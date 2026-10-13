@@ -40,7 +40,11 @@ export default function DeleteButton({
             onClick={async (e) => {
               e.stopPropagation()
               setBusy(true)
-              await onConfirm()
+              try {
+                await onConfirm()
+              } finally {
+                setBusy(false)
+              }
             }}
             className="flex h-6 w-6 items-center justify-center rounded-full text-emerald-600 hover:bg-emerald-50 disabled:opacity-50 dark:text-emerald-400 dark:hover:bg-emerald-900/30"
           >
@@ -87,7 +91,11 @@ export default function DeleteButton({
           onClick={async (e) => {
             e.stopPropagation()
             setBusy(true)
-            await onConfirm()
+            try {
+              await onConfirm()
+            } finally {
+              setBusy(false)
+            }
           }}
           className="font-medium text-red-600 hover:underline disabled:opacity-50"
         >

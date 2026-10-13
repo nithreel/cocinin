@@ -13,7 +13,7 @@ import {
   signOut as firebaseSignOut,
   type User,
 } from 'firebase/auth'
-import { doc, getDoc, onSnapshot, writeBatch } from 'firebase/firestore'
+import { clearIndexedDbPersistence, doc, getDoc, onSnapshot, terminate, writeBatch } from 'firebase/firestore'
 import { auth, db } from '../firebase'
 import { setupDoc, usersCol } from '../lib/collections'
 
@@ -110,6 +110,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function signOut() {
     await firebaseSignOut(auth)
+    // En un dispositivo compartido no deben quedar datos de la cocina en la caché local.
+    try {
+      await terminate(db)
+      await clearIndexedDbPersistence(db)
+    } catch {
+      // si no se puede limpiar (otra pestaña abierta), la sesión ya está cerrada igualmente
+    }
+    window.location.assign('/login')
   }
 
   const loading = authLoading || memberLoading

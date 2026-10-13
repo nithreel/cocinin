@@ -1,5 +1,11 @@
-import { initializeApp, deleteApp } from 'firebase/app'
-import { connectAuthEmulator, createUserWithEmailAndPassword, getAuth, signOut } from 'firebase/auth'
+import { FirebaseError, initializeApp, deleteApp } from 'firebase/app'
+import {
+  connectAuthEmulator,
+  createUserWithEmailAndPassword,
+  getAuth,
+  signInWithEmailAndPassword,
+  signOut,
+} from 'firebase/auth'
 import {
   connectFirestoreEmulator,
   initializeFirestore,
@@ -45,8 +51,19 @@ export async function createAccount(email: string, password: string): Promise<st
     if (import.meta.env.VITE_USE_EMULATORS === 'true') {
       connectAuthEmulator(secondaryAuth, 'http://127.0.0.1:9099', { disableWarnings: true })
     }
-    const cred = await createUserWithEmailAndPassword(secondaryAuth, email, password)
-    const uid = cred.user.uid
+    let uid: string
+    try {
+      uid = (await createUserWithEmailAndPassword(secondaryAuth, email, password)).user.uid
+    } catch (err) {
+      // Reintento tras un alta a medias (la cuenta se creó pero faltó su documento en users):
+      // con la misma contraseña recuperamos su uid y se completa el alta.
+      if (!(err instanceof FirebaseError) || err.code !== 'auth/email-already-in-use') throw err
+      try {
+        uid = (await signInWithEmailAndPassword(secondaryAuth, email, password)).user.uid
+      } catch {
+        throw err
+      }
+    }
     await signOut(secondaryAuth)
     return uid
   } finally {

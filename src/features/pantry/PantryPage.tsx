@@ -160,7 +160,11 @@ function IngredientRow({
 
   async function handleDelete() {
     setDeleting(true)
-    await deleteIngredient(ingredient.id)
+    try {
+      await deleteIngredient(ingredient.id)
+    } finally {
+      setDeleting(false)
+    }
   }
 
   function startEdit() {
@@ -531,7 +535,11 @@ function GroupHeader({
 
   async function handleDelete() {
     setDeleting(true)
-    await deleteGroup(section.id)
+    try {
+      await deleteGroup(section.id)
+    } finally {
+      setDeleting(false)
+    }
   }
 
   if (editing) {

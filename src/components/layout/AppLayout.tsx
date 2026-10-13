@@ -1,5 +1,6 @@
 import { NavLink, Outlet } from 'react-router-dom'
 import { useAuth } from '../../auth/AuthContext'
+import ErrorToast from '../ErrorToast'
 import { useDataError } from '../../lib/AppDataContext'
 
 const USERS_ITEM = { to: '/usuarios', label: 'Usuarios', icon: '👥' }
@@ -62,6 +63,8 @@ export default function AppLayout() {
           Cerrar sesión
         </button>
       </header>
+
+      <ErrorToast />
 
       <main className="flex-1 overflow-y-auto p-4 md:p-8">
         {dataError && (
