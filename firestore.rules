@@ -1,0 +1,51 @@
+rules_version = '2';
+
+// Acceso por membresía: un usuario es miembro si existe /users/{uid}.
+// El primer usuario se crea desde la app (ver meta/setup) y a partir de ahí
+// solo el admin puede dar de alta o quitar a otros. No hay UIDs escritos aquí.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    function isMember() {
+      return isSignedIn() &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+    function setupDone() {
+      return exists(/databases/$(database)/documents/meta/setup);
+    }
+
+    // Marca de "instalación hecha". Pública de lectura para que la pantalla de
+    // login sepa si debe ofrecer crear el primer usuario.
+    match /meta/setup {
+      allow get: if true;
+      allow create: if isSignedIn() && !setupDone() &&
+        existsAfter(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+
+    function isAdmin() {
+      return isMember() &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', 'member') == 'admin';
+    }
+
+    match /users/{uid} {
+      allow read: if isMember() || (isSignedIn() && request.auth.uid == uid);
+      // Primer usuario: se crea como admin a la vez que meta/setup, y solo si no hay instalación.
+      // Después solo el admin da de alta a otros, siempre como 'member'.
+      allow create: if
+        (isSignedIn() && request.auth.uid == uid && !setupDone() &&
+          request.resource.data.role == 'admin' &&
+          existsAfter(/databases/$(database)/documents/meta/setup)) ||
+        (isAdmin() && request.resource.data.role == 'member');
+      // Solo el admin quita accesos, y nunca el suyo.
+      allow delete: if isAdmin() && request.auth.uid != uid;
+    }
+
+    match /groups/{id} { allow read, write: if isMember(); }
+    match /ingredients/{id} { allow read, write: if isMember(); }
+    match /shoppingList/{id} { allow read, write: if isMember(); }
+    match /recipes/{id} { allow read, write: if isMember(); }
+    match /purchaseHistory/{id} { allow read, write: if isMember(); }
+  }
+}

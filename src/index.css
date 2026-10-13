@@ -1,0 +1,36 @@
+@import "tailwindcss";
+@import "@fontsource/poppins/400.css";
+@import "@fontsource/poppins/500.css";
+@import "@fontsource/poppins/600.css";
+@import "@fontsource/poppins/700.css";
+
+@theme {
+  --font-sans: 'Poppins', ui-sans-serif, system-ui, sans-serif;
+
+  /* Greenish dark-mode neutrals (used instead of Tailwind's blue-gray "gray" scale in dark: variants) */
+  --color-moss-600: #3c5b4e;
+  --color-moss-700: #2c463c;
+  --color-moss-800: #1e332c;
+  --color-moss-900: #13221d;
+  --color-moss-950: #0a1512;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  background-color: #fff;
+  color: #111827;
+}
+
+@media (prefers-color-scheme: dark) {
+  body {
+    background-color: var(--color-moss-950);
+    color: #f3f4f6;
+  }
+}
