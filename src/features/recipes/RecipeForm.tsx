@@ -2,6 +2,7 @@ import { useMemo, useState, type FormEvent } from 'react'
 import type { Group, Ingredient, RecipeIngredient } from '../../lib/collections'
 import { groupByPantryGroup } from '../../lib/groupByPantryGroup'
 import SearchInput from '../../components/SearchInput'
+import { matchesSearch } from '../../lib/search'
 
 interface SelectedIngredient {
   quantity: string
@@ -34,7 +35,11 @@ export default function RecipeForm({
   const [instructions, setInstructions] = useState(initial?.instructions ?? '')
   const [selected, setSelected] = useState<Record<string, SelectedIngredient>>(() => {
     const initialSelected: Record<string, SelectedIngredient> = {}
+    // Se descartan las referencias a ingredientes que ya no existen: no se ven en el formulario
+    // y, si se conservaran, seguirían colgando de la receta sin poder quitarlas.
+    const existing = new Set(ingredients.map((i) => i.id))
     for (const ri of initial?.ingredients ?? []) {
+      if (existing.size > 0 && !existing.has(ri.ingredientId)) continue
       initialSelected[ri.ingredientId] = { quantity: ri.quantity, unit: ri.unit, optional: ri.optional ?? false }
     }
     return initialSelected
@@ -73,9 +78,8 @@ export default function RecipeForm({
   const ingredientsById = useMemo(() => new Map(ingredients.map((i) => [i.id, i])), [ingredients])
   // los ya marcados siguen visibles aunque no coincidan con la búsqueda
   const visibleIngredients = useMemo(() => {
-    const term = search.trim().toLowerCase()
-    if (!term) return availableIngredients
-    return availableIngredients.filter((i) => i.name.toLowerCase().includes(term) || i.id in selected)
+    if (!search.trim()) return availableIngredients
+    return availableIngredients.filter((i) => matchesSearch(i.name, search) || i.id in selected)
   }, [availableIngredients, search, selected])
   const sections = useMemo(
     () => groupByPantryGroup(visibleIngredients, (i) => i.id, ingredientsById, groups),

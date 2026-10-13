@@ -10,11 +10,13 @@ import {
   updateIngredientExpiry,
   useGroups,
   useIngredients,
+  useRecipes,
   type ExpiryInput,
 } from './data'
 import type { ExpiryMode, Group, Ingredient } from '../../lib/collections'
 import { CheckIcon, XIcon } from '../../components/DeleteButton'
 import SearchInput from '../../components/SearchInput'
+import { matchesSearch } from '../../lib/search'
 import KebabMenu, { MenuPopup } from '../../components/KebabMenu'
 import { expiryBadgeClasses, getExpiryInfo } from '../../lib/expiry'
 import { NO_GROUP } from '../../lib/groupByPantryGroup'
@@ -59,10 +61,13 @@ function IngredientRow({
   ingredient,
   groups,
   highlight,
+  usedIn,
 }: {
   ingredient: Ingredient
   groups: Group[]
   highlight: boolean
+  /** títulos de las recetas que usan este ingrediente (para avisar antes de borrarlo) */
+  usedIn: string[]
 }) {
   const [busy, setBusy] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
@@ -321,6 +326,12 @@ function IngredientRow({
         ) : null}
       </div>
       </div>
+      {confirmingDelete && usedIn.length > 0 && (
+        <p className="mt-2 rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:bg-amber-950 dark:text-amber-200">
+          Se usa en {usedIn.length === 1 ? 'la receta' : 'las recetas'}: {usedIn.join(', ')}. Si lo eliminas, seguirá
+          apareciendo en {usedIn.length === 1 ? 'ella' : 'ellas'} como «(ingrediente eliminado)».
+        </p>
+      )}
       {editingDates && (
         <form onSubmit={handleSaveDates} className="mt-2 flex flex-wrap items-center gap-2">
           <ExpiryFields mode={expiryMode} date={expiryDate} onModeChange={setExpiryMode} onDateChange={setExpiryDate} />
@@ -613,6 +624,7 @@ function GroupHeader({
 export default function PantryPage() {
   const { groups, loading: loadingGroups } = useGroups()
   const { ingredients, loading: loadingIngredients } = useIngredients()
+  const { recipes } = useRecipes()
   const [showAddGroup, setShowAddGroup] = useState(false)
   const [showAddIngredient, setShowAddIngredient] = useState(false)
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set())
@@ -631,6 +643,14 @@ export default function PantryPage() {
       return next
     })
   }
+
+  const recipesByIngredient = useMemo(() => {
+    const map = new Map<string, string[]>()
+    for (const r of recipes) {
+      for (const ri of r.ingredients) map.set(ri.ingredientId, [...(map.get(ri.ingredientId) ?? []), r.title])
+    }
+    return map
+  }, [recipes])
 
   function handleIngredientAdded(id?: string, groupId?: string | null) {
     setShowAddIngredient(false)
@@ -673,9 +693,8 @@ export default function PantryPage() {
 
   const visibleSections = useMemo(() => {
     if (!searchActive) return sections
-    const term = search.trim().toLowerCase()
     return sections
-      .map((s) => ({ ...s, items: s.items.filter((i) => i.name.toLowerCase().includes(term)) }))
+      .map((s) => ({ ...s, items: s.items.filter((i) => matchesSearch(i.name, search)) }))
       .filter((s) => s.items.length > 0)
   }, [sections, searchActive, search])
 
@@ -742,7 +761,13 @@ export default function PantryPage() {
                 ) : (
                   <ul className="divide-y divide-gray-100 rounded-lg border border-gray-200 bg-white dark:divide-moss-800 dark:border-moss-800 dark:bg-moss-900">
                     {section.items.map((ing) => (
-                      <IngredientRow key={ing.id} ingredient={ing} groups={groups} highlight={ing.id === highlightId} />
+                      <IngredientRow
+                        key={ing.id}
+                        ingredient={ing}
+                        groups={groups}
+                        highlight={ing.id === highlightId}
+                        usedIn={recipesByIngredient.get(ing.id) ?? []}
+                      />
                     ))}
                   </ul>
                 ))}

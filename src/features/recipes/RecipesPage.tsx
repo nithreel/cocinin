@@ -97,7 +97,7 @@ function RecipeCard({
                             : 'text-gray-400 dark:text-gray-500'
                       }
                     >
-                      {ing?.name ?? '(ingrediente eliminado)'}
+                      {ing?.name ?? '(ingrediente eliminado: edita la receta para quitarlo)'}
                       {ri.quantity && ` — ${ri.quantity}${ri.unit ? ` ${ri.unit}` : ''}`}
                       {ri.optional && ' (opcional)'}
                     </li>

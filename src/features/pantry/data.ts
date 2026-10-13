@@ -3,7 +3,7 @@ import { db } from '../../firebase'
 import { localDateString } from '../../lib/expiry'
 import { groupsCol, ingredientsCol, shoppingListCol, type ExpiryMode } from '../../lib/collections'
 
-export { useGroups, useIngredients } from '../../lib/AppDataContext'
+export { useGroups, useIngredients, useRecipes } from '../../lib/AppDataContext'
 
 export interface ExpiryInput {
   mode: ExpiryMode

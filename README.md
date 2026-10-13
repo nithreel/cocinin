@@ -181,7 +181,11 @@ Si prefieres no usar el asistente:
 npm run dev      # servidor local con recarga (usa tu .env, es decir, tus datos reales)
 npm run lint     # oxlint
 npm run build    # tsc + vite build
+npm test         # pruebas unitarias (caducidades, agrupación)
+npm run test:rules  # pruebas de las reglas de seguridad (emulador, Java 21+)
 ```
+
+Cada `push` y cada pull request pasan por GitHub Actions (`.github/workflows/ci.yml`): lint, compilación y las dos baterías de pruebas.
 
 Para desarrollar **sin tocar datos reales** puedes usar los emuladores de Firebase (necesitan Java 21+; en Windows: `winget install EclipseAdoptium.Temurin.21.JDK`):
 
@@ -208,6 +212,7 @@ src/auth/            login, sesión y rutas protegidas (roles admin / member)
 src/features/        pantry (despensa), shopping-list, recipes, users
 src/lib/             tipos y colecciones de Firestore, datos en vivo, caducidades
 src/components/      layout y piezas comunes (menús, buscador, borrado con confirmación)
+tests/               unit/ (lógica pura) y rules/ (reglas de Firestore con emulador)
 scripts/setup.mjs    asistente de instalación (npm run setup)
 firestore.rules      reglas de acceso
 ```

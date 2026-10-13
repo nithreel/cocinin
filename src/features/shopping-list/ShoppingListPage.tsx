@@ -13,6 +13,7 @@ import type { Ingredient, PurchaseHistoryEntry, ShoppingItem } from '../../lib/c
 import { groupByPantryGroup } from '../../lib/groupByPantryGroup'
 import DeleteButton from '../../components/DeleteButton'
 import SearchInput from '../../components/SearchInput'
+import { matchesSearch } from '../../lib/search'
 
 function formatRelativeDate(timestamp: number) {
   const diffDays = Math.floor((Date.now() - timestamp) / 86400000)
@@ -113,8 +114,7 @@ export default function ShoppingListPage() {
   )
 
   const missing = useMemo(() => {
-    const term = missingSearch.trim().toLowerCase()
-    return term ? missingAll.filter((i) => i.name.toLowerCase().includes(term)) : missingAll
+    return missingSearch.trim() ? missingAll.filter((i) => matchesSearch(i.name, missingSearch)) : missingAll
   }, [missingAll, missingSearch])
 
   const cartSections = useMemo(
