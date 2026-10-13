@@ -152,6 +152,7 @@ Si prefieres no usar el asistente:
 
 - **Actualizar** tras cambiar el código: `npm run deploy`. Solo las reglas: `npm run deploy:rules`.
 - **Sin conexión**: la app guarda una copia local de los datos y se abre con ellos aunque no haya cobertura; los cambios se sincronizan al volver la conexión.
+- **Rutas nuevas**: si añades una ruta en `src/App.tsx`, añade también su `no-cache` en `firebase.json` (lo comprueba `npm test`); si no, la app instalada tardaría hasta 1 h en ver las novedades.
 - **PWA**: tras un despliegue, la app instalada puede mostrar la versión anterior hasta cerrarla y abrirla una o dos veces (o recarga forzada `Ctrl+Shift+R` en el navegador).
 - **Dominio propio**: Firebase Console → Hosting → *Add custom domain*.
 - **Copia de seguridad**: el administrador puede descargar un JSON con todos los datos desde **Usuarios → Exportar copia**. Hazlo de vez en cuando.
