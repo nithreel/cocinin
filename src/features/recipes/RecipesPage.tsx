@@ -3,6 +3,7 @@ import { useGroups, useIngredients } from '../pantry/data'
 import { addRecipe, deleteRecipe, updateRecipe, useRecipes } from './data'
 import RecipeForm from './RecipeForm'
 import DeleteButton from '../../components/DeleteButton'
+import { cancelButton } from '../../components/buttonStyles'
 import type { Group, Ingredient, Recipe } from '../../lib/collections'
 
 type RecipeStatus = 'full' | 'partial' | 'missing'
@@ -54,7 +55,7 @@ function RecipeCard({
         className="flex w-full items-center justify-between gap-3 p-4 text-left"
       >
         <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{recipe.title}</h3>
-        <span className="text-gray-400 dark:text-gray-500" aria-hidden="true">
+        <span className="text-gray-500 dark:text-gray-400" aria-hidden="true">
           {open ? '▲' : '▼'}
         </span>
       </button>
@@ -94,7 +95,7 @@ function RecipeCard({
                           ? ''
                           : missingOptional
                             ? 'text-amber-600 dark:text-amber-400'
-                            : 'text-gray-400 dark:text-gray-500'
+                            : 'text-gray-500 dark:text-gray-400'
                       }
                     >
                       {ing?.name ?? '(ingrediente eliminado: edita la receta para quitarlo)'}
@@ -114,12 +115,8 @@ function RecipeCard({
                 </div>
               )}
 
-              <div className="mt-3 flex justify-end gap-3">
-                <button
-                  type="button"
-                  onClick={() => setEditing(true)}
-                  className="text-sm text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
-                >
+              <div className="mt-3 flex items-center justify-end gap-1">
+                <button type="button" onClick={() => setEditing(true)} className={cancelButton}>
                   Editar
                 </button>
                 <DeleteButton onConfirm={() => deleteRecipe(recipe.id)} label="Eliminar" />
@@ -162,10 +159,10 @@ export default function RecipesPage() {
         />
       )}
 
-      {loading && <p className="text-gray-400 dark:text-gray-500">Cargando…</p>}
+      {loading && <p className="text-gray-500 dark:text-gray-400">Cargando…</p>}
 
       {!loading && recipes.length === 0 && (
-        <p className="text-gray-400 dark:text-gray-500">Aún no hay recetas. Crea la primera con "+ Receta".</p>
+        <p className="text-gray-500 dark:text-gray-400">Aún no hay recetas. Crea la primera con "+ Receta".</p>
       )}
 
       <div className="space-y-4">

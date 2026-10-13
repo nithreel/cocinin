@@ -6,7 +6,15 @@ export interface MenuItem {
   danger?: boolean
 }
 
-export function MenuPopup({ items, onClose, className = 'right-0 top-7' }: { items: MenuItem[]; onClose: () => void; className?: string }) {
+export function MenuPopup({
+  items,
+  onClose,
+  className = 'right-0 top-7',
+}: {
+  items: MenuItem[]
+  onClose: () => void
+  className?: string
+}) {
   return (
     <div
       role="menu"

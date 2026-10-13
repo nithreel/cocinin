@@ -128,8 +128,7 @@ Si prefieres no usar el asistente:
 | --- | --- |
 | Añadir ingrediente | Despensa → «+ Ingrediente». Nace disponible (ON) y la lista te lleva hasta él. |
 | Marcar agotado/disponible | Interruptor a la derecha del ingrediente. |
-| Fecha de compra o caducidad | Toca el ingrediente (solo si está en ON). |
-| Editar o eliminar ingrediente | Mantén pulsado (o clic derecho en el ordenador). |
+| Fecha de compra o caducidad, editar o eliminar un ingrediente | Toca el ingrediente: se abre un panel con las fechas (si está en ON) y los botones **Editar** y **Eliminar**. |
 | Comprar | Lista → «Añadir a la lista» en lo que falta (con buscador) → marca lo comprado → «Confirmar compra». |
 | Receta nueva | Recetario → «+ Receta»; hay buscador de ingredientes. |
 | Dar de alta o quitar usuarios, o exportar copia | Menú **Usuarios** (solo administrador). |

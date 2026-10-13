@@ -50,6 +50,6 @@ export function expiryBadgeClasses(status: ExpiryStatus) {
     case 'soon':
       return 'text-amber-600 dark:text-amber-400 font-medium'
     default:
-      return 'text-gray-400 dark:text-gray-500'
+      return 'text-gray-500 dark:text-gray-400'
   }
 }

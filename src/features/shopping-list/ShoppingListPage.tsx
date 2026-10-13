@@ -76,11 +76,11 @@ function SectionHeader({
       aria-expanded={!isCollapsed}
       className="mb-1 flex items-center gap-1.5 text-sm font-semibold uppercase tracking-wide text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
     >
-      <span aria-hidden="true" className="text-gray-400 dark:text-gray-500">
+      <span aria-hidden="true" className="text-gray-500 dark:text-gray-400">
         {isCollapsed ? '▶' : '▼'}
       </span>
       {name}
-      <span className="font-normal normal-case text-gray-400 dark:text-gray-500">({count})</span>
+      <span className="font-normal normal-case text-gray-500 dark:text-gray-400">({count})</span>
     </button>
   )
 }
@@ -143,10 +143,10 @@ export default function ShoppingListPage() {
       <div>
         <h2 className="mb-3 text-2xl font-semibold text-gray-900 dark:text-gray-100">Lista de la compra</h2>
 
-        {loading && <p className="text-gray-400 dark:text-gray-500">Cargando…</p>}
+        {loading && <p className="text-gray-500 dark:text-gray-400">Cargando…</p>}
 
         {!loading && items.length === 0 && (
-          <p className="text-gray-400 dark:text-gray-500">Tu lista está vacía. Añade algo de lo que te falta abajo.</p>
+          <p className="text-gray-500 dark:text-gray-400">Tu lista está vacía. Añade algo de lo que te falta abajo.</p>
         )}
 
         {items.length > 0 && (
@@ -163,30 +163,32 @@ export default function ShoppingListPage() {
                       onToggle={() => cartCollapse.toggle(section.id)}
                     />
                     {!isCollapsed && (
-                      <ul className="divide-y divide-gray-100 rounded-lg border border-gray-200 bg-white px-4 dark:divide-moss-800 dark:border-moss-800 dark:bg-moss-900">
+                      <ul className="divide-y divide-gray-100 rounded-lg border border-gray-200 bg-white dark:divide-moss-800 dark:border-moss-800 dark:bg-moss-900">
                         {section.items.map((item) => {
                           const ingredient = ingredientsById.get(item.ingredientId)
                           return (
-                            <li key={item.id} className="flex items-center gap-3 py-2">
-                              <input
-                                type="checkbox"
-                                checked={item.checked}
-                                onChange={(e) => setShoppingItemChecked(item.id, e.target.checked)}
-                                className="h-4 w-4 rounded border-gray-300 text-emerald-700 focus:ring-emerald-500 dark:border-moss-600 dark:bg-moss-800"
-                              />
-                              <span
-                                className={
-                                  item.checked
-                                    ? 'flex-1 text-gray-400 line-through dark:text-gray-500'
-                                    : 'flex-1 text-gray-900 dark:text-gray-100'
-                                }
-                              >
-                                {ingredient?.name ?? '(ingrediente eliminado)'}
-                              </span>
+                            <li key={item.id} className="flex items-center gap-3 pl-4 pr-3">
+                              <label className="flex min-h-10 flex-1 cursor-pointer items-center gap-3 py-2 max-md:min-h-11">
+                                <input
+                                  type="checkbox"
+                                  checked={item.checked}
+                                  onChange={(e) => setShoppingItemChecked(item.id, e.target.checked)}
+                                  className="h-4 w-4 rounded border-gray-300 text-emerald-700 focus:ring-emerald-500 max-md:h-5 max-md:w-5 dark:border-moss-600 dark:bg-moss-800"
+                                />
+                                <span
+                                  className={
+                                    item.checked
+                                      ? 'flex-1 text-gray-500 line-through dark:text-gray-400'
+                                      : 'flex-1 text-gray-900 dark:text-gray-100'
+                                  }
+                                >
+                                  {ingredient?.name ?? '(ingrediente eliminado)'}
+                                </span>
+                              </label>
                               <button
                                 type="button"
                                 onClick={() => removeFromShoppingList(item.id)}
-                                className="text-sm text-gray-400 hover:text-red-600 dark:text-gray-500 dark:hover:text-red-400"
+                                className="text-sm text-gray-500 hover:text-red-600 max-md:py-3 dark:text-gray-400 dark:hover:text-red-400"
                               >
                                 Quitar
                               </button>
@@ -218,11 +220,11 @@ export default function ShoppingListPage() {
         {missingAll.length > 0 && <SearchInput value={missingSearch} onChange={setMissingSearch} className="mb-3" />}
 
         {!loading && missingAll.length === 0 && (
-          <p className="text-gray-400 dark:text-gray-500">No te falta nada por ahora.</p>
+          <p className="text-gray-500 dark:text-gray-400">No te falta nada por ahora.</p>
         )}
 
         {missingAll.length > 0 && missing.length === 0 && (
-          <p className="text-gray-400 dark:text-gray-500">Nada que coincida con "{missingSearch.trim()}".</p>
+          <p className="text-gray-500 dark:text-gray-400">Nada que coincida con "{missingSearch.trim()}".</p>
         )}
 
         {missing.length > 0 && (
@@ -238,14 +240,14 @@ export default function ShoppingListPage() {
                     onToggle={() => missingCollapse.toggle(section.id)}
                   />
                   {!isCollapsed && (
-                    <ul className="divide-y divide-gray-100 rounded-lg border border-gray-200 bg-white px-4 dark:divide-moss-800 dark:border-moss-800 dark:bg-moss-900">
+                    <ul className="divide-y divide-gray-100 rounded-lg border border-gray-200 bg-white dark:divide-moss-800 dark:border-moss-800 dark:bg-moss-900">
                       {section.items.map((ingredient) => (
-                        <li key={ingredient.id} className="flex items-center justify-between gap-3 py-2">
+                        <li key={ingredient.id} className="flex items-center justify-between gap-3 py-1.5 pl-4 pr-3 max-md:min-h-11 max-md:py-0.5">
                           <span className="text-gray-900 dark:text-gray-100">{ingredient.name}</span>
                           <button
                             type="button"
                             onClick={() => addToShoppingList(ingredient.id)}
-                            className="shrink-0 rounded-md border border-emerald-300 bg-emerald-50 px-3 py-1 text-sm text-emerald-800 hover:bg-emerald-100"
+                            className="shrink-0 rounded-md border border-emerald-300 bg-emerald-50 px-3 py-1 text-sm text-emerald-800 hover:bg-emerald-100 max-md:py-2"
                           >
                             Añadir a la lista
                           </button>
@@ -269,12 +271,12 @@ export default function ShoppingListPage() {
             onToggle={() => setHistoryCollapsed((v) => !v)}
           />
           {historyEntries.length > 0 && (
-            <DeleteButton onConfirm={clearPurchaseHistory} label="Borrar historial" />
+            <DeleteButton onConfirm={clearPurchaseHistory} label="Borrar historial" confirmLabel="Sí, borrar" />
           )}
         </div>
         {!historyCollapsed &&
           (!loadingHistory && purchaseBatches.length === 0 ? (
-            <p className="text-gray-400 dark:text-gray-500">Aún no hay compras confirmadas.</p>
+            <p className="text-gray-500 dark:text-gray-400">Aún no hay compras confirmadas.</p>
           ) : (
             <div className="space-y-3">
               {purchaseBatches.map((batch) => {
@@ -292,12 +294,12 @@ export default function ShoppingListPage() {
                       className="flex w-full items-center justify-between gap-2 py-2 text-sm text-gray-700 dark:text-gray-300"
                     >
                       <span className="flex items-center gap-1.5">
-                        <span aria-hidden="true" className="text-gray-400 dark:text-gray-500">
+                        <span aria-hidden="true" className="text-gray-500 dark:text-gray-400">
                           {isCollapsed ? '▶' : '▼'}
                         </span>
                         Compra de {formatRelativeDate(batch.purchasedAt)}
                       </span>
-                      <span className="shrink-0 text-gray-400 dark:text-gray-500">
+                      <span className="shrink-0 text-gray-500 dark:text-gray-400">
                         {batch.entries.length} artículo{batch.entries.length === 1 ? '' : 's'}
                       </span>
                     </button>

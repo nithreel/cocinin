@@ -1,6 +1,7 @@
 import { useMemo, useState, type FormEvent } from 'react'
 import type { Group, Ingredient, RecipeIngredient } from '../../lib/collections'
 import { groupByPantryGroup } from '../../lib/groupByPantryGroup'
+import { cancelButton } from '../../components/buttonStyles'
 import SearchInput from '../../components/SearchInput'
 import { matchesSearch } from '../../lib/search'
 
@@ -123,10 +124,10 @@ export default function RecipeForm({
       <p className="mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">Ingredientes</p>
       {availableIngredients.length > 0 && <SearchInput value={search} onChange={setSearch} className="mb-3" />}
       {availableIngredients.length === 0 && (
-        <p className="mb-4 text-sm text-gray-400 dark:text-gray-500">Añade ingredientes de comida en la Despensa primero.</p>
+        <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">Añade ingredientes de comida en la Despensa primero.</p>
       )}
       {search.trim() && sections.length === 0 && (
-        <p className="mb-4 text-sm text-gray-400 dark:text-gray-500">Nada que coincida con "{search.trim()}".</p>
+        <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">Nada que coincida con "{search.trim()}".</p>
       )}
       <div className="mb-4 space-y-3">
         {sections.map((section) => (
@@ -203,7 +204,7 @@ export default function RecipeForm({
         >
           {submitting ? 'Guardando…' : submitLabel}
         </button>
-        <button type="button" onClick={onDone} className="text-sm text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300">
+        <button type="button" onClick={onDone} className={cancelButton}>
           Cancelar
         </button>
       </div>

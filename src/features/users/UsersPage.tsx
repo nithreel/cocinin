@@ -74,7 +74,7 @@ export default function UsersPage() {
     <div>
       <h2 className="mb-4 text-2xl font-semibold text-gray-900 dark:text-gray-100">Usuarios</h2>
 
-      {loading && <p className="text-gray-400 dark:text-gray-500">Cargando…</p>}
+      {loading && <p className="text-gray-500 dark:text-gray-400">Cargando…</p>}
 
       <ul className="mb-6 divide-y divide-gray-100 rounded-lg border border-gray-200 bg-white dark:divide-moss-800 dark:border-moss-800 dark:bg-moss-900">
         {members.map((m) => (
@@ -85,7 +85,7 @@ export default function UsersPage() {
               {m.role === 'admin' && <span className="ml-2 text-xs text-emerald-600 dark:text-emerald-400">Admin</span>}
             </span>
             {m.id !== user?.uid && m.role !== 'admin' && (
-              <DeleteButton onConfirm={() => deleteDoc(doc(usersCol, m.id))} label="Quitar acceso" />
+              <DeleteButton onConfirm={() => deleteDoc(doc(usersCol, m.id))} label="Quitar acceso" confirmLabel="Sí, quitar" />
             )}
           </li>
         ))}
@@ -128,7 +128,7 @@ export default function UsersPage() {
         >
           {submitting ? 'Creando…' : 'Crear usuario'}
         </button>
-        <p className="mt-3 text-xs text-gray-400 dark:text-gray-500">
+        <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">
           "Quitar acceso" bloquea al usuario en la app; su cuenta de Firebase sigue existiendo y puede borrarse desde
           la consola de Firebase Authentication.
         </p>

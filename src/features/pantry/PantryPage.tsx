@@ -14,14 +14,13 @@ import {
   type ExpiryInput,
 } from './data'
 import type { ExpiryMode, Group, Ingredient } from '../../lib/collections'
-import { CheckIcon, XIcon } from '../../components/DeleteButton'
+import { ConfirmDelete } from '../../components/DeleteButton'
 import SearchInput from '../../components/SearchInput'
+import { cancelButton, dangerTextButton, primaryButton } from '../../components/buttonStyles'
 import { matchesSearch } from '../../lib/search'
-import KebabMenu, { MenuPopup } from '../../components/KebabMenu'
+import KebabMenu from '../../components/KebabMenu'
 import { expiryBadgeClasses, getExpiryInfo } from '../../lib/expiry'
 import { NO_GROUP } from '../../lib/groupByPantryGroup'
-
-const LONG_PRESS_MS = 500
 
 function ExpiryFields({
   mode,
@@ -70,12 +69,8 @@ function IngredientRow({
   usedIn: string[]
 }) {
   const [busy, setBusy] = useState(false)
-  const [menuOpen, setMenuOpen] = useState(false)
-  const [editingDates, setEditingDates] = useState(false)
+  const [panelOpen, setPanelOpen] = useState(false)
   const rowRef = useRef<HTMLLIElement>(null)
-  const menuRef = useRef<HTMLDivElement>(null)
-  const pressTimer = useRef<number | null>(null)
-  const longPressed = useRef(false)
   const [editing, setEditing] = useState(false)
   const [confirmingDelete, setConfirmingDelete] = useState(false)
   const [deleting, setDeleting] = useState(false)
@@ -89,61 +84,50 @@ function IngredientRow({
     if (highlight) rowRef.current?.scrollIntoView({ block: 'center', behavior: 'smooth' })
   }, [highlight])
 
+  function closePanel() {
+    setPanelOpen(false)
+    setConfirmingDelete(false)
+  }
+
+  // El panel se cierra al tocar fuera de la fila (otra fila, cabecera…) o con Escape.
   useEffect(() => {
-    if (!menuOpen) return
-    // cualquier toque fuera del menú (incluso dentro de la misma fila), scroll o Escape lo cierran
+    if (!panelOpen) return
     function handleDown(e: Event) {
-      if (menuRef.current && menuRef.current.contains(e.target as Node)) return
-      setMenuOpen(false)
+      if (rowRef.current && !rowRef.current.contains(e.target as Node)) closePanel()
     }
     function handleKey(e: KeyboardEvent) {
-      if (e.key === 'Escape') setMenuOpen(false)
+      if (e.key === 'Escape') closePanel()
     }
-    const close = () => setMenuOpen(false)
-    document.addEventListener('pointerdown', handleDown, true)
+    document.addEventListener('pointerdown', handleDown)
     document.addEventListener('keydown', handleKey)
-    window.addEventListener('scroll', close, true)
     return () => {
-      document.removeEventListener('pointerdown', handleDown, true)
+      document.removeEventListener('pointerdown', handleDown)
       document.removeEventListener('keydown', handleKey)
-      window.removeEventListener('scroll', close, true)
     }
-  }, [menuOpen])
+  }, [panelOpen])
 
-  function cancelPress() {
-    if (pressTimer.current !== null) {
-      window.clearTimeout(pressTimer.current)
-      pressTimer.current = null
-    }
-  }
-
-  function startPress() {
-    longPressed.current = false
-    cancelPress()
-    pressTimer.current = window.setTimeout(() => {
-      pressTimer.current = null
-      longPressed.current = true
-      setMenuOpen(true)
-    }, LONG_PRESS_MS)
-  }
-
-  function handleInfoClick() {
-    if (longPressed.current) {
-      longPressed.current = false
+  function togglePanel() {
+    if (panelOpen) {
+      closePanel()
       return
     }
-    if (!ingredient.inPantry) return
     setExpiryMode(ingredient.expiryMode ?? 'none')
     setExpiryDate(ingredient.expiryDate ?? ingredient.stockedDate ?? '')
-    setEditingDates((v) => !v)
+    setPanelOpen(true)
   }
+
+  // al abrir el panel de una fila del final, se desplaza para que se vea entero (sin quedar bajo la barra)
+  useEffect(() => {
+    if (panelOpen) rowRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+  }, [panelOpen, confirmingDelete])
 
   async function handleSaveDates(e: FormEvent) {
     e.preventDefault()
+    if (!ingredient.inPantry) return
     setSaving(true)
     try {
       await updateIngredientExpiry(ingredient.id, { mode: expiryMode, date: expiryDate || null })
-      setEditingDates(false)
+      closePanel()
     } finally {
       setSaving(false)
     }
@@ -172,6 +156,7 @@ function IngredientRow({
     setGroupId(ingredient.groupId ?? NO_GROUP)
     setExpiryMode(ingredient.expiryMode ?? 'none')
     setExpiryDate(ingredient.expiryDate ?? ingredient.stockedDate ?? '')
+    closePanel()
     setEditing(true)
   }
 
@@ -224,14 +209,14 @@ function IngredientRow({
             <button
               type="submit"
               disabled={saving}
-              className="rounded-md bg-emerald-700 px-2.5 py-1 text-sm font-medium text-white hover:bg-emerald-800 disabled:opacity-50"
+              className={primaryButton}
             >
               Guardar
             </button>
             <button
               type="button"
               onClick={() => setEditing(false)}
-              className="text-sm text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
+              className={cancelButton}
             >
               Cancelar
             </button>
@@ -247,41 +232,32 @@ function IngredientRow({
     <li
       ref={rowRef}
       className={
-        'relative border-l-4 py-2 pl-3 pr-1 transition-colors duration-700 ' +
+        'scroll-mb-20 border-l-4 py-2 pl-3 pr-3 transition-colors duration-700 ' +
         (ingredient.inPantry ? 'border-l-emerald-500' : 'border-l-red-400') +
         (highlight ? ' bg-emerald-50 dark:bg-emerald-950' : '')
       }
     >
-      <div className="flex items-center justify-between gap-3">
-      <div
-        role={ingredient.inPantry ? 'button' : undefined}
-        tabIndex={ingredient.inPantry ? 0 : undefined}
-        onClick={handleInfoClick}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' && ingredient.inPantry) handleInfoClick()
-        }}
-        onPointerDown={startPress}
-        onPointerUp={cancelPress}
-        onPointerLeave={cancelPress}
-        onPointerCancel={cancelPress}
-        onContextMenu={(e) => {
-          e.preventDefault()
-          cancelPress()
-          longPressed.current = true
-          setMenuOpen(true)
-        }}
-        className={
-          'flex min-w-0 flex-1 select-none flex-col ' + (ingredient.inPantry ? 'cursor-pointer' : '')
-        }
-      >
-        <span className={ingredient.inPantry ? 'text-gray-900 dark:text-gray-100' : 'text-gray-400 dark:text-gray-500'}>
-          {ingredient.name}
-        </span>
-        {expiryInfo && (
-          <span className={'text-xs ' + expiryBadgeClasses(expiryInfo.status)}>{expiryInfo.label}</span>
-        )}
-      </div>
-      <div className="flex shrink-0 items-center gap-2">
+      <div className="flex items-center justify-between gap-3 max-md:min-h-7">
+        <div
+          role="button"
+          tabIndex={0}
+          aria-expanded={panelOpen}
+          onClick={togglePanel}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault()
+              togglePanel()
+            }
+          }}
+          className="flex min-w-0 flex-1 cursor-pointer select-none flex-col"
+        >
+          <span className={ingredient.inPantry ? 'text-gray-900 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400'}>
+            {ingredient.name}
+          </span>
+          {expiryInfo && (
+            <span className={'text-xs ' + expiryBadgeClasses(expiryInfo.status)}>{expiryInfo.label}</span>
+          )}
+        </div>
         <button
           type="button"
           role="switch"
@@ -294,7 +270,7 @@ function IngredientRow({
           onClick={toggle}
           disabled={busy}
           className={
-            'relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors disabled:opacity-50 ' +
+            'relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors disabled:opacity-50 max-md:after:absolute max-md:after:-inset-2.5 max-md:after:content-[\'\'] ' +
             (ingredient.inPantry ? 'bg-emerald-500' : 'bg-gray-300')
           }
         >
@@ -305,67 +281,62 @@ function IngredientRow({
             }
           />
         </button>
-        {confirmingDelete ? (
-          <span className="inline-flex shrink-0 items-center gap-1">
-            <button
-              type="button"
-              disabled={deleting}
-              aria-label="Confirmar eliminación"
-              title="Confirmar eliminación"
-              onClick={handleDelete}
-              className="flex h-6 w-6 items-center justify-center rounded-full text-emerald-600 hover:bg-emerald-50 disabled:opacity-50"
-            >
-              <CheckIcon />
-            </button>
-            <button
-              type="button"
-              aria-label="Cancelar"
-              title="Cancelar"
-              onClick={() => setConfirmingDelete(false)}
-              className="flex h-6 w-6 items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 dark:hover:bg-moss-800"
-            >
-              <XIcon />
-            </button>
-          </span>
-        ) : null}
       </div>
-      </div>
-      {confirmingDelete && usedIn.length > 0 && (
-        <p className="mt-2 rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:bg-amber-950 dark:text-amber-200">
-          Se usa en {usedIn.length === 1 ? 'la receta' : 'las recetas'}: {usedIn.join(', ')}. Si lo eliminas, seguirá
-          apareciendo en {usedIn.length === 1 ? 'ella' : 'ellas'} como «(ingrediente eliminado)».
-        </p>
-      )}
-      {editingDates && (
-        <form onSubmit={handleSaveDates} className="mt-2 flex flex-wrap items-center gap-2">
-          <ExpiryFields mode={expiryMode} date={expiryDate} onModeChange={setExpiryMode} onDateChange={setExpiryDate} />
-          <button
-            type="submit"
-            disabled={saving}
-            className="rounded-md bg-emerald-700 px-2.5 py-1 text-sm font-medium text-white hover:bg-emerald-800 disabled:opacity-50"
-          >
-            Guardar
-          </button>
-          <button
-            type="button"
-            onClick={() => setEditingDates(false)}
-            className="text-sm text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
-          >
-            Cancelar
-          </button>
+
+      {panelOpen && (
+        <form
+          onSubmit={handleSaveDates}
+          className="mt-2 flex flex-col gap-2 border-t border-gray-100 pt-2 dark:border-moss-800"
+        >
+          {ingredient.inPantry && !confirmingDelete && (
+            <div className="flex flex-wrap items-center gap-2">
+              <ExpiryFields mode={expiryMode} date={expiryDate} onModeChange={setExpiryMode} onDateChange={setExpiryDate} />
+            </div>
+          )}
+
+          {confirmingDelete ? (
+            <>
+              {usedIn.length > 0 && (
+                <p className="rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:bg-amber-950 dark:text-amber-200">
+                  Se usa en {usedIn.length === 1 ? 'la receta' : 'las recetas'}: {usedIn.join(', ')}. Si lo eliminas,
+                  seguirá apareciendo en {usedIn.length === 1 ? 'ella' : 'ellas'} como «(ingrediente eliminado)».
+                </p>
+              )}
+              <ConfirmDelete
+                question={`¿Eliminar «${ingredient.name}»?`}
+                questionClassName="w-full"
+                busy={deleting}
+                onConfirm={handleDelete}
+                onCancel={() => setConfirmingDelete(false)}
+              />
+            </>
+          ) : (
+            <div className="flex items-center gap-2">
+              {ingredient.inPantry && (
+                <>
+                  <button
+                    type="submit"
+                    disabled={saving}
+                    className={primaryButton}
+                  >
+                    Guardar
+                  </button>
+                  <button type="button" onClick={closePanel} className={cancelButton}>
+                    Cancelar
+                  </button>
+                </>
+              )}
+              <div className="ml-auto flex items-center gap-1">
+                <button type="button" onClick={startEdit} className={cancelButton}>
+                  Editar
+                </button>
+                <button type="button" onClick={() => setConfirmingDelete(true)} className={dangerTextButton}>
+                  Eliminar
+                </button>
+              </div>
+            </div>
+          )}
         </form>
-      )}
-      {menuOpen && (
-        <div ref={menuRef}>
-          <MenuPopup
-            className="right-12 top-8"
-            onClose={() => setMenuOpen(false)}
-            items={[
-              { label: 'Editar', onClick: startEdit },
-              { label: 'Eliminar', onClick: () => setConfirmingDelete(true), danger: true },
-            ]}
-          />
-        </div>
       )}
     </li>
   )
@@ -424,11 +395,11 @@ function AddGroupForm({ onDone }: { onDone: () => void }) {
         <button
           type="submit"
           disabled={submitting}
-          className="rounded-md bg-emerald-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-800 disabled:opacity-50"
+          className={primaryButton}
         >
           Crear
         </button>
-        <button type="button" onClick={onDone} className="text-sm text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300">
+        <button type="button" onClick={onDone} className={cancelButton}>
           Cancelar
         </button>
       </div>
@@ -493,11 +464,11 @@ function AddIngredientForm({
         <button
           type="submit"
           disabled={submitting}
-          className="rounded-md bg-emerald-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-800 disabled:opacity-50"
+          className={primaryButton}
         >
           Añadir
         </button>
-        <button type="button" onClick={() => onDone()} className="text-sm text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300">
+        <button type="button" onClick={() => onDone()} className={cancelButton}>
           Cancelar
         </button>
       </div>
@@ -556,14 +527,14 @@ function GroupHeader({
           <button
             type="submit"
             disabled={saving}
-            className="rounded-md bg-emerald-700 px-2.5 py-1 text-sm font-medium text-white hover:bg-emerald-800 disabled:opacity-50"
+            className={primaryButton}
           >
             Guardar
           </button>
           <button
             type="button"
             onClick={() => setEditing(false)}
-            className="text-sm text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
+            className={cancelButton}
           >
             Cancelar
           </button>
@@ -580,37 +551,23 @@ function GroupHeader({
         aria-expanded={!isCollapsed}
         className="flex min-w-0 flex-1 items-center gap-1.5 text-sm font-semibold uppercase tracking-wide text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
       >
-        <span aria-hidden="true" className="shrink-0 text-gray-400 dark:text-gray-500">
+        <span aria-hidden="true" className="shrink-0 text-gray-500 dark:text-gray-400">
           {isCollapsed ? '▶' : '▼'}
         </span>
         <span className="truncate">{section.name}</span>
-        <span className="shrink-0 font-normal normal-case text-gray-400 dark:text-gray-500">
+        <span className="shrink-0 font-normal normal-case text-gray-500 dark:text-gray-400">
           ({section.items.length})
         </span>
       </button>
       {section.deletable &&
         (confirmingDelete ? (
-          <span className="inline-flex shrink-0 items-center gap-1">
-            <button
-              type="button"
-              disabled={deleting}
-              aria-label="Confirmar eliminación"
-              title="Confirmar eliminación"
-              onClick={handleDelete}
-              className="flex h-6 w-6 items-center justify-center rounded-full text-emerald-600 hover:bg-emerald-50 disabled:opacity-50"
-            >
-              <CheckIcon />
-            </button>
-            <button
-              type="button"
-              aria-label="Cancelar"
-              title="Cancelar"
-              onClick={() => setConfirmingDelete(false)}
-              className="flex h-6 w-6 items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 dark:hover:bg-moss-800"
-            >
-              <XIcon />
-            </button>
-          </span>
+          <ConfirmDelete
+            question=""
+            busy={deleting}
+            onConfirm={handleDelete}
+            onCancel={() => setConfirmingDelete(false)}
+            className="shrink-0"
+          />
         ) : (
           <KebabMenu
             items={[
@@ -739,16 +696,16 @@ export default function PantryPage() {
         <SearchInput value={search} onChange={setSearch} />
       )}
 
-      {loading && <p className="text-gray-400 dark:text-gray-500">Cargando…</p>}
+      {loading && <p className="text-gray-500 dark:text-gray-400">Cargando…</p>}
 
       {!loading && ingredients.length === 0 && groups.length === 0 && (
-        <p className="text-gray-400 dark:text-gray-500">
+        <p className="text-gray-500 dark:text-gray-400">
           Aún no hay ingredientes. Añade el primero con "+ Ingrediente".
         </p>
       )}
 
       {!loading && searchActive && visibleSections.length === 0 && (
-        <p className="text-gray-400 dark:text-gray-500">No hay ingredientes que coincidan con "{search.trim()}".</p>
+        <p className="text-gray-500 dark:text-gray-400">No hay ingredientes que coincidan con "{search.trim()}".</p>
       )}
 
       <div className="space-y-6">
