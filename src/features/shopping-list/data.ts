@@ -29,13 +29,15 @@ export async function confirmPurchase(items: ShoppingItem[], ingredientsById: Ma
   const purchasedAt = Date.now()
   const stockedDate = localDateString(new Date(purchasedAt))
   for (const item of checkedItems) {
+    batch.delete(doc(shoppingListCol, item.id))
+    // otro miembro pudo borrar el ingrediente: se quita de la lista sin romper el resto de la compra
+    if (!ingredientsById.has(item.ingredientId)) continue
     batch.update(doc(ingredientsCol, item.ingredientId), {
       inPantry: true,
       expiryMode: 'sinceStocked',
       stockedDate,
       expiryDate: null,
     })
-    batch.delete(doc(shoppingListCol, item.id))
     const ingredientName = ingredientsById.get(item.ingredientId)?.name ?? '(ingrediente eliminado)'
     batch.set(doc(purchaseHistoryCol), { ingredientName, purchasedAt })
   }

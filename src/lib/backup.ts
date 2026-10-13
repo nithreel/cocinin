@@ -30,5 +30,6 @@ export async function downloadBackup() {
   a.href = url
   a.download = `cocinin-copia-${new Date().toISOString().slice(0, 10)}.json`
   a.click()
-  URL.revokeObjectURL(url)
+  // Safari/iOS necesita que la URL siga viva un momento tras el clic
+  setTimeout(() => URL.revokeObjectURL(url), 10_000)
 }

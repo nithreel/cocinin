@@ -24,6 +24,8 @@ interface AppDataValue {
   recipesLoading: boolean
   purchaseHistory: PurchaseHistoryEntry[]
   purchaseHistoryLoading: boolean
+  /** mensaje si algún listener falla (p. ej. permission-denied); null si todo va bien */
+  dataError: string | null
 }
 
 const AppDataContext = createContext<AppDataValue | null>(null)
@@ -39,13 +41,22 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const [recipesLoading, setRecipesLoading] = useState(true)
   const [purchaseHistory, setPurchaseHistory] = useState<PurchaseHistoryEntry[]>([])
   const [purchaseHistoryLoading, setPurchaseHistoryLoading] = useState(true)
+  const [dataError, setDataError] = useState<string | null>(null)
+
+  function handleError(stopLoading: () => void) {
+    return (err: Error) => {
+      console.error(err)
+      setDataError(err.message)
+      stopLoading()
+    }
+  }
 
   useEffect(() => {
     const q = query(groupsCol, orderBy('name'))
     return onSnapshot(q, (snap) => {
       setGroups(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Group))
       setGroupsLoading(false)
-    })
+    }, handleError(() => setGroupsLoading(false)))
   }, [])
 
   useEffect(() => {
@@ -53,7 +64,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     return onSnapshot(q, (snap) => {
       setIngredients(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Ingredient))
       setIngredientsLoading(false)
-    })
+    }, handleError(() => setIngredientsLoading(false)))
   }, [])
 
   useEffect(() => {
@@ -61,7 +72,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     return onSnapshot(q, (snap) => {
       setShoppingItems(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as ShoppingItem))
       setShoppingItemsLoading(false)
-    })
+    }, handleError(() => setShoppingItemsLoading(false)))
   }, [])
 
   useEffect(() => {
@@ -69,7 +80,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     return onSnapshot(q, (snap) => {
       setRecipes(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Recipe))
       setRecipesLoading(false)
-    })
+    }, handleError(() => setRecipesLoading(false)))
   }, [])
 
   useEffect(() => {
@@ -77,7 +88,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     return onSnapshot(q, (snap) => {
       setPurchaseHistory(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as PurchaseHistoryEntry))
       setPurchaseHistoryLoading(false)
-    })
+    }, handleError(() => setPurchaseHistoryLoading(false)))
   }, [])
 
   return (
@@ -93,6 +104,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         recipesLoading,
         purchaseHistory,
         purchaseHistoryLoading,
+        dataError,
       }}
     >
       {children}
@@ -129,4 +141,8 @@ export function useRecipes() {
 export function usePurchaseHistory() {
   const { purchaseHistory, purchaseHistoryLoading } = useAppData()
   return { entries: purchaseHistory, loading: purchaseHistoryLoading }
+}
+
+export function useDataError() {
+  return useAppData().dataError
 }

@@ -1,9 +1,15 @@
 import { initializeApp, deleteApp } from 'firebase/app'
 import { connectAuthEmulator, createUserWithEmailAndPassword, getAuth, signOut } from 'firebase/auth'
-import { connectFirestoreEmulator, getFirestore } from 'firebase/firestore'
+import {
+  connectFirestoreEmulator,
+  initializeFirestore,
+  persistentLocalCache,
+  persistentMultipleTabManager,
+} from 'firebase/firestore'
 
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  // sin configuración, getAuth() lanzaría al cargar: un valor de relleno deja que App muestre el aviso
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || 'sin-configurar',
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
   storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
@@ -16,7 +22,11 @@ export const isFirebaseConfigured = Boolean(firebaseConfig.apiKey && firebaseCon
 const app = initializeApp(firebaseConfig)
 
 export const auth = getAuth(app)
-export const db = getFirestore(app)
+// Caché local persistente: la app abre al instante y sigue mostrando datos sin cobertura
+// (en el súper), y las aperturas siguientes solo descargan los cambios, no todo de nuevo.
+export const db = initializeFirestore(app, {
+  localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
+})
 
 // Desarrollo local sin tocar datos reales: `npm run emulators` + VITE_USE_EMULATORS=true
 if (import.meta.env.VITE_USE_EMULATORS === 'true') {

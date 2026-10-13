@@ -90,6 +90,8 @@ El asistente (`scripts/setup.mjs`) hace todo esto, pidiéndote solo lo imprescin
 
 Al terminar, abre tu URL. Mientras no exista ningún usuario, la pantalla de login muestra **Crear usuario**: el primero que se crea es el **administrador**.
 
+> ⚠️ **Crea tu usuario nada más desplegar.** Hasta que exista el primero, cualquiera que conozca la URL podría registrarse como administrador. Con el primer usuario creado, esa puerta se cierra para siempre.
+
 > Si crear la base de datos falla, el asistente te da el enlace exacto de la consola y espera a que lo hagas.
 
 ---
@@ -116,7 +118,7 @@ Si prefieres no usar el asistente:
    npx firebase login
    npm run deploy                     # compila y sube reglas + web
    ```
-7. Abre `https://<id>.web.app` y crea el primer usuario (administrador).
+7. Abre `https://<id>.web.app` y crea **enseguida** el primer usuario (administrador): hasta entonces cualquiera con la URL podría hacerlo.
 
 ---
 
@@ -149,6 +151,7 @@ Si prefieres no usar el asistente:
 ## Mantenimiento
 
 - **Actualizar** tras cambiar el código: `npm run deploy`. Solo las reglas: `npm run deploy:rules`.
+- **Sin conexión**: la app guarda una copia local de los datos y se abre con ellos aunque no haya cobertura; los cambios se sincronizan al volver la conexión.
 - **PWA**: tras un despliegue, la app instalada puede mostrar la versión anterior hasta cerrarla y abrirla una o dos veces (o recarga forzada `Ctrl+Shift+R` en el navegador).
 - **Dominio propio**: Firebase Console → Hosting → *Add custom domain*.
 - **Copia de seguridad**: el administrador puede descargar un JSON con todos los datos desde **Usuarios → Exportar copia**. Hazlo de vez en cuando.
