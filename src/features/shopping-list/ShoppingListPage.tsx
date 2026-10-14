@@ -246,7 +246,11 @@ export default function ShoppingListPage() {
                           <span className="text-gray-900 dark:text-gray-100">{ingredient.name}</span>
                           <button
                             type="button"
-                            onClick={() => addToShoppingList(ingredient.id)}
+                            onClick={() => {
+                              addToShoppingList(ingredient.id)
+                              // tras añadir, la búsqueda se reinicia y vuelve a verse todo lo que falta
+                              setMissingSearch('')
+                            }}
                             className="shrink-0 rounded-md border border-emerald-300 bg-emerald-50 px-3 py-1 text-sm text-emerald-800 hover:bg-emerald-100 max-md:py-2"
                           >
                             Añadir a la lista

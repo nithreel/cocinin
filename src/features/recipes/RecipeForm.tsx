@@ -49,6 +49,8 @@ export default function RecipeForm({
   const [search, setSearch] = useState('')
 
   function toggleIngredient(id: string) {
+    // al elegir un ingrediente, la búsqueda se reinicia y vuelve a verse toda la lista
+    if (!(id in selected)) setSearch('')
     setSelected((prev) => {
       const next = { ...prev }
       if (id in next) {

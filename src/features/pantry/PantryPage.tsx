@@ -251,7 +251,7 @@ function IngredientRow({
     <li
       ref={rowRef}
       className={
-        'scroll-mb-20 border-l-4 py-2 pl-3 pr-3 transition-colors duration-700 ' +
+        'scroll-mb-20 scroll-mt-28 border-l-4 py-2 pl-3 pr-3 transition-colors duration-700 ' +
         barColor(ingredient) +
         (highlight ? ' bg-emerald-50 dark:bg-emerald-950' : '')
       }
@@ -715,7 +715,9 @@ export default function PantryPage() {
 
   return (
     <div>
-      <div className="mb-4 flex items-center justify-between">
+      {/* Cabecera fija: añadir grupo o ingrediente sin volver arriba. Los formularios se abren dentro de ella. */}
+      <div className="sticky top-0 z-20 -mt-4 max-h-[calc(100dvh-5rem)] overflow-y-auto bg-white pt-4 md:-mt-8 md:pt-8 dark:bg-moss-950">
+      <div className="mb-3 flex items-center justify-between">
         <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Despensa</h2>
         <div className="flex gap-2">
           <button
@@ -739,6 +741,7 @@ export default function PantryPage() {
       {showAddIngredient && (
         <AddIngredientForm groups={groups} onDone={handleIngredientAdded} />
       )}
+      </div>
 
       {(ingredients.length > 0 || search) && (
         <SearchInput value={search} onChange={setSearch} />
