@@ -65,3 +65,21 @@ export function XIcon() {
     </svg>
   )
 }
+
+export function SnowflakeIcon({ className = 'h-5 w-5' }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M12 3v18M4.2 7.5l15.6 9M19.8 7.5L4.2 16.5" />
+      <path d="M9.6 4.6 12 6.8l2.4-2.2M9.6 19.4 12 17.2l2.4 2.2M5.3 10.2l3 .6-.8 2.9M18.7 13.8l-3-.6.8-2.9M5.3 13.8l3-.6-.8-2.9M18.7 10.2l-3 .6.8 2.9" />
+    </svg>
+  )
+}

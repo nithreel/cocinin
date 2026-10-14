@@ -29,6 +29,12 @@ describe('getExpiryInfo', () => {
   it('sin caducidad no muestra nada', () => {
     expect(getExpiryInfo(ingredient({ expiryMode: 'none' }))).toBeNull()
   })
+  it('congelado: se muestra «Congelado» y no se avisa de caducidad', () => {
+    expect(getExpiryInfo(ingredient({ frozen: true, expiryMode: 'date', expiryDate: '2026-10-12' }))).toEqual({ label: 'Congelado', status: 'frozen' })
+  })
+  it('agotado no puede mostrarse congelado', () => {
+    expect(getExpiryInfo(ingredient({ inPantry: false, frozen: true }))).toBeNull()
+  })
   it('caducado', () => {
     expect(getExpiryInfo(ingredient({ expiryMode: 'date', expiryDate: '2026-10-12' }))).toEqual({ label: 'Caducado', status: 'expired' })
   })

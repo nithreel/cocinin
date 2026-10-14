@@ -4,6 +4,7 @@ import {
   addIngredient,
   deleteGroup,
   deleteIngredient,
+  setIngredientFrozen,
   setIngredientInPantry,
   updateGroup,
   updateIngredient,
@@ -15,12 +16,19 @@ import {
 } from './data'
 import type { ExpiryMode, Group, Ingredient } from '../../lib/collections'
 import { ConfirmDelete } from '../../components/DeleteButton'
+import { SnowflakeIcon } from '../../components/icons'
 import SearchInput from '../../components/SearchInput'
 import { cancelButton, dangerTextButton, primaryButton } from '../../components/buttonStyles'
 import { matchesSearch } from '../../lib/search'
 import KebabMenu from '../../components/KebabMenu'
 import { expiryBadgeClasses, getExpiryInfo } from '../../lib/expiry'
 import { NO_GROUP } from '../../lib/groupByPantryGroup'
+
+/** Color de la barra lateral: verde disponible, azul congelado, rojo agotado. */
+function barColor(ingredient: Ingredient) {
+  if (!ingredient.inPantry) return 'border-l-red-400'
+  return ingredient.frozen ? 'border-l-frost-400' : 'border-l-emerald-500'
+}
 
 function ExpiryFields({
   mode,
@@ -133,6 +141,15 @@ function IngredientRow({
     }
   }
 
+  async function toggleFrozen() {
+    setBusy(true)
+    try {
+      await setIngredientFrozen(ingredient.id, !ingredient.frozen, ingredient.inPantry)
+    } finally {
+      setBusy(false)
+    }
+  }
+
   async function toggle() {
     setBusy(true)
     try {
@@ -177,8 +194,7 @@ function IngredientRow({
     return (
       <li
         className={
-          'border-l-4 py-2 pl-3 pr-1 ' +
-          (ingredient.inPantry ? 'border-l-emerald-500' : 'border-l-red-400')
+          'border-l-4 py-2 pl-3 pr-1 ' + barColor(ingredient)
         }
       >
         <form onSubmit={handleSave} className="flex flex-col gap-2">
@@ -233,7 +249,7 @@ function IngredientRow({
       ref={rowRef}
       className={
         'scroll-mb-20 border-l-4 py-2 pl-3 pr-3 transition-colors duration-700 ' +
-        (ingredient.inPantry ? 'border-l-emerald-500' : 'border-l-red-400') +
+        barColor(ingredient) +
         (highlight ? ' bg-emerald-50 dark:bg-emerald-950' : '')
       }
     >
@@ -258,29 +274,51 @@ function IngredientRow({
             <span className={'text-xs ' + expiryBadgeClasses(expiryInfo.status)}>{expiryInfo.label}</span>
           )}
         </div>
-        <button
-          type="button"
-          role="switch"
-          aria-checked={ingredient.inPantry}
-          aria-label={
-            ingredient.inPantry
-              ? `${ingredient.name}: disponible, pulsa para marcar como agotado`
-              : `${ingredient.name}: agotado, pulsa para marcar como disponible`
-          }
-          onClick={toggle}
-          disabled={busy}
-          className={
-            'relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors disabled:opacity-50 max-md:after:absolute max-md:after:-inset-2.5 max-md:after:content-[\'\'] ' +
-            (ingredient.inPantry ? 'bg-emerald-500' : 'bg-gray-300')
-          }
-        >
-          <span
-            className={
-              'inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ' +
-              (ingredient.inPantry ? 'translate-x-6' : 'translate-x-1')
+        <div className="flex shrink-0 items-center gap-2">
+          <button
+            type="button"
+            aria-pressed={!!ingredient.frozen}
+            aria-label={
+              ingredient.frozen
+                ? `${ingredient.name}: en el congelador, pulsa para sacarlo`
+                : `${ingredient.name}: pulsa para marcarlo como congelado`
             }
-          />
-        </button>
+            title={ingredient.frozen ? 'En el congelador' : 'Marcar como congelado'}
+            onClick={toggleFrozen}
+            disabled={busy}
+            className={
+              'relative flex h-7 w-7 items-center justify-center rounded-full transition-colors disabled:opacity-50 max-md:after:absolute max-md:after:-inset-2 max-md:after:content-[\'\'] ' +
+              (ingredient.frozen
+                ? 'bg-frost-100 text-frost-700 dark:bg-frost-950 dark:text-frost-400'
+                : 'text-gray-400 hover:bg-gray-100 hover:text-frost-700 dark:text-gray-500 dark:hover:bg-moss-800 dark:hover:text-frost-400')
+            }
+          >
+            <SnowflakeIcon />
+          </button>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={ingredient.inPantry}
+            aria-label={
+              ingredient.inPantry
+                ? `${ingredient.name}: ${ingredient.frozen ? 'congelado' : 'disponible'}, pulsa para marcar como agotado`
+                : `${ingredient.name}: agotado, pulsa para marcar como disponible`
+            }
+            onClick={toggle}
+            disabled={busy}
+            className={
+              'relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors disabled:opacity-50 max-md:after:absolute max-md:after:-inset-2.5 max-md:after:content-[\'\'] ' +
+              (ingredient.inPantry ? (ingredient.frozen ? 'bg-frost-400' : 'bg-emerald-500') : 'bg-gray-300')
+            }
+          >
+            <span
+              className={
+                'inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ' +
+                (ingredient.inPantry ? 'translate-x-6' : 'translate-x-1')
+              }
+            />
+          </button>
+        </div>
       </div>
 
       {panelOpen && (

@@ -6,7 +6,7 @@ export function localDateString(date: Date = new Date()) {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
 }
 
-export type ExpiryStatus = 'ok' | 'soon' | 'expired'
+export type ExpiryStatus = 'ok' | 'soon' | 'expired' | 'frozen'
 
 export interface ExpiryInfo {
   label: string
@@ -15,6 +15,8 @@ export interface ExpiryInfo {
 
 export function getExpiryInfo(ingredient: Ingredient): ExpiryInfo | null {
   if (!ingredient.inPantry) return null
+  // congelado: las fechas se conservan, pero no se avisa de caducidad mientras esté en el congelador
+  if (ingredient.frozen) return { label: 'Congelado', status: 'frozen' }
 
   if (ingredient.expiryMode === 'date' && ingredient.expiryDate) {
     const today = new Date()
@@ -49,6 +51,8 @@ export function expiryBadgeClasses(status: ExpiryStatus) {
       return 'text-red-600 dark:text-red-400 font-medium'
     case 'soon':
       return 'text-amber-600 dark:text-amber-400 font-medium'
+    case 'frozen':
+      return 'text-frost-700 dark:text-frost-400 font-medium'
     default:
       return 'text-gray-500 dark:text-gray-400'
   }

@@ -17,7 +17,7 @@
 
 CocinIN responde a tres preguntas del día a día: **¿qué tenemos en casa?**, **¿qué hay que comprar?** y **¿qué podemos cocinar?** Todo se sincroniza al instante entre las personas de la casa: si alguien tacha algo en el súper, los demás lo ven en su móvil.
 
-- 🥫 **Despensa**: ingredientes por grupos con un interruptor *disponible / agotado*, y fecha de compra o de caducidad (con avisos de «caduca en 2 días»).
+- 🥫 **Despensa**: ingredientes por grupos con un interruptor *disponible / agotado*, un copo de nieve para marcarlos como *congelados*, y fecha de compra o de caducidad (con avisos de «caduca en 2 días»).
 - 🛒 **Lista de la compra**: lo que te falta, con buscador. Al confirmar la compra, lo comprado vuelve a la despensa y se anota en el historial.
 - 📖 **Recetario**: recetas con ingredientes (obligatorios u opcionales) y preparación. Cada receta se marca según tengas o no lo necesario.
 - 👥 **Usuarios**: un administrador da de alta a los demás. Cada casa tiene su propia instalación y sus datos son privados.
@@ -128,6 +128,7 @@ Si prefieres no usar el asistente:
 | --- | --- |
 | Añadir ingrediente | Despensa → «+ Ingrediente». Nace disponible (ON) y la lista te lleva hasta él. |
 | Marcar agotado/disponible | Interruptor a la derecha del ingrediente. |
+| Marcar como congelado | Copo de nieve junto al interruptor: la barra y el interruptor se ponen azules. Un ingrediente congelado cuenta como disponible. |
 | Fecha de compra o caducidad, editar o eliminar un ingrediente | Toca el ingrediente: se abre un panel con las fechas (si está en ON) y los botones **Editar** y **Eliminar**. |
 | Comprar | Lista → «Añadir a la lista» en lo que falta (con buscador) → marca lo comprado → «Confirmar compra». |
 | Receta nueva | Recetario → «+ Receta»; hay buscador de ingredientes. |

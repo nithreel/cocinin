@@ -58,7 +58,16 @@ export async function updateIngredient(
 export async function setIngredientInPantry(id: string, inPantry: boolean) {
   await updateDoc(
     doc(ingredientsCol, id),
-    inPantry ? { inPantry, stockedDate: localDateString() } : { inPantry },
+    // al agotarse deja de estar congelado
+    inPantry ? { inPantry, stockedDate: localDateString() } : { inPantry, frozen: false },
+  )
+}
+
+/** Marca o desmarca un ingrediente como congelado. Congelar implica que lo tienes (ON). */
+export async function setIngredientFrozen(id: string, frozen: boolean, wasInPantry: boolean) {
+  await updateDoc(
+    doc(ingredientsCol, id),
+    frozen && !wasInPantry ? { frozen, inPantry: true, stockedDate: localDateString() } : { frozen },
   )
 }
 

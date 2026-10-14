@@ -8,6 +8,12 @@
   --font-sans: 'Poppins', ui-sans-serif, system-ui, sans-serif;
 
   /* Greenish dark-mode neutrals (used instead of Tailwind's blue-gray "gray" scale in dark: variants) */
+  /* Azul congelado: 400 para toggle y barra, 700 para texto legible sobre blanco */
+  --color-frost-100: #e4f3fa;
+  --color-frost-400: #7ac3e6;
+  --color-frost-700: #27789c;
+  --color-frost-950: #0c2633;
+
   --color-moss-600: #3c5b4e;
   --color-moss-700: #2c463c;
   --color-moss-800: #1e332c;

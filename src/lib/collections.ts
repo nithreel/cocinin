@@ -15,6 +15,8 @@ export interface Ingredient {
   name: string
   groupId: string | null
   inPantry: boolean
+  /** en el congelador: implica que está disponible (inPantry) */
+  frozen?: boolean
   createdAt: number
   expiryMode?: ExpiryMode
   expiryDate?: string | null
