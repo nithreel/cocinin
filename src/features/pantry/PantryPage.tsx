@@ -69,10 +69,13 @@ function IngredientRow({
   groups,
   highlight,
   usedIn,
+  canFreeze,
 }: {
   ingredient: Ingredient
   groups: Group[]
   highlight: boolean
+  /** los grupos que no son comida (limpieza, baño…) no ofrecen congelar */
+  canFreeze: boolean
   /** títulos de las recetas que usan este ingrediente (para avisar antes de borrarlo) */
   usedIn: string[]
 }) {
@@ -275,26 +278,28 @@ function IngredientRow({
           )}
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          <button
-            type="button"
-            aria-pressed={!!ingredient.frozen}
-            aria-label={
-              ingredient.frozen
-                ? `${ingredient.name}: en el congelador, pulsa para sacarlo`
-                : `${ingredient.name}: pulsa para marcarlo como congelado`
-            }
-            title={ingredient.frozen ? 'En el congelador' : 'Marcar como congelado'}
-            onClick={toggleFrozen}
-            disabled={busy}
-            className={
-              'relative flex h-7 w-7 items-center justify-center rounded-full transition-colors disabled:opacity-50 max-md:after:absolute max-md:after:-inset-2 max-md:after:content-[\'\'] ' +
-              (ingredient.frozen
-                ? 'bg-frost-100 text-frost-700 dark:bg-frost-950 dark:text-frost-400'
-                : 'text-gray-400 hover:bg-gray-100 hover:text-frost-700 dark:text-gray-500 dark:hover:bg-moss-800 dark:hover:text-frost-400')
-            }
-          >
-            <SnowflakeIcon />
-          </button>
+          {(canFreeze || ingredient.frozen) && (
+            <button
+              type="button"
+              aria-pressed={!!ingredient.frozen}
+              aria-label={
+                ingredient.frozen
+                  ? `${ingredient.name}: en el congelador, pulsa para sacarlo`
+                  : `${ingredient.name}: pulsa para marcarlo como congelado`
+              }
+              title={ingredient.frozen ? 'En el congelador' : 'Marcar como congelado'}
+              onClick={toggleFrozen}
+              disabled={busy}
+              className={
+                'relative flex h-7 w-7 items-center justify-center rounded-full transition-colors disabled:opacity-50 max-md:after:absolute max-md:after:-inset-2 max-md:after:content-[\'\'] ' +
+                (ingredient.frozen
+                  ? 'bg-frost-100 text-frost-700 dark:bg-frost-950 dark:text-frost-400'
+                  : 'text-gray-400 hover:bg-gray-100 hover:text-frost-700 dark:text-gray-500 dark:hover:bg-moss-800 dark:hover:text-frost-400')
+              }
+            >
+              <SnowflakeIcon />
+            </button>
+          )}
           <button
             type="button"
             role="switch"
@@ -388,14 +393,19 @@ function IsFoodCheckbox({
   onChange: (checked: boolean) => void
 }) {
   return (
-    <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+    <label className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
       <input
         type="checkbox"
         checked={checked}
         onChange={(e) => onChange(e.target.checked)}
-        className="h-4 w-4 rounded border-gray-300 text-emerald-700 focus:ring-emerald-500 dark:border-moss-600 dark:bg-moss-800"
+        className="mt-0.5 h-4 w-4 shrink-0 rounded border-gray-300 text-emerald-700 focus:ring-emerald-500 dark:border-moss-600 dark:bg-moss-800"
       />
-      Mostrar en recetas
+      <span>
+        Es comida
+        <span className="block text-xs text-gray-500 dark:text-gray-400">
+          Sus ingredientes salen en las recetas y se pueden congelar.
+        </span>
+      </span>
     </label>
   )
 }
@@ -770,6 +780,7 @@ export default function PantryPage() {
                         groups={groups}
                         highlight={ing.id === highlightId}
                         usedIn={recipesByIngredient.get(ing.id) ?? []}
+                        canFreeze={section.isFood}
                       />
                     ))}
                   </ul>

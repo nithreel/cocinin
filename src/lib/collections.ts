@@ -5,6 +5,7 @@ export interface Group {
   id: string
   name: string
   createdAt: number
+  /** grupo de comida: sus ingredientes salen en las recetas y se pueden congelar (por defecto sí) */
   isFood?: boolean
 }
 
