@@ -49,8 +49,8 @@ export default function RecipeForm({
   const [search, setSearch] = useState('')
 
   function toggleIngredient(id: string) {
-    // al elegir un ingrediente, la búsqueda se reinicia y vuelve a verse toda la lista
-    if (!(id in selected)) setSearch('')
+    // al pulsar un ingrediente, la búsqueda se reinicia y vuelve a verse toda la lista
+    setSearch('')
     setSelected((prev) => {
       const next = { ...prev }
       if (id in next) {
@@ -79,11 +79,11 @@ export default function RecipeForm({
     [ingredients, foodGroupIds, selected],
   )
   const ingredientsById = useMemo(() => new Map(ingredients.map((i) => [i.id, i])), [ingredients])
-  // los ya marcados siguen visibles aunque no coincidan con la búsqueda
+  // con búsqueda solo salen los que coinciden, estén marcados o no
   const visibleIngredients = useMemo(() => {
     if (!search.trim()) return availableIngredients
-    return availableIngredients.filter((i) => matchesSearch(i.name, search) || i.id in selected)
-  }, [availableIngredients, search, selected])
+    return availableIngredients.filter((i) => matchesSearch(i.name, search))
+  }, [availableIngredients, search])
   const sections = useMemo(
     () => groupByPantryGroup(visibleIngredients, (i) => i.id, ingredientsById, groups),
     [visibleIngredients, ingredientsById, groups],
@@ -124,7 +124,11 @@ export default function RecipeForm({
       />
 
       <p className="mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">Ingredientes</p>
-      {availableIngredients.length > 0 && <SearchInput value={search} onChange={setSearch} className="mb-3" />}
+      {availableIngredients.length > 0 && (
+        <div className="sticky -top-4 z-10 -mx-4 bg-white px-4 pb-3 pt-2 md:-top-8 dark:bg-moss-900">
+          <SearchInput value={search} onChange={setSearch} className="" />
+        </div>
+      )}
       {availableIngredients.length === 0 && (
         <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">Añade ingredientes de comida en la Despensa primero.</p>
       )}
@@ -198,7 +202,8 @@ export default function RecipeForm({
         className="mb-4 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-moss-700 dark:bg-moss-800 dark:text-gray-100"
       />
 
-      <div className="flex gap-2">
+      {/* Pie fijo: Guardar y Cancelar siguen a la vista en formularios largos */}
+      <div className="sticky -bottom-4 z-10 -mx-4 -mb-4 flex gap-2 rounded-b-lg border-t border-gray-100 bg-white px-4 py-3 md:-bottom-8 dark:border-moss-800 dark:bg-moss-900">
         <button
           type="submit"
           disabled={submitting}

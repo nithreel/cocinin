@@ -201,15 +201,18 @@ export default function ShoppingListPage() {
                 )
               })}
             </div>
-            <button
-              type="button"
-              onClick={handleConfirmPurchase}
-              disabled={confirming || !hasChecked}
-              title={hasChecked ? undefined : 'Tacha al menos un artículo para confirmar la compra'}
-              className="w-full rounded-md bg-emerald-700 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-800 disabled:opacity-50 sm:w-auto"
-            >
-              {confirming ? 'Confirmando…' : 'Confirmar compra'}
-            </button>
+            {/* Pie fijo: el botón de confirmar sigue a la vista con la lista larga */}
+            <div className="sticky -bottom-4 z-10 bg-white py-2 md:-bottom-8 dark:bg-moss-950">
+              <button
+                type="button"
+                onClick={handleConfirmPurchase}
+                disabled={confirming || !hasChecked}
+                title={hasChecked ? undefined : 'Tacha al menos un artículo para confirmar la compra'}
+                className="w-full rounded-md bg-emerald-700 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-800 disabled:opacity-50 sm:w-auto"
+              >
+                {confirming ? 'Confirmando…' : 'Confirmar compra'}
+              </button>
+            </div>
           </>
         )}
       </div>
@@ -217,7 +220,11 @@ export default function ShoppingListPage() {
       <div>
         <h3 className="mb-3 text-lg font-semibold text-gray-900 dark:text-gray-100">Te falta</h3>
 
-        {missingAll.length > 0 && <SearchInput value={missingSearch} onChange={setMissingSearch} className="mb-3" />}
+        {missingAll.length > 0 && (
+          <div className="sticky -top-4 z-10 bg-white pb-3 pt-2 md:-top-8 dark:bg-moss-950">
+            <SearchInput value={missingSearch} onChange={setMissingSearch} className="" />
+          </div>
+        )}
 
         {!loading && missingAll.length === 0 && (
           <p className="text-gray-500 dark:text-gray-400">No te falta nada por ahora.</p>

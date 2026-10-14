@@ -45,7 +45,7 @@ function RecipeCard({
   return (
     <article
       className={
-        'overflow-hidden rounded-lg border-y border-r border-t-gray-200 border-r-gray-200 border-b-gray-200 border-l-4 bg-white dark:border-t-moss-800 dark:border-r-moss-800 dark:border-b-moss-800 dark:bg-moss-900 ' +
+        'overflow-clip rounded-lg border-y border-r border-t-gray-200 border-r-gray-200 border-b-gray-200 border-l-4 bg-white dark:border-t-moss-800 dark:border-r-moss-800 dark:border-b-moss-800 dark:bg-moss-900 ' +
         statusBorderClasses[status]
       }
     >
@@ -61,7 +61,7 @@ function RecipeCard({
       </button>
 
       {open && (
-        <div className="border-t border-gray-100 px-4 pb-4 pt-3 dark:border-moss-800">
+        <div className={`border-t border-gray-100 px-4 pt-3 dark:border-moss-800 ${editing ? 'pb-4' : 'pb-0'}`}>
           {editing ? (
             <RecipeForm
               ingredients={ingredients}
@@ -115,7 +115,8 @@ function RecipeCard({
                 </div>
               )}
 
-              <div className="mt-3 flex items-center justify-end gap-1">
+              {/* Pie fijo: Editar y Eliminar siguen a la vista aunque la receta sea larga */}
+              <div className="sticky -bottom-4 z-10 -mx-4 mt-3 flex items-center justify-end gap-1 border-t border-gray-100 bg-white px-4 py-2 md:-bottom-8 dark:border-moss-800 dark:bg-moss-900">
                 <button type="button" onClick={() => setEditing(true)} className={cancelButton}>
                   Editar
                 </button>

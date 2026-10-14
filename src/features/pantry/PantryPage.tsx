@@ -713,38 +713,43 @@ export default function PantryPage() {
 
   const loading = loadingGroups || loadingIngredients
 
+  // Los formularios se abren arriba del todo: si se pulsa con la página desplazada, se vuelve a la cima para verlos.
+  function openForm(toggle: (fn: (v: boolean) => boolean) => void) {
+    toggle((v) => !v)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
   return (
     <div>
-      {/* Cabecera fija: añadir grupo o ingrediente sin volver arriba. Los formularios se abren dentro de ella. */}
-      <div className="sticky top-0 z-20 -mt-4 max-h-[calc(100dvh-5rem)] overflow-y-auto bg-white pt-4 md:-mt-8 md:pt-8 dark:bg-moss-950">
-      <div className="mb-3 flex items-center justify-between">
+      {/* Cabecera fija (título, botones y buscador); los formularios se abren debajo, en el flujo normal. */}
+      <div className="sticky -top-4 z-20 -mt-4 bg-white pb-3 pt-4 md:-top-8 md:-mt-8 md:pt-8 dark:bg-moss-950">
+      <div className="flex items-center justify-between">
         <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Despensa</h2>
         <div className="flex gap-2">
           <button
             type="button"
-            onClick={() => setShowAddGroup((v) => !v)}
+            onClick={() => openForm(setShowAddGroup)}
             className="rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50 dark:border-moss-700 dark:text-gray-300 dark:hover:bg-moss-800"
           >
             + Grupo
           </button>
           <button
             type="button"
-            onClick={() => setShowAddIngredient((v) => !v)}
+            onClick={() => openForm(setShowAddIngredient)}
             className="rounded-md bg-emerald-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-800"
           >
             + Ingrediente
           </button>
         </div>
       </div>
+      {(ingredients.length > 0 || search) && (
+        <SearchInput value={search} onChange={setSearch} className="mt-3" />
+      )}
+      </div>
 
       {showAddGroup && <AddGroupForm onDone={() => setShowAddGroup(false)} />}
       {showAddIngredient && (
         <AddIngredientForm groups={groups} onDone={handleIngredientAdded} />
-      )}
-      </div>
-
-      {(ingredients.length > 0 || search) && (
-        <SearchInput value={search} onChange={setSearch} />
       )}
 
       {loading && <p className="text-gray-500 dark:text-gray-400">Cargando…</p>}
