@@ -8,6 +8,8 @@ export { useGroups, useIngredients, useRecipes } from '../../lib/AppDataContext'
 export interface ExpiryInput {
   mode: ExpiryMode
   date: string | null
+  /** cantidad que queda, texto libre; vacío = sin dato */
+  quantity: string
 }
 
 export async function addGroup(name: string, isFood: boolean) {
@@ -28,6 +30,7 @@ export async function addIngredient(name: string, groupId: string | null, expiry
     expiryMode: expiry.mode,
     expiryDate: expiry.mode === 'date' ? expiry.date : null,
     stockedDate: expiry.mode === 'sinceStocked' && expiry.date ? expiry.date : localDateString(),
+    quantity: expiry.quantity.trim() || null,
   })
   return ref.id
 }
@@ -37,6 +40,7 @@ export async function updateIngredientExpiry(id: string, expiry: ExpiryInput) {
     expiryMode: expiry.mode,
     expiryDate: expiry.mode === 'date' ? expiry.date : null,
     stockedDate: expiry.mode === 'sinceStocked' ? expiry.date : null,
+    quantity: expiry.quantity.trim() || null,
   })
 }
 
@@ -52,6 +56,7 @@ export async function updateIngredient(
     expiryMode: expiry.mode,
     expiryDate: expiry.mode === 'date' ? expiry.date : null,
     stockedDate: expiry.mode === 'sinceStocked' ? expiry.date : null,
+    quantity: expiry.quantity.trim() || null,
   })
 }
 
@@ -59,7 +64,7 @@ export async function setIngredientInPantry(id: string, inPantry: boolean) {
   await updateDoc(
     doc(ingredientsCol, id),
     // al agotarse deja de estar congelado
-    inPantry ? { inPantry, stockedDate: localDateString() } : { inPantry, frozen: false },
+    inPantry ? { inPantry, stockedDate: localDateString() } : { inPantry, frozen: false, quantity: null },
   )
 }
 

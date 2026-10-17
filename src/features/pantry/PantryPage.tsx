@@ -21,7 +21,7 @@ import SearchInput from '../../components/SearchInput'
 import { cancelButton, dangerTextButton, primaryButton } from '../../components/buttonStyles'
 import { matchesSearch } from '../../lib/search'
 import KebabMenu from '../../components/KebabMenu'
-import { expiryBadgeClasses, getExpiryInfo } from '../../lib/expiry'
+import { expiryBadgeClasses, getExpiryInfo, remainingLabel } from '../../lib/expiry'
 import { NO_GROUP } from '../../lib/groupByPantryGroup'
 
 /** Color de la barra lateral: verde disponible, azul congelado, rojo agotado. */
@@ -33,13 +33,17 @@ function barColor(ingredient: Ingredient) {
 function ExpiryFields({
   mode,
   date,
+  quantity,
   onModeChange,
   onDateChange,
+  onQuantityChange,
 }: {
   mode: ExpiryMode
   date: string
+  quantity: string
   onModeChange: (mode: ExpiryMode) => void
   onDateChange: (date: string) => void
+  onQuantityChange: (quantity: string) => void
 }) {
   return (
     <>
@@ -60,6 +64,14 @@ function ExpiryFields({
           className="rounded-md border border-gray-300 px-2 py-1 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-moss-700 dark:bg-moss-800 dark:text-gray-100"
         />
       )}
+      <input
+        value={quantity}
+        onChange={(e) => onQuantityChange(e.target.value)}
+        placeholder="Cantidad (ej. 500 g)"
+        maxLength={40}
+        aria-label="Cantidad que tienes"
+        className="w-40 rounded-md border border-gray-300 px-2 py-1 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-moss-700 dark:bg-moss-800 dark:text-gray-100"
+      />
     </>
   )
 }
@@ -89,6 +101,7 @@ function IngredientRow({
   const [groupId, setGroupId] = useState(ingredient.groupId ?? NO_GROUP)
   const [expiryMode, setExpiryMode] = useState<ExpiryMode>(ingredient.expiryMode ?? 'none')
   const [expiryDate, setExpiryDate] = useState(ingredient.expiryDate ?? ingredient.stockedDate ?? '')
+  const [quantity, setQuantity] = useState(ingredient.quantity ?? '')
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
@@ -124,6 +137,7 @@ function IngredientRow({
     }
     setExpiryMode(ingredient.expiryMode ?? 'none')
     setExpiryDate(ingredient.expiryDate ?? ingredient.stockedDate ?? '')
+    setQuantity(ingredient.quantity ?? '')
     setPanelOpen(true)
   }
 
@@ -137,7 +151,7 @@ function IngredientRow({
     if (!ingredient.inPantry) return
     setSaving(true)
     try {
-      await updateIngredientExpiry(ingredient.id, { mode: expiryMode, date: expiryDate || null })
+      await updateIngredientExpiry(ingredient.id, { mode: expiryMode, date: expiryDate || null, quantity })
       closePanel()
     } finally {
       setSaving(false)
@@ -176,6 +190,7 @@ function IngredientRow({
     setGroupId(ingredient.groupId ?? NO_GROUP)
     setExpiryMode(ingredient.expiryMode ?? 'none')
     setExpiryDate(ingredient.expiryDate ?? ingredient.stockedDate ?? '')
+    setQuantity(ingredient.quantity ?? '')
     closePanel()
     setEditing(true)
   }
@@ -185,7 +200,7 @@ function IngredientRow({
     if (!name.trim()) return
     setSaving(true)
     try {
-      const expiry: ExpiryInput = { mode: expiryMode, date: expiryDate || null }
+      const expiry: ExpiryInput = { mode: expiryMode, date: expiryDate || null, quantity }
       await updateIngredient(ingredient.id, name.trim(), groupId === NO_GROUP ? null : groupId, expiry)
       setEditing(false)
     } finally {
@@ -222,7 +237,7 @@ function IngredientRow({
             </select>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <ExpiryFields mode={expiryMode} date={expiryDate} onModeChange={setExpiryMode} onDateChange={setExpiryDate} />
+            <ExpiryFields mode={expiryMode} date={expiryDate} onModeChange={setExpiryMode} onDateChange={setExpiryDate} quantity={quantity} onQuantityChange={setQuantity} />
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -273,8 +288,14 @@ function IngredientRow({
           <span className={ingredient.inPantry ? 'text-gray-900 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400'}>
             {ingredient.name}
           </span>
-          {expiryInfo && (
-            <span className={'text-xs ' + expiryBadgeClasses(expiryInfo.status)}>{expiryInfo.label}</span>
+          {(expiryInfo || ingredient.quantity) && (
+            <span className="text-xs">
+              {ingredient.quantity && (
+                <span className="text-gray-500 dark:text-gray-400">{remainingLabel(ingredient.quantity)} {ingredient.quantity}</span>
+              )}
+              {expiryInfo && ingredient.quantity && <span className="text-gray-400"> · </span>}
+              {expiryInfo && <span className={expiryBadgeClasses(expiryInfo.status)}>{expiryInfo.label}</span>}
+            </span>
           )}
         </div>
         <div className="flex shrink-0 items-center gap-2">
@@ -333,7 +354,7 @@ function IngredientRow({
         >
           {ingredient.inPantry && !confirmingDelete && (
             <div className="flex flex-wrap items-center gap-2">
-              <ExpiryFields mode={expiryMode} date={expiryDate} onModeChange={setExpiryMode} onDateChange={setExpiryDate} />
+              <ExpiryFields mode={expiryMode} date={expiryDate} onModeChange={setExpiryMode} onDateChange={setExpiryDate} quantity={quantity} onQuantityChange={setQuantity} />
             </div>
           )}
 
@@ -466,6 +487,7 @@ function AddIngredientForm({
   const [groupId, setGroupId] = useState(NO_GROUP)
   const [expiryMode, setExpiryMode] = useState<ExpiryMode>('none')
   const [expiryDate, setExpiryDate] = useState('')
+  const [quantity, setQuantity] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
   async function handleSubmit(e: FormEvent) {
@@ -473,7 +495,7 @@ function AddIngredientForm({
     if (!name.trim()) return
     setSubmitting(true)
     try {
-      const expiry: ExpiryInput = { mode: expiryMode, date: expiryDate || null }
+      const expiry: ExpiryInput = { mode: expiryMode, date: expiryDate || null, quantity }
       const targetGroup = groupId === NO_GROUP ? null : groupId
       const id = await addIngredient(name.trim(), targetGroup, expiry)
       onDone(id, targetGroup)
@@ -506,7 +528,7 @@ function AddIngredientForm({
         </select>
       </div>
       <div className="flex flex-wrap gap-2">
-        <ExpiryFields mode={expiryMode} date={expiryDate} onModeChange={setExpiryMode} onDateChange={setExpiryDate} />
+        <ExpiryFields mode={expiryMode} date={expiryDate} onModeChange={setExpiryMode} onDateChange={setExpiryDate} quantity={quantity} onQuantityChange={setQuantity} />
       </div>
       <div className="flex items-center gap-2">
         <button
@@ -707,7 +729,10 @@ export default function PantryPage() {
   const visibleSections = useMemo(() => {
     if (!searchActive) return sections
     return sections
-      .map((s) => ({ ...s, items: s.items.filter((i) => matchesSearch(i.name, search)) }))
+      .map((s) =>
+        // si el término coincide con el nombre del grupo, entra el grupo entero
+        matchesSearch(s.name, search) ? s : { ...s, items: s.items.filter((i) => matchesSearch(i.name, search)) },
+      )
       .filter((s) => s.items.length > 0)
   }, [sections, searchActive, search])
 

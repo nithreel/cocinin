@@ -57,3 +57,14 @@ export function expiryBadgeClasses(status: ExpiryStatus) {
       return 'text-gray-500 dark:text-gray-400'
   }
 }
+
+/** «Queda» si la cantidad es una unidad o menos («1 bote», «1/2», «media lata»); «Quedan» en el resto. */
+export function remainingLabel(quantity: string) {
+  const q = quantity.trim().toLowerCase()
+  const m = q.match(/^(\d+(?:[.,]\d+)?)(?:\s*\/\s*(\d+))?(?![\d.,/-])/)
+  if (m) {
+    const n = m[2] ? Number(m[1]) / Number(m[2]) : Number(m[1].replace(',', '.'))
+    return n > 0 && n <= 1 ? 'Queda' : 'Quedan'
+  }
+  return /^(un|una|medio|media)(\s|$)/.test(q) ? 'Queda' : 'Quedan'
+}

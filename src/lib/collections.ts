@@ -22,6 +22,8 @@ export interface Ingredient {
   expiryMode?: ExpiryMode
   expiryDate?: string | null
   stockedDate?: string | null
+  /** cantidad que queda (texto libre, p. ej. «500 g»); vacío por defecto */
+  quantity?: string | null
 }
 
 export interface ShoppingItem {

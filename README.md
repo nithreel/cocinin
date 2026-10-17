@@ -129,7 +129,8 @@ Si prefieres no usar el asistente:
 | Añadir ingrediente | Despensa → «+ Ingrediente». Nace disponible (ON) y la lista te lleva hasta él. |
 | Marcar agotado/disponible | Interruptor a la derecha del ingrediente. |
 | Marcar como congelado | Copo de nieve junto al interruptor: la barra y el interruptor se ponen azules. Un ingrediente congelado cuenta como disponible. |
-| Fecha de compra o caducidad, editar o eliminar un ingrediente | Toca el ingrediente: se abre un panel con las fechas (si está en ON) y los botones **Editar** y **Eliminar**. |
+| Fecha de compra o caducidad, cantidad que queda, editar o eliminar un ingrediente | Toca el ingrediente: se abre un panel con las fechas y la cantidad (si está en ON) y los botones **Editar** y **Eliminar**. La cantidad es texto libre (p. ej. «500 g»), empieza vacía y se borra al marcarlo agotado. |
+| Buscar | El buscador de la Despensa filtra por nombre de ingrediente **o de grupo** («Curry» enseña también todo el grupo Curry). |
 | Comprar | Lista → «Añadir a la lista» en lo que falta (con buscador) → marca lo comprado → «Confirmar compra». |
 | Receta nueva | Recetario → «+ Receta»; hay buscador de ingredientes. |
 | Dar de alta o quitar usuarios, o exportar copia | Menú **Usuarios** (solo administrador). |
@@ -145,6 +146,26 @@ Si prefieres no usar el asistente:
 - «Quitar acceso» bloquea al usuario en la app; su cuenta de Authentication sigue existiendo y puede borrarse en la consola de Firebase.
 - La configuración web de Firebase (`VITE_FIREBASE_*`) **no es secreta**: viaja en el JavaScript público, y la protección real son las reglas de Firestore. Aun así `.env` está fuera del control de versiones; no lo subas.
 - **Un proyecto de Firebase por instalación.** No compartas el mismo proyecto entre casas distintas: se mezclarían los datos. Cada una tiene su propio id y su propia URL.
+
+---
+
+## Actualizar Cocinin a una versión nueva
+
+Cuando haya cambios en este repositorio, tu copia no se actualiza sola. Desde la carpeta `cocinin` (mismos comandos en Windows, macOS y Linux):
+
+```sh
+git pull
+npm install
+npm run deploy
+```
+
+1. `git pull` baja el código nuevo. Tu `.env` y `.firebaserc` no se tocan (no están en el repositorio), así que seguirás conectado a tu proyecto y con tus datos.
+2. `npm install` instala las dependencias nuevas, si las hay.
+3. `npm run deploy` compila y publica la web y las reglas de seguridad en tu Firebase.
+
+Después, la app instalada puede enseñar la versión anterior hasta que la cierres y abras una o dos veces (en el navegador, `Ctrl+Shift+R`). Tus datos no se pierden: los campos nuevos aparecen vacíos y se rellenan cuando quieras.
+
+Si `git pull` se queja de cambios locales, es que has editado archivos del repositorio: guárdalos con `git stash`, haz el `pull` y recupéralos con `git stash pop`. Si has iniciado sesión en otra cuenta o ordenador, repite antes `npx firebase login`.
 
 ---
 

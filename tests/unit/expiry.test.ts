@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { getExpiryInfo, localDateString } from '../../src/lib/expiry'
+import { getExpiryInfo, localDateString, remainingLabel } from '../../src/lib/expiry'
 import type { Ingredient } from '../../src/lib/collections'
 
 function ingredient(over: Partial<Ingredient>): Ingredient {
@@ -51,5 +51,14 @@ describe('getExpiryInfo', () => {
   it('desde la compra', () => {
     expect(getExpiryInfo(ingredient({ expiryMode: 'sinceStocked', stockedDate: '2026-10-13' }))?.label).toBe('Comprado hoy')
     expect(getExpiryInfo(ingredient({ expiryMode: 'sinceStocked', stockedDate: '2026-10-08' }))?.label).toBe('Comprado hace 5 días')
+  })
+})
+
+describe('remainingLabel', () => {
+  it('singular con una unidad o menos', () => {
+    for (const q of ['1', '1 bote', '1/2', '0,5 kg', 'media lata', 'un paquete']) expect(remainingLabel(q)).toBe('Queda')
+  })
+  it('plural en el resto', () => {
+    for (const q of ['2 botes', '500 g', '1,5 l', '1-2 latas', '10']) expect(remainingLabel(q)).toBe('Quedan')
   })
 })
