@@ -57,7 +57,31 @@ for (;;) {
     console.log('Ya tienes ese proyecto: lo reutilizo.')
     break
   }
-  console.log(`No se pudo crear (${created.out.split('\n').find((l) => /Error|already/i.test(l)) ?? 'id ocupado'}). Prueba con otro id.`)
+  // el mensaje de la CLI es genérico: la causa real está en firebase-debug.log
+  let debugLog = ''
+  try {
+    debugLog = readFileSync('firebase-debug.log', 'utf8')
+  } catch {}
+  if (/accept Terms of Service/i.test(created.out + debugLog.split('\n').slice(-40).join('\n'))) {
+    // los términos solo los puede aceptar la persona: abrimos la página y esperamos
+    console.log('Falta aceptar los términos de Google Cloud con esta cuenta (solo se hace una vez).')
+    console.log('Se abre https://console.cloud.google.com : acepta los términos que te salgan y vuelve aquí.')
+    const open = process.platform === 'darwin' ? ['open'] : process.platform === 'win32' ? ['cmd', '/c', 'start', ''] : ['xdg-open']
+    spawnSync(open[0], [...open.slice(1), 'https://console.cloud.google.com/'], { stdio: 'ignore' })
+    await ask('Pulsa Enter cuando los hayas aceptado para reintentarlo')
+    const retry = fb(['projects:create', projectId, '--display-name', 'CocinIN'])
+    if (retry.ok) break
+  }
+  if (/add Firebase to Google Cloud/i.test(created.out)) {
+    // el proyecto de Cloud ya existe; falta aceptar los términos de Firebase para activarlo
+    console.log('El proyecto se creó en Google Cloud, pero falta aceptar los términos de Firebase con esta cuenta.')
+    console.log('Se abre https://console.firebase.google.com : acepta los términos (crear un proyecto de prueba también vale) y vuelve aquí.')
+    const open = process.platform === 'darwin' ? ['open'] : process.platform === 'win32' ? ['cmd', '/c', 'start', ''] : ['xdg-open']
+    spawnSync(open[0], [...open.slice(1), 'https://console.firebase.google.com/'], { stdio: 'ignore' })
+    await ask('Pulsa Enter cuando los hayas aceptado para reintentarlo')
+    if (fb(['projects:addfirebase', projectId]).ok) break
+  }
+  console.log(`No se pudo crear (${created.out.split('\n').find((l) => /Error|already/i.test(l)) ?? 'id ocupado'}). Detalle en firebase-debug.log. Prueba con otro id.`)
 }
 
 writeFileSync('.firebaserc', JSON.stringify({ projects: { default: projectId } }, null, 2) + '\n')
