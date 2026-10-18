@@ -72,8 +72,13 @@ for (;;) {
     const retry = fb(['projects:create', projectId, '--display-name', 'CocinIN'])
     if (retry.ok) break
   }
-  if (/add Firebase to Google Cloud/i.test(created.out)) {
-    // el proyecto de Cloud ya existe; falta aceptar los términos de Firebase para activarlo
+  // el proyecto de Cloud ya existe (quizá de un intento anterior) pero sin Firebase: se lo añadimos
+  if (/already/i.test(created.out) && fb(['projects:addfirebase', projectId]).ok) {
+    console.log('Proyecto de Google Cloud existente: Firebase activado.')
+    break
+  }
+  if (/add Firebase to Google Cloud|already/i.test(created.out)) {
+    // falta aceptar los términos de Firebase para activarlo
     console.log('El proyecto se creó en Google Cloud, pero falta aceptar los términos de Firebase con esta cuenta.')
     console.log('Se abre https://console.firebase.google.com : acepta los términos (crear un proyecto de prueba también vale) y vuelve aquí.')
     const open = process.platform === 'darwin' ? ['open'] : process.platform === 'win32' ? ['cmd', '/c', 'start', ''] : ['xdg-open']
