@@ -1,9 +1,10 @@
 import { useMemo, useState } from 'react'
+import { addIngredient } from '../pantry/data'
 import { addImportedRecipes, undoImport } from './data'
 import { cancelButton, primaryButton } from '../../components/buttonStyles'
 import { XIcon } from '../../components/icons'
 import { parseImport, resolveRecipes } from '../../lib/importRecipes'
-import type { Ingredient, Recipe } from '../../lib/collections'
+import type { Group, Ingredient, Recipe } from '../../lib/collections'
 
 /** Texto que se pega en Claude web junto con la copia de seguridad y la receta. */
 const CLAUDE_PROMPT = `Te paso la copia de seguridad de mi cocina (JSON) y una receta. Devuélveme SOLO un JSON, sin explicaciones, con esta forma:
@@ -16,6 +17,66 @@ Reglas:
 - Si un ingrediente se usa varias veces, suma las cantidades en una sola entrada. "optional": true solo si la receta lo marca como opcional.
 - "instructions": cabecera solo con lo que diga la receta (raciones, horno…; no inventes), línea en blanco, pasos numerados "1. Título corto: texto en infinitivo.", y al final, si hay alternativas reales, una línea "Sustituciones: …". Sin comentarios de relleno, bromas ni primera persona.
 - El agua no es ingrediente.`
+
+/** Crea los ingredientes que faltan, cada uno en el grupo que elija nith (no se crea nada sin elegirlo). */
+function CreateMissing({ names, groups }: { names: string[]; groups: Group[] }) {
+  const [open, setOpen] = useState(false)
+  const [picked, setPicked] = useState<Record<string, string>>({})
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const foodGroups = groups.filter((g) => g.isFood !== false)
+  const ready = names.every((n) => picked[n])
+
+  async function create() {
+    setBusy(true)
+    setError(null)
+    try {
+      // Sin existencias: son cosas que no tienes; así la receta no sale como «completa» por error.
+      for (const n of names) await addIngredient(n, picked[n], { mode: 'none', date: null, quantity: '' }, false)
+    } catch (e) {
+      setError(`No se pudieron crear: ${(e as Error).message}`)
+      setBusy(false)
+    }
+  }
+
+  if (!open) {
+    return (
+      <button type="button" onClick={() => setOpen(true)} className={cancelButton + ' ml-4 mt-1 text-emerald-700 dark:text-emerald-400'}>
+        Crear los que faltan…
+      </button>
+    )
+  }
+  return (
+    <div className="mt-2 space-y-2 pl-6">
+      {names.map((n) => (
+        <div key={n} className="flex items-center gap-2">
+          <span className="min-w-0 flex-1 truncate text-gray-900 dark:text-gray-100">{n}</span>
+          <select
+            value={picked[n] ?? ''}
+            onChange={(e) => setPicked((p) => ({ ...p, [n]: e.target.value }))}
+            className="w-40 rounded-md border border-gray-300 px-2 py-1 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-moss-700 dark:bg-moss-800 dark:text-gray-100"
+          >
+            <option value="">Grupo…</option>
+            {foodGroups.map((g) => (
+              <option key={g.id} value={g.id}>
+                {g.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      ))}
+      {error && <p className="text-red-600 dark:text-red-400">{error}</p>}
+      <div className="flex gap-2">
+        <button type="button" disabled={!ready || busy} onClick={create} className={primaryButton}>
+          {busy ? 'Creando…' : `Crear ${names.length}`}
+        </button>
+        <button type="button" onClick={() => setOpen(false)} className={cancelButton}>
+          Cancelar
+        </button>
+      </div>
+    </div>
+  )
+}
 
 function CopyIcon() {
   return (
@@ -36,10 +97,12 @@ function CheckIcon() {
 
 export default function ImportRecipes({
   ingredients,
+  groups,
   recipes,
   onClose,
 }: {
   ingredients: Ingredient[]
+  groups: Group[]
   recipes: Recipe[]
   onClose: () => void
 }) {
@@ -182,6 +245,7 @@ export default function ImportRecipes({
                     No se importa: faltan en la Despensa {r.unknown.join(', ')}. Créalos y vuelve a probar.
                   </p>
                 )}
+                {blocked && r.missing.length > 0 && <CreateMissing names={r.missing} groups={groups} />}
                 <details className="group mt-1 pl-6">
                   <summary className="cursor-pointer list-none text-gray-600 marker:hidden dark:text-gray-400">
                     {r.ingredients.length}/{r.lines.length} ingredientes

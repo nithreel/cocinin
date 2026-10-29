@@ -21,11 +21,11 @@ export async function updateGroup(id: string, name: string, isFood: boolean) {
 }
 
 // Un ingrediente nuevo nace disponible (ON): quien lo añade es porque lo tiene.
-export async function addIngredient(name: string, groupId: string | null, expiry: ExpiryInput) {
+export async function addIngredient(name: string, groupId: string | null, expiry: ExpiryInput, inPantry = true) {
   const ref = await addDoc(ingredientsCol, {
     name,
     groupId,
-    inPantry: true,
+    inPantry,
     createdAt: Date.now(),
     expiryMode: expiry.mode,
     expiryDate: expiry.mode === 'date' ? expiry.date : null,

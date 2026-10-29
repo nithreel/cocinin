@@ -158,7 +158,7 @@ export default function RecipesPage() {
         </div>
       </div>
 
-      {showImport && <ImportRecipes ingredients={ingredients} recipes={recipes} onClose={() => setShowImport(false)} />}
+      {showImport && <ImportRecipes ingredients={ingredients} groups={groups} recipes={recipes} onClose={() => setShowImport(false)} />}
 
       {showForm && (
         <RecipeForm
