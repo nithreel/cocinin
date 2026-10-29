@@ -60,7 +60,7 @@ export default function UsersPage() {
     try {
       const cleanEmail = email.trim()
       const uid = await createAccount(cleanEmail, password)
-      await setDoc(doc(usersCol, uid), { email: cleanEmail, role: 'member', createdAt: Date.now() })
+      await setDoc(doc(usersCol, uid), { email: cleanEmail, role: 'member', createdAt: Date.now(), by: user?.uid ?? null })
       setEmail('')
       setPassword('')
     } catch (err) {

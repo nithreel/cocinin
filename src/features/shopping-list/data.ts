@@ -1,5 +1,5 @@
 import { addDoc, deleteDoc, doc, getDocs, updateDoc, writeBatch } from 'firebase/firestore'
-import { db } from '../../firebase'
+import { currentUid, db } from '../../firebase'
 import {
   ingredientsCol,
   purchaseHistoryCol,
@@ -12,7 +12,7 @@ import { localDateString } from '../../lib/expiry'
 export { useShoppingList, usePurchaseHistory } from '../../lib/AppDataContext'
 
 export async function addToShoppingList(ingredientId: string) {
-  await addDoc(shoppingListCol, { ingredientId, checked: false, addedAt: Date.now() })
+  await addDoc(shoppingListCol, { ingredientId, checked: false, addedAt: Date.now(), by: currentUid() })
 }
 
 export async function removeFromShoppingList(itemId: string) {
@@ -39,7 +39,7 @@ export async function confirmPurchase(items: ShoppingItem[], ingredientsById: Ma
       expiryDate: null,
     })
     const ingredientName = ingredientsById.get(item.ingredientId)?.name ?? '(ingrediente eliminado)'
-    batch.set(doc(purchaseHistoryCol), { ingredientName, purchasedAt })
+    batch.set(doc(purchaseHistoryCol), { ingredientName, purchasedAt, by: currentUid() })
   }
   await batch.commit()
 }

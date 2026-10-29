@@ -1,0 +1,14 @@
+services:
+  cocinin-notifier:
+    build: .
+    container_name: cocinin-notifier
+    restart: unless-stopped
+    mem_limit: 192m
+    environment:
+      GOOGLE_APPLICATION_CREDENTIALS: /secrets/service-account.json
+      VAPID_FILE: /secrets/vapid.json
+      VAPID_SUBJECT: mailto:admin@example.com
+      DATA_DIR: /data
+    volumes:
+      - ./secrets:/secrets:ro
+      - ./data:/data

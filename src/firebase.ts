@@ -28,6 +28,8 @@ export const isFirebaseConfigured = Boolean(firebaseConfig.apiKey && firebaseCon
 const app = initializeApp(firebaseConfig)
 
 export const auth = getAuth(app)
+/** Quién hace la escritura: los avisos push no se mandan a quien provoca el cambio. */
+export const currentUid = () => auth.currentUser?.uid ?? null
 // Caché local persistente: la app abre al instante y sigue mostrando datos sin cobertura
 // (en el súper), y las aperturas siguientes solo descargan los cambios, no todo de nuevo.
 export const db = initializeFirestore(app, {

@@ -1,5 +1,5 @@
 import { addDoc, doc, getDocs, query, updateDoc, where, writeBatch } from 'firebase/firestore'
-import { db } from '../../firebase'
+import { currentUid, db } from '../../firebase'
 import { localDateString } from '../../lib/expiry'
 import { groupsCol, ingredientsCol, shoppingListCol, type ExpiryMode } from '../../lib/collections'
 
@@ -64,7 +64,9 @@ export async function setIngredientInPantry(id: string, inPantry: boolean) {
   await updateDoc(
     doc(ingredientsCol, id),
     // al agotarse deja de estar congelado
-    inPantry ? { inPantry, stockedDate: localDateString() } : { inPantry, frozen: false, quantity: null },
+    inPantry
+      ? { inPantry, stockedDate: localDateString() }
+      : { inPantry, frozen: false, quantity: null, by: currentUid() },
   )
 }
 

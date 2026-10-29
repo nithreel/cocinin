@@ -1,11 +1,11 @@
 import { addDoc, deleteDoc, doc, getDocs, query, updateDoc, where, writeBatch } from 'firebase/firestore'
-import { db } from '../../firebase'
+import { currentUid, db } from '../../firebase'
 import { recipesCol, type RecipeIngredient } from '../../lib/collections'
 
 export { useRecipes } from '../../lib/AppDataContext'
 
 export async function addRecipe(title: string, instructions: string, ingredients: RecipeIngredient[]) {
-  await addDoc(recipesCol, { title, instructions, ingredients, createdAt: Date.now() })
+  await addDoc(recipesCol, { title, instructions, ingredients, createdAt: Date.now(), by: currentUid() })
 }
 
 export async function updateRecipe(
@@ -28,7 +28,7 @@ export async function addImportedRecipes(
   const batchId = String(Date.now())
   const batch = writeBatch(db)
   for (const r of recipes) {
-    batch.set(doc(recipesCol), { ...r, createdAt: Date.now(), importada: batchId })
+    batch.set(doc(recipesCol), { ...r, createdAt: Date.now(), importada: batchId, by: currentUid() })
   }
   await batch.commit()
   return batchId

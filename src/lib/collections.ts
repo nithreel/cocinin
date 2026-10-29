@@ -24,6 +24,8 @@ export interface Ingredient {
   stockedDate?: string | null
   /** cantidad que queda (texto libre, p. ej. «500 g»); vacío por defecto */
   quantity?: string | null
+  /** uid de quien lo marcó como agotado por última vez (para no avisarle a él) */
+  by?: string | null
 }
 
 export interface ShoppingItem {

@@ -1,0 +1,12 @@
+{
+  "name": "cocinin-notifier",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Servicio opcional que envía los avisos push de CocinIN (pensado para una Raspberry Pi)",
+  "scripts": { "start": "node index.mjs" },
+  "dependencies": {
+    "@google-cloud/firestore": "^7.11.0",
+    "web-push": "^3.6.7"
+  }
+}

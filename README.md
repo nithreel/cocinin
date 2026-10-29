@@ -242,3 +242,14 @@ firestore.rules      reglas de acceso
 ## Licencia
 
 MIT. Ver `LICENSE`.
+
+## Avisos push (opcional)
+
+La app puede avisar al móvil de: elemento gastado, varios añadidos a la lista, compra hecha, receta nueva, usuario nuevo y caducidad próxima. Firebase gratis no envía push sin Cloud Functions (plan Blaze), así que el envío lo hace un servicio pequeño en `notifier/` que corre en cualquier máquina siempre encendida (p. ej. una Raspberry Pi) con Docker. Coste: 0 €.
+
+1. Genera claves VAPID: `npx web-push generate-vapid-keys --json`. La pública va en `.env` (`VITE_VAPID_PUBLIC_KEY`); ambas, en `notifier/secrets/vapid.json` (`{"publicKey":"…","privateKey":"…"}`).
+2. Consola de Firebase → Configuración del proyecto → Cuentas de servicio → *Generar nueva clave privada*; guárdala como `notifier/secrets/service-account.json`.
+3. En esa máquina: `cd notifier && docker compose up -d --build`.
+4. En la app, pantalla **Avisos** (campana): activa los avisos en cada dispositivo. En iPhone hay que instalar antes la app en la pantalla de inicio.
+
+Si no montas el servicio, la app funciona igual; solo no habrá avisos. Con la máquina apagada los avisos de ese rato se pierden.
