@@ -128,7 +128,7 @@ async function checkExpiry() {
   if (fresh.length === 0) return
   fresh.forEach((f) => notifiedExpiry.add(f.key))
   writeFileSync(STATE_FILE, JSON.stringify([...notifiedExpiry]))
-  await send('caducidad', expiryMessage(fresh.map((f) => f.name)), '/despensa', null)
+  await send('caducidad', expiryMessage(fresh), '/despensa', null)
 }
 setTimeout(() => void checkExpiry(), 15_000)
 setInterval(() => void checkExpiry(), 60 * 60 * 1000)

@@ -22,9 +22,9 @@ export function newlyExpiring(ingredients, notified, now = new Date()) {
     const days = daysToExpiry(ing, now)
     if (days === null || days > SOON_DAYS) continue
     if (notified.has(expiryKey(id, ing))) continue
-    out.push({ id, name: ing.name, key: expiryKey(id, ing) })
+    out.push({ id, name: ing.name, days, key: expiryKey(id, ing) })
   }
-  return out
+  return out.sort((a, b) => a.days - b.days)
 }
 
 export function inSendWindow(now = new Date(), from = 8, to = 22) {
@@ -69,14 +69,29 @@ export function recipeMessage(titles) {
 }
 
 export function purchaseMessage(count) {
-  return { title: 'Compra hecha', body: `${count} ${plural(count, 'producto', 'productos')}` }
+  return { title: 'Compra hecha', body: `${count} ${plural(count, 'producto añadido', 'productos añadidos')} a la despensa` }
 }
 
-export function expiryMessage(names) {
-  if (names.length === 1) return { title: 'Caducidad', body: `${names[0]} caduca pronto` }
-  const shown = names.slice(0, 4).join(', ')
-  const rest = names.length > 4 ? ` y ${names.length - 4} más` : ''
-  return { title: 'Caducidad', body: `${names.length} ingredientes caducan pronto: ${shown}${rest}` }
+/** Plazo en palabras: «hoy», «mañana», «en 3 días» o «caducado». */
+export function expiryWhen(days) {
+  if (days < 0) return 'caducado'
+  if (days === 0) return 'hoy'
+  if (days === 1) return 'mañana'
+  return `en ${days} días`
+}
+
+/** `items`: [{ name, days }] ordenados del más urgente al menos. */
+export function expiryMessage(items) {
+  if (items.length === 1) {
+    const { name, days } = items[0]
+    return { title: 'Caducidad', body: days < 0 ? `${name} ha caducado` : `${name} caduca ${expiryWhen(days)}` }
+  }
+  const shown = items
+    .slice(0, 4)
+    .map((i) => `${i.name} (${expiryWhen(i.days)})`)
+    .join(', ')
+  const rest = items.length > 4 ? ` y ${items.length - 4} más` : ''
+  return { title: 'Caducidad', body: `${items.length} ingredientes caducan pronto: ${shown}${rest}` }
 }
 
 /** Suscripciones a las que enviar: con el aviso activado y que no sean de quien provocó el cambio. */

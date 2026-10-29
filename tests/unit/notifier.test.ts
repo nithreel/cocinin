@@ -5,6 +5,7 @@ import {
   expiryMessage,
   inSendWindow,
   newlyExpiring,
+  purchaseMessage,
   recipients,
   spentMessage,
 } from '../../notifier/lib.mjs'
@@ -48,7 +49,7 @@ describe('caducidad', () => {
       ['c', ing('2026-11-02')],
       ['d', ing('2026-10-20')],
     ])
-    expect(newlyExpiring(map, new Set(), NOW).map((i) => i.id)).toEqual(['a', 'b', 'd'])
+    expect(newlyExpiring(map, new Set(), NOW).map((i) => i.id)).toEqual(['d', 'a', 'b'])
   })
   it('no repite lo ya avisado, pero cambiar la fecha lo rearma', () => {
     const map = new Map([['a', ing('2026-10-30')]])
@@ -76,7 +77,16 @@ describe('mensajes y destinatarios', () => {
   it('textos en singular y plural', () => {
     expect(spentMessage(['Leche']).body).toBe('Se ha gastado Leche')
     expect(spentMessage(['Leche', 'Pan', 'Leche']).body).toBe('Se han gastado 2: Leche, Pan')
-    expect(expiryMessage(['a', 'b', 'c', 'd', 'e', 'f']).body).toContain('y 2 más')
+    const many = ['a', 'b', 'c', 'd', 'e', 'f'].map((name, days) => ({ name, days }))
+    expect(expiryMessage(many).body).toBe(
+      '6 ingredientes caducan pronto: a (hoy), b (mañana), c (en 2 días), d (en 3 días) y 2 más',
+    )
+    expect(expiryMessage([{ name: 'Leche', days: 0 }]).body).toBe('Leche caduca hoy')
+    expect(expiryMessage([{ name: 'Leche', days: 1 }]).body).toBe('Leche caduca mañana')
+    expect(expiryMessage([{ name: 'Leche', days: 3 }]).body).toBe('Leche caduca en 3 días')
+    expect(expiryMessage([{ name: 'Leche', days: -2 }]).body).toBe('Leche ha caducado')
+    expect(purchaseMessage(1).body).toBe('1 producto añadido a la despensa')
+    expect(purchaseMessage(12).body).toBe('12 productos añadidos a la despensa')
   })
   it('no avisa a quien lo provoca ni a quien lo tiene desactivado', () => {
     const subs = [
