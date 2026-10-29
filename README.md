@@ -118,7 +118,7 @@ Al terminar, abre tu URL: mientras no exista ningún usuario, el login muestra *
 
 ## Avisos en el móvil (opcional)
 
-La app funciona completa sin esto. Si quieres notificaciones (algo se ha gastado, compra hecha, algo va a caducar…), hace falta un servicio pequeño en una máquina tuya siempre encendida con Docker, por ejemplo una Raspberry Pi. Firebase gratis no puede enviarlas por sí solo. Coste: 0 €.
+La app funciona completa sin esto. Si quieres notificaciones (algo se ha gastado, compra hecha, algo va a caducar…), hace falta un servicio pequeño en una máquina tuya siempre encendida con Docker, por ejemplo una Raspberry Pi. Firebase gratis no puede enviarlas por sí solo.
 
 Avisa de: elemento gastado, varios añadidos a la lista, compra hecha, receta nueva, usuario nuevo y caducidad próxima. Cada persona elige cuáles quiere en la campana de la app, y nunca se avisa a quien provoca el cambio.
 
