@@ -46,6 +46,8 @@ export interface Recipe {
   instructions: string
   ingredients: RecipeIngredient[]
   createdAt: number
+  /** id del lote si vino del importador (permite deshacer la importación) */
+  importada?: string
 }
 
 export interface PurchaseHistoryEntry {
