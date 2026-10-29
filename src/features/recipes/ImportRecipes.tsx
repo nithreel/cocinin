@@ -55,18 +55,21 @@ export default function ImportRecipes({
   async function handleImport() {
     setBusy(true)
     setError(null)
+    const toAdd = selected.map(({ r }) => ({
+      title: r.recipe.title,
+      instructions: r.recipe.instructions,
+      ingredients: r.ingredients,
+    }))
+    const previousText = text
+    // Se vacía antes de escribir: Firestore avisa de la receta nueva al instante (antes de confirmar),
+    // y con el texto aún pegado saldría «Ya hay una receta con este título» en la propia importada.
+    setText('')
+    setChecked({})
     try {
-      const batchId = await addImportedRecipes(
-        selected.map(({ r }) => ({
-          title: r.recipe.title,
-          instructions: r.recipe.instructions,
-          ingredients: r.ingredients,
-        })),
-      )
-      setDone({ batchId, count: selected.length })
-      setText('')
-      setChecked({})
+      const batchId = await addImportedRecipes(toAdd)
+      setDone({ batchId, count: toAdd.length })
     } catch (e) {
+      setText(previousText)
       setError(`No se pudo importar: ${(e as Error).message}`)
     } finally {
       setBusy(false)
