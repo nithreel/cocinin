@@ -17,7 +17,7 @@ import {
 } from './lib.mjs'
 
 const vapid = JSON.parse(readFileSync(process.env.VAPID_FILE ?? '/secrets/vapid.json', 'utf8'))
-webpush.setVapidDetails(process.env.VAPID_SUBJECT ?? 'mailto:admin@example.com', vapid.publicKey, vapid.privateKey)
+webpush.setVapidDetails(process.env.VAPID_SUBJECT ?? 'https://cocinin.web.app', vapid.publicKey, vapid.privateKey)
 const db = new Firestore()
 const DATA_DIR = process.env.DATA_DIR ?? '/data'
 const STATE_FILE = `${DATA_DIR}/expiry-state.json`
