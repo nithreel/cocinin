@@ -17,10 +17,14 @@ const COLLECTIONS = {
   users: usersCol,
 }
 
-/** Descarga un JSON con todos los datos de la cocina (copia de seguridad). */
-export async function downloadBackup() {
+/**
+ * Descarga un JSON con los datos de la cocina (copia de seguridad). Sin `includeUsers` se omiten los
+ * correos de los miembros: es la copia que puede bajar cualquier usuario.
+ */
+export async function downloadBackup(includeUsers = true) {
   const data: Record<string, unknown> = { exportedAt: new Date().toISOString() }
   for (const [name, col] of Object.entries(COLLECTIONS)) {
+    if (name === 'users' && !includeUsers) continue
     const snap = await getDocs(col)
     data[name] = snap.docs.map((d) => ({ id: d.id, ...d.data() }))
   }

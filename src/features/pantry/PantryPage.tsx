@@ -18,7 +18,8 @@ import type { ExpiryMode, Group, Ingredient } from '../../lib/collections'
 import { ConfirmDelete } from '../../components/DeleteButton'
 import { SnowflakeIcon } from '../../components/icons'
 import SearchInput from '../../components/SearchInput'
-import { cancelButton, dangerTextButton, primaryButton } from '../../components/buttonStyles'
+import BackupButton from '../../components/BackupButton'
+import { cancelButton, dangerTextButton, outlineButton, primaryButton } from '../../components/buttonStyles'
 import { matchesSearch } from '../../lib/search'
 import KebabMenu from '../../components/KebabMenu'
 import { expiryBadgeClasses, getExpiryInfo, remainingLabel } from '../../lib/expiry'
@@ -754,7 +755,7 @@ export default function PantryPage() {
           <button
             type="button"
             onClick={() => openForm(setShowAddGroup)}
-            className="rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50 dark:border-moss-700 dark:text-gray-300 dark:hover:bg-moss-800"
+            className={outlineButton}
           >
             + Grupo
           </button>
@@ -821,6 +822,10 @@ export default function PantryPage() {
             </section>
           )
         })}
+      </div>
+
+      <div className="mt-8 text-center">
+        <BackupButton />
       </div>
     </div>
   )

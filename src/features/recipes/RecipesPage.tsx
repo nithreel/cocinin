@@ -2,9 +2,10 @@ import { useMemo, useState } from 'react'
 import { useGroups, useIngredients } from '../pantry/data'
 import { addRecipe, deleteRecipe, updateRecipe, useRecipes } from './data'
 import RecipeForm from './RecipeForm'
+import BackupButton from '../../components/BackupButton'
 import ImportRecipes from './ImportRecipes'
 import DeleteButton from '../../components/DeleteButton'
-import { cancelButton } from '../../components/buttonStyles'
+import { cancelButton, outlineButton } from '../../components/buttonStyles'
 import type { Group, Ingredient, Recipe } from '../../lib/collections'
 
 type RecipeStatus = 'full' | 'partial' | 'missing'
@@ -145,7 +146,7 @@ export default function RecipesPage() {
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Recetario</h2>
         <div className="flex items-center gap-2">
-          <button type="button" onClick={() => setShowImport((v) => !v)} className={cancelButton}>
+          <button type="button" onClick={() => setShowImport((v) => !v)} className={outlineButton}>
             Importar
           </button>
           <button
@@ -186,6 +187,10 @@ export default function RecipesPage() {
             ingredientsById={ingredientsById}
           />
         ))}
+      </div>
+
+      <div className="mt-8 text-center">
+        <BackupButton />
       </div>
     </div>
   )

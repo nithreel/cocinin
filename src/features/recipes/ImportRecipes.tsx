@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { addIngredient } from '../pantry/data'
 import { addImportedRecipes, undoImport } from './data'
 import { cancelButton, primaryButton } from '../../components/buttonStyles'
+import BackupButton from '../../components/BackupButton'
 import { XIcon } from '../../components/icons'
 import { parseImport, resolveRecipes } from '../../lib/importRecipes'
 import type { Group, Ingredient, Recipe } from '../../lib/collections'
@@ -191,10 +192,14 @@ export default function ImportRecipes({
             {copied ? 'Instrucciones copiadas' : 'Copiar instrucciones'}
           </span>
           <span className="block text-xs text-gray-500 dark:text-gray-400">
-            Pégalas en Claude con tu copia de seguridad y la receta
+            Pégalas junto con tu copia de seguridad y la receta
           </span>
         </span>
       </button>
+
+      <div className="mb-3">
+        <BackupButton />
+      </div>
 
       {done && (
         <div className="mb-3 flex items-center justify-between gap-2 rounded-md bg-emerald-50 px-3 py-2 text-sm text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200">
