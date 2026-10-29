@@ -7,7 +7,7 @@ services:
     environment:
       GOOGLE_APPLICATION_CREDENTIALS: /secrets/service-account.json
       VAPID_FILE: /secrets/vapid.json
-      VAPID_SUBJECT: https://cocinin.web.app
+      VAPID_SUBJECT: ${VAPID_SUBJECT:?ejecuta ./instalar.sh}
       DATA_DIR: /data
     volumes:
       - ./secrets:/secrets:ro

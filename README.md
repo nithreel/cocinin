@@ -245,11 +245,37 @@ MIT. Ver `LICENSE`.
 
 ## Avisos push (opcional)
 
-La app puede avisar al móvil de: elemento gastado, varios añadidos a la lista, compra hecha, receta nueva, usuario nuevo y caducidad próxima. Firebase gratis no envía push sin Cloud Functions (plan Blaze), así que el envío lo hace un servicio pequeño en `notifier/` que corre en cualquier máquina siempre encendida (p. ej. una Raspberry Pi) con Docker. Coste: 0 €.
+La app funciona completa sin esto. Si quieres que el móvil reciba notificaciones, hace falta un servicio pequeño que las envíe. Firebase gratis no puede (necesitaría Cloud Functions, que exige el plan Blaze de pago), así que el envío lo hace `notifier/`, que corre en una máquina tuya siempre encendida. Coste: 0 €.
 
-1. Genera claves VAPID: `npx web-push generate-vapid-keys --json`. La pública va en `.env` (`VITE_VAPID_PUBLIC_KEY`); ambas, en `notifier/secrets/vapid.json` (`{"publicKey":"…","privateKey":"…"}`).
-2. Consola de Firebase → Configuración del proyecto → Cuentas de servicio → *Generar nueva clave privada*; guárdala como `notifier/secrets/service-account.json`.
-3. En esa máquina: `cd notifier && docker compose up -d --build`.
-4. En la app, pantalla **Avisos** (campana): activa los avisos en cada dispositivo. En iPhone hay que instalar antes la app en la pantalla de inicio.
+**Avisos que envía**
 
-Si no montas el servicio, la app funciona igual; solo no habrá avisos. Con la máquina apagada los avisos de ese rato se pierden.
+| Aviso | Cuándo |
+|---|---|
+| Elemento gastado | un ingrediente de la despensa pasa a agotado (agrupa los que llegan seguidos, 60 s) |
+| Lista de la compra | se añaden varios elementos (uno solo no avisa; un aviso por tanda, con 15 min de enfriamiento) |
+| Compra hecha | se confirma la compra |
+| Receta nueva | entra una receta en el recetario |
+| Usuario nuevo | el admin añade a alguien |
+| Caducidad | un ingrediente entra en «caduca en 3 días o menos» (revisión cada hora, solo de 8:00 a 22:00) |
+
+No se avisa a quien provoca el cambio, y cada persona activa o quita cada tipo en la pantalla **Avisos** (campana de la cabecera).
+
+**Qué necesitas**
+- Una máquina siempre encendida con **Docker** y conexión a internet (consume poca memoria; funciona en una Raspberry Pi 3). No hace falta que esté en tu red local ni abrir puertos: solo habla hacia fuera con Firestore y con los servidores de push.
+- La **clave de la cuenta de servicio** de tu proyecto Firebase: consola de Firebase → Configuración del proyecto → Cuentas de servicio → *Generar nueva clave privada*. Guárdala como `notifier/secrets/service-account.json`. Da acceso amplio al proyecto: no la subas a git (la carpeta `secrets/` ya está ignorada), no la compartas y déjala solo en esa máquina.
+- Node y `npm` en el ordenador desde el que lo instalas (para generar las claves).
+
+**Instalación**
+```bash
+cd notifier
+./instalar.sh                  # en esta misma máquina
+./instalar.sh usuario@host     # o en otra por ssh (p. ej. la Raspberry)
+```
+El script genera las claves VAPID, escribe la clave pública en `.env`, comprueba que la cuenta de servicio es de tu proyecto y arranca el contenedor. Es repetible. Si ha cambiado `.env`, ejecuta después `npm run deploy` en la raíz para que la app incluya la clave pública.
+
+Después, en cada móvil: abre la app → campana → **Activar**. En **iPhone** hay que añadir antes la app a la pantalla de inicio (Safari → Compartir → *Añadir a pantalla de inicio*) y abrirla desde ese icono; necesita iOS 16.4 o superior.
+
+**Cosas a tener en cuenta**
+- Si la máquina está apagada o sin internet, los avisos de ese rato se pierden (no se acumulan).
+- Registro: `docker logs -f cocinin-notifier`. Para quitarlo: `docker compose down` en `notifier/` (y borra la clave de servicio en la consola si ya no la usas).
+- Las claves VAPID y la cuenta de servicio nunca se suben al repositorio; `.env`, `notifier/.env`, `notifier/secrets/` y `notifier/data/` están en `.gitignore`.
