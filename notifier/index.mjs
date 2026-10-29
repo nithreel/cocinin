@@ -94,7 +94,8 @@ listen('purchaseHistory', (type, _id, data, first) => {
   if (!first && type === 'added') purchases.push({ by: data.by ?? null })
 })
 
-const recipes = createCollector(60_000, (batch) => {
+// 2 s: casi al momento, pero una importación en lote (varias recetas a la vez) sale como un solo aviso
+const recipes = createCollector(2_000, (batch) => {
   void send('receta', recipeMessage(batch.map((b) => b.title)), '/recetario', batch[0].by)
 })
 listen('recipes', (type, _id, data, first) => {
