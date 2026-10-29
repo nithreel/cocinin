@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { addImportedRecipes, undoImport } from './data'
 import { cancelButton, primaryButton } from '../../components/buttonStyles'
+import { XIcon } from '../../components/icons'
 import { parseImport, resolveRecipes } from '../../lib/importRecipes'
 import type { Ingredient, Recipe } from '../../lib/collections'
 
@@ -15,6 +16,23 @@ Reglas:
 - Si un ingrediente se usa varias veces, suma las cantidades en una sola entrada. "optional": true solo si la receta lo marca como opcional.
 - "instructions": cabecera solo con lo que diga la receta (raciones, horno…; no inventes), línea en blanco, pasos numerados "1. Título corto: texto en infinitivo.", y al final, si hay alternativas reales, una línea "Sustituciones: …". Sin comentarios de relleno, bromas ni primera persona.
 - El agua no es ingrediente.`
+
+function CopyIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="9" y="9" width="11" height="11" rx="2.5" />
+      <path d="M5 15V6.5A2.5 2.5 0 0 1 7.5 4H15" />
+    </svg>
+  )
+}
+
+function CheckIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M5 12.5l4.5 4.5L19 7.5" />
+    </svg>
+  )
+}
 
 export default function ImportRecipes({
   ingredients,
@@ -92,12 +110,28 @@ export default function ImportRecipes({
 
   return (
     <section className="mb-6 rounded-lg border border-gray-200 bg-white p-4 dark:border-moss-700 dark:bg-moss-900">
-      <div className="mb-2 flex items-center justify-between gap-2">
-        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Importar recetas (JSON)</h3>
-        <button type="button" onClick={copyPrompt} className={cancelButton}>
-          {copied ? 'Copiado ✓' : 'Copiar instrucciones para Claude'}
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">Importar recetas</h3>
+        <button type="button" onClick={onClose} aria-label="Cerrar" className={cancelButton + ' -mr-2'}>
+          <XIcon />
         </button>
       </div>
+
+      <button
+        type="button"
+        onClick={copyPrompt}
+        className="mb-3 flex w-full items-center gap-3 rounded-lg border border-gray-200 px-3 py-2.5 text-left hover:bg-gray-50 dark:border-moss-700 dark:hover:bg-moss-800"
+      >
+        <span className="text-emerald-700 dark:text-emerald-400">{copied ? <CheckIcon /> : <CopyIcon />}</span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-sm font-medium text-gray-900 dark:text-gray-100">
+            {copied ? 'Instrucciones copiadas' : 'Copiar instrucciones'}
+          </span>
+          <span className="block text-xs text-gray-500 dark:text-gray-400">
+            Pégalas en Claude con tu copia de seguridad y la receta
+          </span>
+        </span>
+      </button>
 
       {done && (
         <div className="mb-3 flex items-center justify-between gap-2 rounded-md bg-emerald-50 px-3 py-2 text-sm text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200">
@@ -140,10 +174,6 @@ export default function ImportRecipes({
                   />
                   <span className="font-medium">{r.recipe.title}</span>
                 </label>
-                <p className="mt-1 pl-6 text-gray-600 dark:text-gray-400">
-                  {r.ingredients.length} ingredientes
-                  {r.recipe.instructions ? ' · con preparación' : ' · sin preparación'}
-                </p>
                 {r.duplicateTitle && (
                   <p className="pl-6 text-amber-600 dark:text-amber-400">Ya hay una receta con este título.</p>
                 )}
@@ -152,6 +182,29 @@ export default function ImportRecipes({
                     No se importa: faltan en la Despensa {r.unknown.join(', ')}. Créalos y vuelve a probar.
                   </p>
                 )}
+                <details className="group mt-1 pl-6">
+                  <summary className="cursor-pointer list-none text-gray-600 marker:hidden dark:text-gray-400">
+                    {r.ingredients.length}/{r.lines.length} ingredientes
+                    {r.recipe.instructions ? ' · con preparación' : ' · sin preparación'}
+                    <span className="ml-1 text-emerald-700 group-open:hidden dark:text-emerald-400">Ver</span>
+                    <span className="ml-1 hidden text-emerald-700 group-open:inline dark:text-emerald-400">Ocultar</span>
+                  </summary>
+                  <ul className="mt-2 space-y-0.5 text-gray-700 dark:text-gray-300">
+                    {r.lines.map((l, k) => (
+                      <li key={k} className={l.found ? '' : 'text-red-600 dark:text-red-400'}>
+                        {l.found ? '✓' : '✕'} {l.name}
+                        {l.quantity && ` — ${l.quantity}${l.unit ? ` ${l.unit}` : ''}`}
+                        {!l.quantity && l.unit && ` — ${l.unit}`}
+                        {l.optional && ' (opcional)'}
+                      </li>
+                    ))}
+                  </ul>
+                  {r.recipe.instructions && (
+                    <p className="mt-3 max-h-60 overflow-y-auto whitespace-pre-wrap border-t border-gray-100 pt-3 text-gray-700 dark:border-moss-800 dark:text-gray-300">
+                      {r.recipe.instructions}
+                    </p>
+                  )}
+                </details>
               </li>
             )
           })}
@@ -168,9 +221,6 @@ export default function ImportRecipes({
           className={primaryButton}
         >
           {busy ? 'Importando…' : `Importar ${selected.length || ''}`.trim()}
-        </button>
-        <button type="button" onClick={onClose} className={cancelButton}>
-          Cerrar
         </button>
       </div>
     </section>

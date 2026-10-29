@@ -99,6 +99,8 @@ export interface ResolvedRecipe {
   ingredients: RecipeIngredient[]
   /** nombres que no existen en la despensa (o son ambiguos): no se crean */
   unknown: string[]
+  /** una línea por ingrediente pedido, con el nombre real de la despensa si se encontró */
+  lines: { name: string; quantity: string; unit: string; optional: boolean; found: boolean }[]
   /** ya hay una receta con ese título */
   duplicateTitle: boolean
 }
@@ -118,17 +120,22 @@ export function resolveRecipes(
   return recipes.map((recipe) => {
     const resolved: RecipeIngredient[] = []
     const unknown: string[] = []
+    const lines: ResolvedRecipe['lines'] = []
     const seen = new Set<string>()
     for (const ri of recipe.ingredients) {
       const found = byName.get(normalizeText(ri.name).trim())
+      const line = { name: ri.name, quantity: ri.quantity, unit: ri.unit, optional: ri.optional }
       if (found?.length !== 1) {
         unknown.push(found ? `${ri.name} (ambiguo)` : ri.name)
+        lines.push({ ...line, found: false })
         continue
       }
       if (seen.has(found[0].id)) {
         unknown.push(`${ri.name} (repetido)`)
+        lines.push({ ...line, found: false })
         continue
       }
+      lines.push({ ...line, name: found[0].name, found: true })
       seen.add(found[0].id)
       resolved.push({ ingredientId: found[0].id, quantity: ri.quantity, unit: ri.unit, optional: ri.optional })
     }
@@ -136,6 +143,7 @@ export function resolveRecipes(
       recipe,
       ingredients: resolved,
       unknown,
+      lines,
       duplicateTitle: titles.has(normalizeText(recipe.title).trim()),
     }
   })
