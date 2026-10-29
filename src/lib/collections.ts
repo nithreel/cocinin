@@ -56,6 +56,25 @@ export interface PurchaseHistoryEntry {
   purchasedAt: number
 }
 
+/** Qué avisos recibe un dispositivo. */
+export interface PushPrefs {
+  gastado: boolean
+  lista: boolean
+  compra: boolean
+  receta: boolean
+  usuario: boolean
+  caducidad: boolean
+}
+
+/** Suscripción push de un dispositivo (id = hash del endpoint). La envía la Raspberry, no la app. */
+export interface PushSubscriptionDoc {
+  uid: string
+  endpoint: string
+  keys: { p256dh: string; auth: string }
+  prefs: PushPrefs
+  createdAt: number
+}
+
 export type Role = 'admin' | 'member'
 
 export interface Member {
@@ -70,5 +89,6 @@ export const ingredientsCol = collection(db, 'ingredients')
 export const shoppingListCol = collection(db, 'shoppingList')
 export const recipesCol = collection(db, 'recipes')
 export const purchaseHistoryCol = collection(db, 'purchaseHistory')
+export const pushSubscriptionsCol = collection(db, 'pushSubscriptions')
 export const usersCol = collection(db, 'users')
 export const setupDoc = doc(db, 'meta', 'setup')

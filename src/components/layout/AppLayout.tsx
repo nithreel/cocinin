@@ -1,7 +1,7 @@
 import { NavLink, Outlet } from 'react-router-dom'
 import { useAuth } from '../../auth/AuthContext'
 import ErrorToast from '../ErrorToast'
-import { BookIcon, CartIcon, PantryIcon, UsersIcon } from '../icons'
+import { BellIcon, BookIcon, CartIcon, LogoutIcon, PantryIcon, UsersIcon } from '../icons'
 import { useDataError } from '../../lib/AppDataContext'
 
 const USERS_ITEM = { to: '/usuarios', label: 'Usuarios', Icon: UsersIcon }
@@ -19,6 +19,23 @@ function navLinkClasses(isActive: boolean) {
       ? 'text-emerald-700 md:bg-emerald-100 md:text-emerald-800 dark:text-emerald-400 dark:md:bg-emerald-900/40 dark:md:text-emerald-300'
       : 'text-gray-500 hover:text-emerald-700 md:hover:bg-emerald-50 dark:text-gray-400 dark:hover:text-emerald-400 dark:md:hover:bg-emerald-900/20',
   ].join(' ')
+}
+
+const iconButton =
+  'flex h-10 w-10 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-moss-800 dark:hover:text-gray-200'
+
+/** Acceso a la pantalla de avisos; se resalta cuando está abierta. */
+function AlertsLink() {
+  return (
+    <NavLink
+      to="/avisos"
+      aria-label="Avisos"
+      title="Avisos"
+      className={({ isActive }) => iconButton + (isActive ? ' !text-emerald-700 dark:!text-emerald-400' : '')}
+    >
+      <BellIcon />
+    </NavLink>
+  )
 }
 
 export default function AppLayout() {
@@ -42,27 +59,23 @@ export default function AppLayout() {
             <span>{item.label}</span>
           </NavLink>
         ))}
-        <div className="mt-auto border-t border-gray-100 pt-3 dark:border-moss-800">
-          <p className="truncate px-2 text-xs text-gray-500 dark:text-gray-400">{user?.email}</p>
-          <button
-            type="button"
-            onClick={() => signOut()}
-            className="mt-1 w-full rounded-lg px-2 py-2 text-left text-sm text-gray-500 hover:bg-gray-50 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-moss-800 dark:hover:text-gray-200"
-          >
-            Cerrar sesión
+        <div className="mt-auto flex items-center gap-1 border-t border-gray-100 pt-3 dark:border-moss-800">
+          <p className="min-w-0 flex-1 truncate px-2 text-xs text-gray-500 dark:text-gray-400">{user?.email}</p>
+          <AlertsLink />
+          <button type="button" onClick={() => signOut()} aria-label="Cerrar sesión" title="Cerrar sesión" className={iconButton}>
+            <LogoutIcon />
           </button>
         </div>
       </nav>
 
       <header className="flex shrink-0 items-center justify-between border-b border-gray-200 bg-white px-4 py-3 md:hidden dark:border-moss-800 dark:bg-moss-900">
         <img src="/icons/icon.svg" alt="CocinIN" className="h-9 w-9 rounded-lg" />
-        <button
-          type="button"
-          onClick={() => signOut()}
-          className="text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-        >
-          Cerrar sesión
-        </button>
+        <div className="flex items-center gap-1">
+          <AlertsLink />
+          <button type="button" onClick={() => signOut()} aria-label="Cerrar sesión" title="Cerrar sesión" className={iconButton}>
+            <LogoutIcon />
+          </button>
+        </div>
       </header>
 
       <ErrorToast />

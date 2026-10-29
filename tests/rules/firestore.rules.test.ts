@@ -96,6 +96,39 @@ describe('instalación hecha', () => {
   })
 })
 
+describe('suscripciones push', () => {
+  beforeEach(seedInstalled)
+  const sub = (uid: string) => ({
+    uid,
+    endpoint: 'https://push.example/x',
+    keys: { p256dh: 'p', auth: 'a' },
+    prefs: {},
+    createdAt: 1,
+  })
+
+  it('cada miembro crea, lee y borra solo las suyas', async () => {
+    const mine = env.authenticatedContext('member').firestore()
+    await assertSucceeds(setDoc(doc(mine, 'pushSubscriptions/s1'), sub('member')))
+    await assertSucceeds(getDoc(doc(mine, 'pushSubscriptions/s1')))
+    await assertSucceeds(updateDoc(doc(mine, 'pushSubscriptions/s1'), { prefs: { lista: false } }))
+    await assertSucceeds(deleteDoc(doc(mine, 'pushSubscriptions/s1')))
+  })
+
+  it('no se crean a nombre de otro ni se leen, cambian o borran las ajenas', async () => {
+    await env.withSecurityRulesDisabled((ctx) => setDoc(doc(ctx.firestore(), 'pushSubscriptions/ajena'), sub('admin')))
+    const db = env.authenticatedContext('member').firestore()
+    await assertFails(setDoc(doc(db, 'pushSubscriptions/s2'), sub('admin')))
+    await assertFails(getDoc(doc(db, 'pushSubscriptions/ajena')))
+    await assertFails(updateDoc(doc(db, 'pushSubscriptions/ajena'), { prefs: {} }))
+    await assertFails(deleteDoc(doc(db, 'pushSubscriptions/ajena')))
+  })
+
+  it('quien no es miembro no puede suscribirse', async () => {
+    const db = env.authenticatedContext('intruso').firestore()
+    await assertFails(setDoc(doc(db, 'pushSubscriptions/s3'), sub('intruso')))
+  })
+})
+
 describe('instalación nueva (sin usuarios)', () => {
   beforeEach(() => env.clearFirestore())
 

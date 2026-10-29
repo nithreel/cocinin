@@ -47,5 +47,14 @@ service cloud.firestore {
     match /shoppingList/{id} { allow read, write: if isMember(); }
     match /recipes/{id} { allow read, write: if isMember(); }
     match /purchaseHistory/{id} { allow read, write: if isMember(); }
+
+    // Suscripciones push: cada miembro gestiona solo las suyas. La Raspberry las lee con la
+    // cuenta de servicio (que no pasa por estas reglas).
+    match /pushSubscriptions/{id} {
+      allow read, delete: if isMember() && resource.data.uid == request.auth.uid;
+      allow create: if isMember() && request.resource.data.uid == request.auth.uid;
+      allow update: if isMember() && resource.data.uid == request.auth.uid &&
+        request.resource.data.uid == request.auth.uid;
+    }
   }
 }

@@ -6,6 +6,7 @@ import AppLayout from './components/layout/AppLayout'
 import PantryPage from './features/pantry/PantryPage'
 import ShoppingListPage from './features/shopping-list/ShoppingListPage'
 import UsersPage from './features/users/UsersPage'
+import AlertsPage from './features/alerts/AlertsPage'
 import RecipesPage from './features/recipes/RecipesPage'
 import { isFirebaseConfigured } from './firebase'
 import { AppDataProvider } from './lib/AppDataContext'
@@ -36,6 +37,7 @@ export default function App() {
           <Route path="/despensa" element={<PantryPage />} />
           <Route path="/lista" element={<ShoppingListPage />} />
           <Route path="/recetario" element={<RecipesPage />} />
+          <Route path="/avisos" element={<AlertsPage />} />
           <Route path="/usuarios" element={<UsersPage />} />
         </Route>
       </Routes>

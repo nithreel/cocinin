@@ -83,3 +83,21 @@ export function SnowflakeIcon({ className = 'h-5 w-5' }: { className?: string })
     </svg>
   )
 }
+
+export function BellIcon() {
+  return (
+    <Icon>
+      <path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2h-15z" />
+      <path d="M10 21.5h4" />
+    </Icon>
+  )
+}
+
+export function LogoutIcon() {
+  return (
+    <Icon>
+      <path d="M10 4.5H7A2.5 2.5 0 0 0 4.5 7v10A2.5 2.5 0 0 0 7 19.5h3" />
+      <path d="M15 8l4 4-4 4M19 12H9.5" />
+    </Icon>
+  )
+}
