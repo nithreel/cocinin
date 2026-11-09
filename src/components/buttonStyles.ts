@@ -24,3 +24,7 @@ export const rowIconButton =
 /** Igual, en verde y con borde: la acción positiva de la fila (añadir a la lista). */
 export const rowAddButton =
   "relative flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-emerald-600 text-emerald-700 hover:bg-emerald-50 after:absolute after:-inset-2 after:content-[''] dark:border-emerald-500 dark:text-emerald-400 dark:hover:bg-emerald-950"
+
+/** Enlace/acción discreta en verde. */
+export const linkButton =
+  'inline-flex items-center rounded-md px-2 py-1.5 text-sm text-emerald-700 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-950'

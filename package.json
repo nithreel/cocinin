@@ -1,6 +1,6 @@
 {
   "name": "cocinin",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Despensa, lista de la compra y recetario compartidos (React + Firebase)",
   "private": true,
   "type": "module",

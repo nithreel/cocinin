@@ -4,6 +4,7 @@ import { useAuth } from '../../auth/AuthContext'
 import { ToastProvider } from '../Toast'
 import ErrorToast from '../ErrorToast'
 import UpdatePrompt from '../UpdatePrompt'
+import ReleaseNotice from '../ReleaseNotice'
 import { ConfirmDelete } from '../DeleteButton'
 import { BellIcon, BookIcon, CartIcon, DownloadIcon, LogoutIcon, NoteIcon, PantryIcon, UsersIcon } from '../icons'
 import { downloadBackup } from '../../lib/backup'
@@ -199,6 +200,7 @@ export default function AppLayout() {
           </p>
         )}
         <div className="mx-auto w-full max-w-3xl">
+          <ReleaseNotice />
           <Outlet />
         </div>
       </main>

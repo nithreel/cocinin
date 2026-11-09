@@ -143,6 +143,7 @@ npm run deploy
 
 Tu `.env` y `.firebaserc` no se tocan, así que sigues con tu proyecto y tus datos. La app instalada puede enseñar la versión anterior hasta que la cierres y abras una o dos veces (en el navegador, `Ctrl+Shift+R`). Si `git pull` se queja de cambios locales, guárdalos con `git stash`, haz el `pull` y recupéralos con `git stash pop`.
 
+- **Aviso de versión nueva**: el admin ve un aviso en la app cuando hay una release más reciente en GitHub que la instalada (una consulta al día a la API pública de GitHub). Para no consultar: `VITE_DISABLE_UPDATE_CHECK=true` en `.env`; para otro repositorio: `VITE_UPDATE_REPO=usuario/repo`.
 - Solo las reglas: `npm run deploy:rules`.
 - **Sin conexión**: la app guarda una copia local y sincroniza al volver la cobertura.
 - **Copia de seguridad**: descárgala de vez en cuando desde Despensa o Recetario.
