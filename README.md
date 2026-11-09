@@ -54,7 +54,7 @@ Tecnología: React 19 + TypeScript + Vite + Tailwind, y Firebase (Authentication
 
 ## Instalación
 
-Necesitas **Node.js 20+**, **Git** y una **cuenta de Google**. Sin tarjeta: cabe en el plan gratuito de Firebase (Spark). Los comandos son iguales en Windows (PowerShell), macOS y Linux.
+Necesitas **Node.js 20+**, **Git** y una **cuenta de Google** (sin tarjeta: plan gratuito de Firebase). Igual en Windows (PowerShell), macOS y Linux:
 
 ```sh
 git clone https://github.com/nithreel/cocinin.git
@@ -63,55 +63,45 @@ npm install
 npm run setup
 ```
 
-`npm run setup` inicia sesión en Firebase, crea el proyecto (su id será tu URL, `https://<id>.web.app`), la base de datos y las reglas, te guía en activar *Correo electrónico/contraseña* en Authentication (único paso manual) y despliega la web. Antes de empezar comprueba Node, dependencias, Git e internet; `npm run setup -- --comprobar` ejecuta solo esas comprobaciones.
+> ⚠️ **Crea tu usuario nada más desplegar:** el primero que se crea es el administrador y, hasta entonces, cualquiera con la URL podría serlo.
 
-> ⚠️ **Crea tu usuario nada más desplegar.** Mientras no exista ninguno, el login muestra **Crear usuario** y el primero es el **administrador**; hasta entonces, cualquiera con la URL podría serlo.
+**¿Primera vez, o te falta Node o Git?** Abre la guía de abajo: hay un instalador de un solo comando.
+
+<details>
+<summary>Guía para quien empieza de cero</summary>
+
+**Instalador de un comando.** Abre una terminal (Windows: tecla Windows → **PowerShell**; macOS: Cmd + Espacio → **Terminal**; Linux: **Terminal**), pega la línea de tu sistema y pulsa Enter. Instala Git y Node.js si faltan, descarga CocinIN en la carpeta `cocinin` de tu usuario, instala lo necesario y lanza el asistente de Firebase. Puedes leer el script antes de ejecutarlo: [`instalar.sh`](instalar.sh) · [`instalar.ps1`](instalar.ps1).
+
+| Sistema | Comando |
+| --- | --- |
+| Windows | `irm https://raw.githubusercontent.com/nithreel/cocinin/main/instalar.ps1 \| iex` |
+| macOS / Linux | `curl -fsSL https://raw.githubusercontent.com/nithreel/cocinin/main/instalar.sh \| bash` |
+
+Te pedirá confirmación antes de instalar nada (y, en Linux, tu contraseña para instalar Git). Se detiene en el único paso que no se puede automatizar, **activar el acceso por correo en Firebase**, y te explica cómo.
+
+**Paso a paso, a mano** (unos 15 minutos). Tras cada paso hay una **comprobación**; si no sale lo esperado, no sigas y mira [Problemas frecuentes](#problemas-frecuentes).
+
+1. **Instalar Node.js y Git.**
+   - Windows (PowerShell): `winget install OpenJS.NodeJS.LTS` y `winget install Git.Git`. Sin `winget`, los instaladores de <https://nodejs.org> y <https://git-scm.com>.
+   - macOS: `brew install node git`. Linux: `nodejs` (v20+), `npm` y `git` con el gestor de tu distribución.
+   - **Cierra la terminal y ábrela de nuevo**, y comprueba con `node --version` y `git --version`. ✅ `v20.…` o superior y `git version 2.…`.
+2. **Descargar CocinIN:** `git clone …`, `cd cocinin` y `npm install` (los comandos de arriba, uno por uno; `npm install` tarda 1-2 minutos y los `warn` son normales). ✅ Termina con `added … packages`, sin `ERR!`; `ls` (macOS/Linux) o `dir` (Windows) muestra `package.json`.
+3. **`npm run setup`.** El asistente comprueba Node, dependencias, Git e internet (`npm run setup -- --comprobar` ejecuta solo eso) y te va preguntando:
+   1. Se abre el navegador para iniciar sesión con tu cuenta de Google. Acepta y vuelve a la terminal.
+   2. **Id de proyecto:** minúsculas, números y guiones, de 6 a 30 caracteres y empezando por letra (p. ej. `cocinin-maria`). Será tu URL, `https://<id>.web.app`; es único en todo Firebase (si está cogido, pide otro) y público: no pongas nada personal.
+   3. Puede pedirte aceptar términos de Google Cloud o de Firebase (solo la primera vez): acepta en la página que se abre y pulsa Enter.
+   4. Crea el proyecto, la base de datos y las reglas sin que hagas nada.
+   5. **Paso manual (1 minuto):** abre la dirección de Authentication que te muestra, pulsa **Comenzar** y, en *Correo electrónico/contraseña*, **Habilitar** y **Guardar**. Vuelve y pulsa Enter.
+   6. Compila y publica la web (1-2 minutos). ✅ Termina con `✔ Listo. Abre https://<tu-id>.web.app …`.
 
 Ya está instalada cuando tu URL abre CocinIN y has creado tu usuario. Lo demás ([usuarios](#usuarios-y-seguridad), [avisos](#avisos-en-el-móvil-opcional), [instalarla como app](#instalarla-como-app)) es configuración opcional.
 
-**Ten en cuenta:** no hace falta activar facturación (ignora cualquier oferta de pasar a Blaze); la base de datos se crea en Europa (`eur3`) y la región no se puede cambiar después; una instalación (un proyecto de Firebase) por casa, para no mezclar datos; y si `setup` falla a medias, puedes repetirlo con el mismo id y reutiliza lo que ya exista.
-
-<details>
-<summary>Guía paso a paso (primera vez con la terminal, Node o Firebase)</summary>
-
-Son unos 15 minutos y no hace falta saber programar: se copian y pegan comandos y se lee lo que responde. Tras cada paso hay una **comprobación**; si no sale lo esperado, no sigas y mira [Problemas frecuentes](#problemas-frecuentes).
-
-**La terminal** es una ventana donde se escriben comandos y se confirman con Enter. Todos los comandos de esta guía van ahí.
-
-| Sistema | Cómo abrirla |
-| --- | --- |
-| Windows | Tecla Windows, escribe **PowerShell** y ábrelo. |
-| macOS | Cmd + Espacio, escribe **Terminal** y ábrelo. |
-| Linux | Busca **Terminal** en tus aplicaciones. |
-
-**Paso 1 · Instalar Node.js y Git**
-
-- **Windows** (PowerShell): `winget install OpenJS.NodeJS.LTS` y después `winget install Git.Git`. Sin `winget`, usa los instaladores de <https://nodejs.org> y <https://git-scm.com> (opciones por defecto).
-- **macOS**: `brew install node git`. Sin `brew`, usa los instaladores de arriba.
-- **Linux**: `nodejs` (v20 o superior), `npm` y `git` con el gestor de tu distribución.
-
-**Cierra la terminal y ábrela de nuevo** (si no, no encuentra lo recién instalado) y comprueba con `node --version` y `git --version`.
-✅ Esperado: `v20.…` o superior, y `git version 2.…`.
-
-**Paso 2 · Descargar CocinIN**
-
-Escribe `git clone …`, `cd cocinin` y `npm install` (los de arriba, uno por uno). `npm install` tarda 1-2 minutos; los avisos `warn` son normales.
-✅ Esperado: termina con `added … packages`, sin `ERR!`. Con `ls` (macOS/Linux) o `dir` (Windows) debe aparecer `package.json`.
-
-**Paso 3 · `npm run setup`**
-
-El asistente te va preguntando, en este orden:
-
-1. **Se abre el navegador** para iniciar sesión con tu cuenta de Google y autorizar Firebase CLI. Acepta y vuelve a la terminal.
-2. **Te pide el id de proyecto**: minúsculas, números y guiones, de 6 a 30 caracteres y empezando por letra (p. ej. `cocinin-maria`). Es único en todo Firebase (si está cogido, te pide otro) y es visible públicamente: no pongas nada personal.
-3. **Puede pedirte aceptar términos** de Google Cloud o de Firebase (solo la primera vez con esa cuenta): acepta en la página que se abre y pulsa Enter.
-4. Crea el proyecto, la base de datos y las reglas sin que hagas nada.
-5. **Paso manual (1 minuto):** abre la dirección de Authentication que te muestra, pulsa **Comenzar** y, en *Correo electrónico/contraseña*, **Habilitar** y **Guardar**. Vuelve y pulsa Enter.
-6. Compila y publica la web (1-2 minutos).
-
-✅ Esperado: termina con `✔ Listo. Abre https://<tu-id>.web.app …`. Ábrela y crea tu usuario.
-
-**Seguridad:** el asistente guarda tu sesión de Firebase en tu ordenador, así que no lo hagas en uno público o compartido. No subas ni compartas `firebase-debug.log` (si aparece) ni, si montas los avisos, `notifier/secrets/`.
+**Ten en cuenta**
+- No hace falta activar facturación: ignora cualquier oferta de pasar al plan Blaze.
+- La base de datos se crea en Europa (`eur3`) y la región no se puede cambiar después.
+- Una instalación (un proyecto de Firebase) por casa, para no mezclar datos.
+- Si `setup` falla a medias, repítelo con el mismo id: reutiliza lo que ya exista.
+- El asistente guarda tu sesión de Firebase en tu ordenador: no lo hagas en uno público o compartido. No subas ni compartas `firebase-debug.log` ni, si montas los avisos, `notifier/secrets/`.
 
 </details>
 
