@@ -86,7 +86,8 @@ export default function LoginPage() {
         onSubmit={handleSubmit}
         className="w-full max-w-sm rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-moss-800 dark:bg-moss-900"
       >
-        <img src="/icons/icon.svg" alt="CocinIN" className="mb-3 h-16 w-16 rounded-2xl" />
+        <img src="/icons/icon.svg" alt="" className="mb-3 h-16 w-16 rounded-2xl" />
+        <h1 className="mb-1 text-xl font-semibold text-gray-900 dark:text-gray-100">CocinIN</h1>
         <p className="mb-6 text-sm text-gray-500 dark:text-gray-400">
           {setupMode ? 'Bienvenido. Crea el primer usuario para empezar.' : 'Inicia sesión para continuar'}
         </p>
@@ -118,8 +119,8 @@ export default function LoginPage() {
           className="field mb-4 w-full"
         />
 
-        {error && <p className="mb-4 text-sm text-red-600 dark:text-red-400">{error}</p>}
-        {info && <p className="mb-4 text-sm text-emerald-700 dark:text-emerald-400">{info}</p>}
+        {error && <p role="alert" className="mb-4 text-sm text-red-700 dark:text-red-400">{error}</p>}
+        {info && <p role="status" className="mb-4 text-sm text-emerald-700 dark:text-emerald-400">{info}</p>}
 
         <button
           type="submit"
@@ -132,7 +133,7 @@ export default function LoginPage() {
           <button
             type="button"
             onClick={handleReset}
-            className="mt-3 w-full text-center text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+            className="mt-3 w-full py-2 text-center text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
           >
             ¿Has olvidado la contraseña?
           </button>

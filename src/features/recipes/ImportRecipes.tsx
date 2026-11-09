@@ -35,7 +35,8 @@ function CreateMissing({ names, groups }: { names: string[]; groups: Group[] }) 
       // Sin existencias: son cosas que no tienes; así la receta no sale como «completa» por error.
       for (const n of names) await addIngredient(n, picked[n], { mode: 'none', date: null, quantity: '' }, false)
     } catch (e) {
-      setError(`No se pudieron crear: ${(e as Error).message}`)
+      console.error(e)
+      setError('No se pudieron crear. Inténtalo de nuevo.')
       setBusy(false)
     }
   }
@@ -66,7 +67,7 @@ function CreateMissing({ names, groups }: { names: string[]; groups: Group[] }) 
           </select>
         </div>
       ))}
-      {error && <p className="text-red-600 dark:text-red-400">{error}</p>}
+      {error && <p className="text-red-700 dark:text-red-400">{error}</p>}
       <div className="flex gap-2">
         <button type="button" disabled={!ready || busy} onClick={create} className={primaryButton}>
           {busy ? 'Creando…' : `Crear ${names.length}`}
@@ -135,7 +136,8 @@ export default function ImportRecipes({
       setDone({ batchId, count: toAdd.length })
     } catch (e) {
       setText(previousText)
-      setError(`No se pudo importar: ${(e as Error).message}`)
+      console.error(e)
+      setError('No se pudo importar. Inténtalo de nuevo.')
     } finally {
       setBusy(false)
     }
@@ -149,7 +151,8 @@ export default function ImportRecipes({
       await undoImport(done.batchId)
       setDone(null)
     } catch (e) {
-      setError(`No se pudo deshacer: ${(e as Error).message}`)
+      console.error(e)
+      setError('No se pudo deshacer. Inténtalo de nuevo.')
     } finally {
       setBusy(false)
     }
@@ -207,7 +210,7 @@ export default function ImportRecipes({
         className="field mb-3 w-full font-mono !text-xs"
       />
 
-      {parsed && !parsed.ok && <p className="mb-3 text-sm text-red-600 dark:text-red-400">{parsed.error}</p>}
+      {parsed && !parsed.ok && <p className="mb-3 text-sm text-red-700 dark:text-red-400">{parsed.error}</p>}
 
       {resolved.length > 0 && (
         <ul className="mb-3 space-y-2">
@@ -229,7 +232,7 @@ export default function ImportRecipes({
                   <p className="pl-6 text-amber-600 dark:text-amber-400">Ya hay una receta con este título.</p>
                 )}
                 {blocked && (
-                  <p className="pl-6 text-red-600 dark:text-red-400">
+                  <p className="pl-6 text-red-700 dark:text-red-400">
                     No se importa: faltan en la Despensa {r.unknown.join(', ')}. Créalos y vuelve a probar.
                   </p>
                 )}
@@ -243,7 +246,7 @@ export default function ImportRecipes({
                   </summary>
                   <ul className="mt-2 space-y-0.5 text-gray-700 dark:text-gray-300">
                     {r.lines.map((l, k) => (
-                      <li key={k} className={l.found ? '' : 'text-red-600 dark:text-red-400'}>
+                      <li key={k} className={l.found ? '' : 'text-red-700 dark:text-red-400'}>
                         {l.found ? '✓' : '✕'} {l.name}
                         {l.quantity && ` — ${l.quantity}${l.unit ? ` ${l.unit}` : ''}`}
                         {!l.quantity && l.unit && ` — ${l.unit}`}
@@ -263,7 +266,7 @@ export default function ImportRecipes({
         </ul>
       )}
 
-      {error && <p className="mb-3 text-sm text-red-600 dark:text-red-400">{error}</p>}
+      {error && <p className="mb-3 text-sm text-red-700 dark:text-red-400">{error}</p>}
 
       <div className="flex gap-2">
         <button

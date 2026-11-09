@@ -24,6 +24,8 @@ import Switch from '../../components/Switch'
 import StickyHeader from '../../components/StickyHeader'
 import { cancelButton, dangerTextButton, outlineButton, primaryButton } from '../../components/buttonStyles'
 import { scrollMainToTop, smoothBehavior } from '../../lib/scroll'
+import { useCollapsedSet } from '../../lib/useCollapsedSet'
+import ListSkeleton from '../../components/ListSkeleton'
 import { matchesSearch } from '../../lib/search'
 import KebabMenu from '../../components/KebabMenu'
 import { expiryBadgeClasses, getExpiryInfo, remainingLabel } from '../../lib/expiry'
@@ -582,22 +584,10 @@ export default function PantryPage() {
   const { recipes } = useRecipes()
   const [showAddGroup, setShowAddGroup] = useState(false)
   const [showAddIngredient, setShowAddIngredient] = useState(false)
-  const [collapsed, setCollapsed] = useState<Set<string>>(new Set())
+  const { collapsed, toggle: toggleCollapsed, expand } = useCollapsedSet('despensa')
   const [search, setSearch] = useState('')
   const [highlightId, setHighlightId] = useState<string | null>(null)
   const searchActive = search.trim().length > 0
-
-  function toggleCollapsed(id: string) {
-    setCollapsed((prev) => {
-      const next = new Set(prev)
-      if (next.has(id)) {
-        next.delete(id)
-      } else {
-        next.add(id)
-      }
-      return next
-    })
-  }
 
   const recipesByIngredient = useMemo(() => {
     const map = new Map<string, string[]>()
@@ -614,11 +604,7 @@ export default function PantryPage() {
     setHighlightId(id)
     window.setTimeout(() => setHighlightId((cur) => (cur === id ? null : cur)), 3000)
     // el grupo destino puede estar plegado: lo desplegamos para llegar al ingrediente
-    setCollapsed((prev) => {
-      const next = new Set(prev)
-      next.delete(groupId ?? NO_GROUP)
-      return next
-    })
+    expand(groupId ?? NO_GROUP)
   }
 
   const sections = useMemo(() => {
@@ -684,16 +670,16 @@ export default function PantryPage() {
         <AddIngredientForm groups={groups} onDone={handleIngredientAdded} />
       )}
 
-      {loading && <p className="text-gray-500 dark:text-gray-400">Cargando…</p>}
+      {loading && <ListSkeleton />}
 
       {!loading && ingredients.length === 0 && groups.length === 0 && (
         <p className="text-gray-500 dark:text-gray-400">
-          Aún no hay ingredientes. Añade el primero con "+ Ingrediente".
+          Aún no hay ingredientes. Añade el primero con «+ Ingrediente».
         </p>
       )}
 
       {!loading && searchActive && visibleSections.length === 0 && (
-        <p className="text-gray-500 dark:text-gray-400">No hay ingredientes que coincidan con "{search.trim()}".</p>
+        <p className="text-gray-500 dark:text-gray-400">No hay ingredientes que coincidan con «{search.trim()}».</p>
       )}
 
       <div className="xl:columns-2 xl:gap-8">

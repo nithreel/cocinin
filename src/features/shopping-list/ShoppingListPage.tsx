@@ -20,6 +20,8 @@ import SectionHeader from '../../components/SectionHeader'
 import StickyHeader from '../../components/StickyHeader'
 import { linkButton, primaryButton, rowAddButton, rowIconButton } from '../../components/buttonStyles'
 import { ChevronIcon, PlusIcon, XIcon } from '../../components/icons'
+import { useCollapsedSet } from '../../lib/useCollapsedSet'
+import ListSkeleton from '../../components/ListSkeleton'
 import { matchesSearch } from '../../lib/search'
 
 function formatRelativeDate(timestamp: number) {
@@ -49,22 +51,6 @@ function groupPurchaseHistory(entries: PurchaseHistoryEntry[]): PurchaseBatch[] 
   return batches
 }
 
-function useCollapsedSet() {
-  const [collapsed, setCollapsed] = useState<Set<string>>(new Set())
-  function toggle(id: string) {
-    setCollapsed((prev) => {
-      const next = new Set(prev)
-      if (next.has(id)) {
-        next.delete(id)
-      } else {
-        next.add(id)
-      }
-      return next
-    })
-  }
-  return { collapsed, toggle }
-}
-
 export default function ShoppingListPage() {
   const { groups } = useGroups()
   const { ingredients, loading: loadingIngredients } = useIngredients()
@@ -73,9 +59,9 @@ export default function ShoppingListPage() {
   const toast = useToast()
   const [confirming, setConfirming] = useState(false)
   const [historyCollapsed, setHistoryCollapsed] = useState(true)
-  const cartCollapse = useCollapsedSet()
-  const missingCollapse = useCollapsedSet()
-  const batchCollapse = useCollapsedSet()
+  const cartCollapse = useCollapsedSet('lista-compra')
+  const missingCollapse = useCollapsedSet('lista-falta')
+  const batchCollapse = useCollapsedSet('lista-lotes')
   const [missingSearch, setMissingSearch] = useState('')
 
   const purchaseBatches = useMemo(() => groupPurchaseHistory(historyEntries), [historyEntries])
@@ -128,7 +114,7 @@ export default function ShoppingListPage() {
 
       <div className="mb-8">
 
-        {loading && <p className="text-gray-500 dark:text-gray-400">Cargando…</p>}
+        {loading && <ListSkeleton />}
 
         {!loading && items.length === 0 && (
           <p className="text-gray-500 dark:text-gray-400">Tu lista está vacía. Añade algo de lo que te falta, abajo.</p>

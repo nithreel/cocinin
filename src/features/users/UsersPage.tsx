@@ -165,7 +165,7 @@ export default function UsersPage() {
           onChange={(e) => setPassword(e.target.value)}
           className={inputClasses + ' mb-3'}
         />
-        {error && <p className="mb-3 text-sm text-red-600 dark:text-red-400">{error}</p>}
+        {error && <p className="mb-3 text-sm text-red-700 dark:text-red-400">{error}</p>}
         <button
           type="submit"
           disabled={submitting}

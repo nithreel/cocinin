@@ -3,6 +3,7 @@ import { onSnapshot, orderBy, query } from 'firebase/firestore'
 import { useAuth } from '../../auth/AuthContext'
 import { ConfirmDelete } from '../../components/DeleteButton'
 import KebabMenu from '../../components/KebabMenu'
+import ListSkeleton from '../../components/ListSkeleton'
 import StickyHeader from '../../components/StickyHeader'
 import Switch from '../../components/Switch'
 import { BellIcon } from '../../components/icons'
@@ -126,7 +127,7 @@ function NoteForm({
         </>
       )}
 
-      {error && <p className="mb-3 text-sm text-red-600 dark:text-red-400">{error}</p>}
+      {error && <p className="mb-3 text-sm text-red-700 dark:text-red-400">{error}</p>}
       <div className="flex gap-2">
         <button type="submit" disabled={submitting} className={primaryButton}>
           {submitting ? 'Guardando…' : submitLabel}
@@ -229,9 +230,9 @@ export default function NotesPage() {
         <NoteForm members={members} submitLabel="Guardar nota" onSubmit={addNote} onDone={() => setShowForm(false)} />
       )}
 
-      {loading && <p className="text-gray-500 dark:text-gray-400">Cargando…</p>}
+      {loading && <ListSkeleton />}
       {!loading && notes.length === 0 && (
-        <p className="text-gray-500 dark:text-gray-400">Aún no hay notas. Crea la primera con "+ Nota".</p>
+        <p className="text-gray-500 dark:text-gray-400">Aún no hay notas. Crea la primera con «+ Nota».</p>
       )}
 
       <ul className="space-y-3">

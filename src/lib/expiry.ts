@@ -48,7 +48,7 @@ export function getExpiryInfo(ingredient: Ingredient): ExpiryInfo | null {
 export function expiryBadgeClasses(status: ExpiryStatus) {
   switch (status) {
     case 'expired':
-      return 'text-red-600 dark:text-red-400 font-medium'
+      return 'text-red-700 dark:text-red-400 font-medium'
     case 'soon':
       return 'text-amber-700 dark:text-amber-400 font-medium'
     case 'frozen':

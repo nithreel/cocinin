@@ -6,6 +6,7 @@ import { scrollMainToTop } from '../../lib/scroll'
 import { ChevronIcon } from '../../components/icons'
 import SearchInput from '../../components/SearchInput'
 import { matchesSearch } from '../../lib/search'
+import ListSkeleton from '../../components/ListSkeleton'
 import StickyHeader from '../../components/StickyHeader'
 import ImportRecipes from './ImportRecipes'
 import DeleteButton from '../../components/DeleteButton'
@@ -235,7 +236,7 @@ export default function RecipesPage() {
         />
       )}
 
-      {loading && <p className="text-gray-500 dark:text-gray-400">Cargando…</p>}
+      {loading && <ListSkeleton />}
 
       {!loading && recipes.length === 0 && (
         <p className="text-gray-500 dark:text-gray-400">Aún no hay recetas. Crea la primera con «+ Receta».</p>
