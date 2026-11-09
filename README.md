@@ -54,31 +54,81 @@ Tecnología: React 19 + TypeScript + Vite + Tailwind, y Firebase (Authentication
 
 ## Instalación
 
-Necesitas **Node.js 20 o superior**, **Git** y una **cuenta de Google**. No hace falta tarjeta: todo cabe en el plan gratuito de Firebase (Spark) para uso doméstico.
+Son **tres pasos y unos 15 minutos**. No hace falta saber programar: solo copiar y pegar comandos en una terminal y leer lo que responde. Al final de cada paso hay una **comprobación**; si no sale lo esperado, no sigas y mira [Problemas frecuentes](#problemas-frecuentes).
 
-<details>
-<summary>Instalar Node y Git</summary>
+**Qué necesitas**
+- Un ordenador con Windows, macOS o Linux y conexión a internet.
+- Una **cuenta de Google** (la de Gmail vale).
+- **No hace falta tarjeta de crédito.** CocinIN cabe de sobra en el plan gratuito de Firebase (Spark) para uso doméstico.
 
-**Windows** (PowerShell): `winget install OpenJS.NodeJS.LTS` y `winget install Git.Git`; cierra y vuelve a abrir la terminal. Sin `winget`, usa los instaladores de <https://nodejs.org> y <https://git-scm.com>.
-**macOS**: `brew install node git`. **Linux**: `nodejs` (v20+), `npm` y `git` con el gestor de tu distribución.
-Comprueba con `node --version` (v20 o superior).
+**Qué es «la terminal»**: una ventana donde se escriben comandos. Todos los comandos de esta guía se escriben ahí y se confirman con Enter.
 
-</details>
+| Sistema | Cómo abrirla |
+| --- | --- |
+| Windows | Tecla Windows, escribe **PowerShell** y ábrelo. |
+| macOS | Cmd + Espacio, escribe **Terminal** y ábrelo. |
+| Linux | Busca **Terminal** en tus aplicaciones. |
 
-Los comandos son idénticos en Windows (PowerShell), macOS y Linux:
+### Paso 1 · Instalar Node.js y Git
+
+Son dos programas que CocinIN necesita para instalarse (no tendrás que usarlos más).
+
+- **Windows** (en PowerShell): `winget install OpenJS.NodeJS.LTS` y después `winget install Git.Git`. Sin `winget`, usa los instaladores de <https://nodejs.org> y <https://git-scm.com> (acepta las opciones por defecto).
+- **macOS**: `brew install node git`. Si no tienes `brew`, usa los mismos instaladores de arriba.
+- **Linux**: instala `nodejs` (versión 20 o superior), `npm` y `git` con el gestor de tu distribución.
+
+**Cierra la terminal y ábrela de nuevo** (si no, no encuentra los programas recién instalados). Comprueba:
+
+```sh
+node --version
+git --version
+```
+
+✅ Esperado: `node` muestra `v20.…` o superior (p. ej. `v22.11.0`) y `git` muestra `git version 2.…`. Si dice «no se reconoce» o «command not found», repite el cierre y apertura de la terminal; si sigue igual, el programa no se instaló bien. Si `node` es anterior a v20, actualízalo.
+
+### Paso 2 · Descargar CocinIN
+
+En la terminal, uno por uno:
 
 ```sh
 git clone https://github.com/nithreel/cocinin.git
 cd cocinin
 npm install
+```
+
+El primero descarga el proyecto, el segundo entra en su carpeta y el tercero instala lo que necesita (tarda 1-2 minutos; los avisos en amarillo, `warn`, son normales).
+
+✅ Esperado: `npm install` termina con algo como `added … packages` y sin la palabra `ERR!`. Para comprobar que estás en la carpeta correcta, escribe `ls` (macOS/Linux) o `dir` (Windows): debe aparecer `package.json`.
+
+### Paso 3 · Crear tu Firebase y publicar la app
+
+```sh
 npm run setup
 ```
 
-El asistente te pide un **id de proyecto** (será tu dirección: `https://<id>.web.app`, único en todo Firebase), crea el proyecto, la base de datos y las reglas de seguridad, y despliega la web. Te guía en el único paso manual: activar *Correo electrónico/contraseña* en Authentication (1 minuto).
+Es un asistente que te va preguntando. Esto es lo que ocurre, en orden:
 
-Al terminar, abre tu URL: mientras no exista ningún usuario, el login muestra **Crear usuario**, y el primero que se crea es el **administrador**.
+1. **Se abre el navegador** para que inicies sesión con tu cuenta de Google y autorices a Firebase CLI. Acepta y vuelve a la terminal.
+2. **Te pide un «id de proyecto»**: será la dirección de tu app (`https://<id>.web.app`). Usa minúsculas, números y guiones, de 6 a 30 caracteres y empezando por letra (p. ej. `cocinin-maria`). Es **único en todo Firebase**: si está cogido te lo dirá y pides otro. Se puede ver públicamente: no pongas nada personal.
+3. **Puede pedirte aceptar términos** de Google Cloud o de Firebase (solo la primera vez con esa cuenta). Se abre una página: acepta y pulsa Enter en la terminal para reintentar.
+4. **Crea el proyecto, la base de datos y las reglas de seguridad** sin que hagas nada.
+5. **Un único paso manual (1 minuto):** el asistente te da la dirección de Authentication. Ábrela, pulsa **Comenzar** y, en *Correo electrónico/contraseña*, pulsa **Habilitar** y **Guardar**. Vuelve a la terminal y pulsa Enter.
+6. **Compila y publica la web.** Tarda uno o dos minutos.
 
-> ⚠️ **Crea tu usuario nada más desplegar.** Hasta entonces, cualquiera que conozca la URL podría registrarse como administrador.
+✅ Esperado: termina con `✔ Listo. Abre https://<tu-id>.web.app …`.
+
+> ⚠️ **Crea tu usuario nada más terminar.** Abre tu URL: mientras no exista ningún usuario, el login muestra **Crear usuario**, y el primero que se crea es el **administrador**. Hasta entonces, cualquiera que conozca la URL podría registrarse como administrador.
+
+**Has terminado la instalación cuando:** tu URL abre CocinIN, has creado tu usuario y puedes añadir un ingrediente en la Despensa. Lo que sigue (usuarios, avisos, instalarla como app) es **configuración opcional** y se puede hacer cuando quieras: ver [Usuarios y seguridad](#usuarios-y-seguridad), [Avisos en el móvil](#avisos-en-el-móvil-opcional) e [Instalarla como app](#instalarla-como-app).
+
+### Puntos delicados
+
+- **Coste.** No necesitas tarjeta ni activar facturación. Si Firebase o Google Cloud te ofrecen «pasar al plan Blaze» o «activar la facturación», **no hace falta**: puedes ignorarlo.
+- **Inicio de sesión de Google.** El asistente guarda tu sesión de Firebase en tu ordenador. No uses un ordenador público ni compartido.
+- **Región de la base de datos.** El asistente la elige por ti y **no se puede cambiar después**.
+- **Cosas que no debes compartir ni subir a ningún sitio:** el fichero `firebase-debug.log` (si aparece) y, si montas los avisos, `notifier/secrets/`. El `.env` contiene la configuración web de Firebase, que no es secreta, pero tampoco hace falta publicarla.
+- **Una instalación por casa.** No compartas proyecto de Firebase entre casas distintas: se mezclarían los datos.
+- **Si algo falla a medias**, puedes volver a ejecutar `npm run setup` con el mismo id: reutiliza lo que ya exista.
 
 <details>
 <summary>Instalación manual, sin el asistente</summary>
@@ -154,6 +204,7 @@ Tu `.env` y `.firebaserc` no se tocan, así que sigues con tu proyecto y tus dat
 - **Dominio propio**: Firebase Console → Hosting → *Add custom domain*.
 - Límites del plan gratuito (Spark): 50 000 lecturas y 20 000 escrituras al día en Firestore; de sobra para una casa.
 
+<a id="problemas-frecuentes"></a>
 <details>
 <summary>Problemas frecuentes</summary>
 
@@ -165,6 +216,12 @@ Tu `.env` y `.firebaserc` no se tocan, así que sigues con tu proyecto y tus dat
 | «Tu cuenta no tiene acceso a esta cocina» | Que el admin la dé de alta desde **Usuarios**. |
 | El id de proyecto se rechaza | Los ids son únicos en todo Firebase; prueba otro. |
 | `firebase: command not found` | Usa `npx firebase …`. |
+| `node` o `git` «no se reconoce» / «command not found» | Cierra la terminal y ábrela de nuevo tras instalarlos; si sigue, reinstálalos. |
+| `node --version` da menos de v20 | Actualiza Node.js (Paso 1) y vuelve a abrir la terminal. |
+| `npm install` falla con `EACCES` (Linux/macOS) | No uses `sudo`. Instala Node con un gestor de versiones (`nvm`, `mise`) o arregla los permisos de npm. |
+| El navegador no se abre al iniciar sesión (servidor, SSH…) | `npx firebase login --no-localhost`, sigue las instrucciones y repite `npm run setup`. |
+| Al terminar, la URL da «Site Not Found» | Espera un minuto y recarga; si sigue, `npm run deploy`. |
+| Otro error | Copia el mensaje **completo** de la terminal (y mira `firebase-debug.log` si existe) para buscarlo o para abrir una *issue* en GitHub. |
 | Windows: «la ejecución de scripts está deshabilitada» | Una vez: `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`, o usa cmd. |
 | No veo los cambios tras desplegar | Caché de la PWA: cierra y abre la app, o `Ctrl+Shift+R`. |
 
