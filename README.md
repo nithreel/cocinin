@@ -106,7 +106,7 @@ El primero descarga el proyecto, el segundo entra en su carpeta y el tercero ins
 npm run setup
 ```
 
-Es un asistente que te va preguntando. Esto es lo que ocurre, en orden:
+Es un asistente que te va preguntando. Antes de empezar comprueba que tienes Node 20+, las dependencias instaladas y conexión a internet, y si algo falta te dice cómo arreglarlo (puedes lanzar solo esas comprobaciones con `npm run setup -- --comprobar`). Esto es lo que ocurre después, en orden:
 
 1. **Se abre el navegador** para que inicies sesión con tu cuenta de Google y autorices a Firebase CLI. Acepta y vuelve a la terminal.
 2. **Te pide un «id de proyecto»**: será la dirección de tu app (`https://<id>.web.app`). Usa minúsculas, números y guiones, de 6 a 30 caracteres y empezando por letra (p. ej. `cocinin-maria`). Es **único en todo Firebase**: si está cogido te lo dirá y pides otro. Se puede ver públicamente: no pongas nada personal.
@@ -217,7 +217,7 @@ Tu `.env` y `.firebaserc` no se tocan, así que sigues con tu proyecto y tus dat
 | El id de proyecto se rechaza | Los ids son únicos en todo Firebase; prueba otro. |
 | `firebase: command not found` | Usa `npx firebase …`. |
 | `node` o `git` «no se reconoce» / «command not found» | Cierra la terminal y ábrela de nuevo tras instalarlos; si sigue, reinstálalos. |
-| `node --version` da menos de v20 | Actualiza Node.js (Paso 1) y vuelve a abrir la terminal. |
+| `node --version` da menos de v20 | Actualiza Node.js (Paso 1) y vuelve a abrir la terminal. `npm run setup -- --comprobar` lo verifica. |
 | `npm install` falla con `EACCES` (Linux/macOS) | No uses `sudo`. Instala Node con un gestor de versiones (`nvm`, `mise`) o arregla los permisos de npm. |
 | El navegador no se abre al iniciar sesión (servidor, SSH…) | `npx firebase login --no-localhost`, sigue las instrucciones y repite `npm run setup`. |
 | Al terminar, la URL da «Site Not Found» | Espera un minuto y recarga; si sigue, `npm run deploy`. |

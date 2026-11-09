@@ -11,6 +11,49 @@ import { createInterface } from 'node:readline/promises'
 
 // Todo se ejecuta con el propio Node (sin npx ni shell): así funciona igual en Windows, macOS y Linux.
 const require = createRequire(import.meta.url)
+
+// 0. Comprobaciones previas: si algo falta, se dice en claro y cómo arreglarlo, antes de tocar nada.
+// `npm run setup -- --comprobar` solo ejecuta estas comprobaciones y sale.
+{
+  const stop = (msg) => {
+    console.error(`\n✖ ${msg}`)
+    process.exit(1)
+  }
+  console.log('Comprobando que todo está listo…')
+
+  const major = Number(process.versions.node.split('.')[0])
+  if (major < 20) {
+    stop(
+      `Tienes Node.js ${process.versions.node} y CocinIN necesita la versión 20 o superior.\n` +
+        '  Actualízalo (Windows: winget install OpenJS.NodeJS.LTS; macOS: brew install node), cierra la terminal, ábrela de nuevo y repite npm run setup.',
+    )
+  }
+  console.log(`  ✔ Node.js ${process.versions.node}`)
+
+  try {
+    require.resolve('firebase-tools/package.json')
+  } catch {
+    stop('Faltan las dependencias del proyecto. Ejecuta npm install (dentro de la carpeta cocinin) y vuelve a lanzar npm run setup.')
+  }
+  console.log('  ✔ Dependencias instaladas')
+
+  const git = spawnSync('git', ['--version'], { encoding: 'utf8' })
+  if (git.status === 0) console.log(`  ✔ ${git.stdout.trim()}`)
+  else console.log('  ! Git no está instalado: no hace falta para este asistente, pero lo necesitarás para actualizar CocinIN más adelante.')
+
+  try {
+    await fetch('https://firebase.google.com', { method: 'HEAD', signal: AbortSignal.timeout(8000) })
+    console.log('  ✔ Conexión a internet')
+  } catch {
+    stop('No hay conexión con Google. Comprueba tu internet (o el proxy/VPN) y repite npm run setup.')
+  }
+
+  if (process.argv.includes('--comprobar')) {
+    console.log('\nTodo en orden: puedes ejecutar npm run setup.')
+    process.exit(0)
+  }
+}
+
 const FIREBASE_BIN = join(dirname(require.resolve('firebase-tools/package.json')), 'lib', 'bin', 'firebase.js')
 
 const rl = createInterface({ input: process.stdin, output: process.stdout })
