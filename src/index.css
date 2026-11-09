@@ -27,6 +27,19 @@
   --head-h: 44px;
 }
 
+/* controles nativos (fecha, desplegables, scroll) en el tema que toque, y checkboxes con el verde de la app */
+:root {
+  color-scheme: light dark;
+}
+input[type='checkbox'] {
+  accent-color: var(--color-emerald-700);
+}
+@media (prefers-color-scheme: dark) {
+  input[type='checkbox'] {
+    accent-color: var(--color-emerald-500);
+  }
+}
+
 html,
 body,
 #root {

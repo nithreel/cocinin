@@ -143,7 +143,7 @@ export default function AlertsPage() {
                     checked={prefs[k.key]}
                     disabled={busy}
                     onChange={() => toggle(k.key)}
-                    className="h-5 w-5 shrink-0 rounded border-gray-300 text-emerald-700 focus:ring-emerald-500 dark:border-moss-600 dark:bg-moss-800"
+                    className="h-5 w-5 shrink-0"
                   />
                 </label>
               </li>

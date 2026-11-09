@@ -40,7 +40,7 @@ export default function ErrorToast() {
   return (
     <div
       role="alert"
-      className="fixed inset-x-4 bottom-20 z-50 mx-auto max-w-md rounded-lg bg-red-600 px-4 py-3 text-sm text-white shadow-lg md:bottom-6"
+      className="fixed inset-x-4 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-50 mx-auto max-w-md rounded-lg bg-red-600 px-4 py-3 text-sm text-white shadow-lg md:bottom-6"
     >
       {message}
     </div>

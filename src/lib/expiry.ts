@@ -50,7 +50,7 @@ export function expiryBadgeClasses(status: ExpiryStatus) {
     case 'expired':
       return 'text-red-600 dark:text-red-400 font-medium'
     case 'soon':
-      return 'text-amber-600 dark:text-amber-400 font-medium'
+      return 'text-amber-700 dark:text-amber-400 font-medium'
     case 'frozen':
       return 'text-frost-700 dark:text-frost-400 font-medium'
     default:

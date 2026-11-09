@@ -238,7 +238,7 @@ export default function ImportRecipes({
                     disabled={blocked}
                     checked={!blocked && isChecked(i)}
                     onChange={() => setChecked((c) => ({ ...c, [i]: !isChecked(i) }))}
-                    className="mt-0.5 h-4 w-4 shrink-0 rounded border-gray-300 text-emerald-700 focus:ring-emerald-500 dark:border-moss-600 dark:bg-moss-800"
+                    className="mt-0.5 h-4 w-4 shrink-0"
                   />
                   <span className="font-medium">{r.recipe.title}</span>
                 </label>

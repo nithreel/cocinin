@@ -11,7 +11,7 @@ export const dangerTextButton =
 
 /** Confirmación definitiva de un borrado. */
 export const dangerButton =
-  'rounded-md bg-red-400 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-500 disabled:opacity-50'
+  'rounded-md bg-red-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50'
 
 /** Botón secundario con borde («+ Grupo», «Importar»). */
 export const outlineButton =

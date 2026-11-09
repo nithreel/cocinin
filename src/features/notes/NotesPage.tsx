@@ -114,7 +114,7 @@ function NoteForm({
                 <Switch checked={recipients.has(m.id)} onChange={(on) => toggleRecipient(m.id, on)} label={`Avisar a ${memberName(m)}`} />
                 <span className="min-w-0 truncate text-sm text-gray-900 dark:text-gray-100">
                   {memberName(m)}
-                  {m.id === user?.uid && <span className="ml-2 text-xs text-gray-400">(tú)</span>}
+                  {m.id === user?.uid && <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">(tú)</span>}
                 </span>
               </li>
             ))}

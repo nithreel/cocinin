@@ -186,7 +186,7 @@ export default function RecipeForm({
                         type="checkbox"
                         checked={isSelected}
                         onChange={() => toggleIngredient(ing.id)}
-                        className="h-4 w-4 shrink-0 rounded border-gray-300 text-emerald-700 focus:ring-emerald-500 dark:border-moss-600 dark:bg-moss-800"
+                        className="h-4 w-4 shrink-0"
                       />
                       {ing.name}
                     </label>
@@ -209,7 +209,7 @@ export default function RecipeForm({
                             type="checkbox"
                             checked={selected[ing.id].optional}
                             onChange={() => toggleOptional(ing.id)}
-                            className="h-4 w-4 rounded border-gray-300 text-emerald-700 focus:ring-emerald-500 dark:border-moss-600 dark:bg-moss-800"
+                            className="h-4 w-4"
                           />
                           Opcional
                         </label>

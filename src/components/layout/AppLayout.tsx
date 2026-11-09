@@ -92,7 +92,7 @@ function Brand({ size }: { size: string }) {
   return (
     <div className="flex items-center gap-2">
       <img src="/icons/icon.svg" alt="" className={size + ' rounded-lg'} />
-      <span className="text-lg font-semibold text-gray-900 dark:text-gray-100">CocinIn</span>
+      <span className="text-lg font-semibold text-gray-900 dark:text-gray-100">CocinIN</span>
     </div>
   )
 }
@@ -145,7 +145,7 @@ export default function AppLayout() {
         </div>
       </main>
 
-      <nav className="flex shrink-0 border-t border-gray-200 bg-white md:hidden dark:border-moss-800 dark:bg-moss-900">
+      <nav className="flex shrink-0 border-t border-gray-200 bg-white pb-[env(safe-area-inset-bottom)] md:hidden dark:border-moss-800 dark:bg-moss-900">
         {NAV_ITEMS.map((item) => (
           <NavLink
             key={item.to}

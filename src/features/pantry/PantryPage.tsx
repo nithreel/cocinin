@@ -332,7 +332,7 @@ function IngredientRow({
               {ingredient.quantity && (
                 <span className="text-gray-500 dark:text-gray-400">{remainingLabel(ingredient.quantity)} {ingredient.quantity}</span>
               )}
-              {expiryInfo && ingredient.quantity && <span className="text-gray-400"> · </span>}
+              {expiryInfo && ingredient.quantity && <span className="text-gray-500 dark:text-gray-400"> · </span>}
               {expiryInfo && <span className={expiryBadgeClasses(expiryInfo.status)}>{expiryInfo.label}</span>}
             </span>
           )}
@@ -411,7 +411,7 @@ function IsFoodCheckbox({
         type="checkbox"
         checked={checked}
         onChange={(e) => onChange(e.target.checked)}
-        className="mt-0.5 h-4 w-4 shrink-0 rounded border-gray-300 text-emerald-700 focus:ring-emerald-500 dark:border-moss-600 dark:bg-moss-800"
+        className="mt-0.5 h-4 w-4 shrink-0"
       />
       <span>
         Es comida
@@ -780,7 +780,7 @@ export default function PantryPage() {
               />
               {!isCollapsed &&
                 (section.items.length === 0 ? (
-                  <p className="rounded-lg border border-dashed border-gray-200 px-4 py-3 text-sm text-gray-400 dark:border-moss-700 dark:text-gray-500">
+                  <p className="rounded-lg border border-dashed border-gray-200 px-4 py-3 text-sm text-gray-500 dark:border-moss-700 dark:text-gray-400">
                     Sin ingredientes en este grupo.
                   </p>
                 ) : (

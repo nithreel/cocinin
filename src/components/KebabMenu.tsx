@@ -68,7 +68,7 @@ export default function KebabMenu({ items }: { items: MenuItem[] }) {
         aria-label="Más opciones"
         aria-haspopup="menu"
         aria-expanded={open}
-        className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-moss-800 dark:hover:text-gray-300"
+        className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-moss-800 dark:hover:text-gray-300"
       >
         <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor">
           <circle cx="12" cy="5" r="1.75" />

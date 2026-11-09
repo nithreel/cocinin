@@ -55,7 +55,7 @@ function MemberRow({ m, isSelf }: { m: Member; isSelf: boolean }) {
       <span className="min-w-0">
         <span className="block truncate text-gray-900 dark:text-gray-100">
           {memberName(m)}
-          {isSelf && <span className="ml-2 text-xs text-gray-400">(tú)</span>}
+          {isSelf && <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">(tú)</span>}
           {m.role === 'admin' && <span className="ml-2 text-xs text-emerald-600 dark:text-emerald-400">Admin</span>}
         </span>
         {m.alias?.trim() && <span className="block truncate text-xs text-gray-500 dark:text-gray-400">{m.email}</span>}
