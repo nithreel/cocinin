@@ -65,21 +65,29 @@ npm run setup
 
 > ⚠️ **Crea tu usuario nada más desplegar:** el primero que se crea es el administrador y, hasta entonces, cualquiera con la URL podría serlo.
 
-**¿Primera vez, o te falta Node o Git?** Abre la guía de abajo: hay un instalador de un solo comando.
+**¿Primera vez, o te falta Node o Git?** Abre la guía de abajo: puedes usar un instalador de un solo comando o seguir los pasos a mano.
 
 <details>
 <summary>Guía para quien empieza de cero</summary>
 
-**Instalador de un comando.** Abre una terminal (Windows: tecla Windows → **PowerShell**; macOS: Cmd + Espacio → **Terminal**; Linux: **Terminal**), pega la línea de tu sistema y pulsa Enter. Instala Git y Node.js si faltan, descarga CocinIN en la carpeta `cocinin` de tu usuario, instala lo necesario y lanza el asistente de Firebase. Puedes leer el script antes de ejecutarlo: [`instalar.sh`](instalar.sh) · [`instalar.ps1`](instalar.ps1).
+Hay **dos formas** de instalarlo. **Elige una**: con la A no necesitas hacer nada de la B.
+
+#### Opción A · Instalador de un comando (la más fácil)
+
+Abre una terminal (Windows: tecla Windows → **PowerShell**; macOS: Cmd + Espacio → **Terminal**; Linux: **Terminal**), pega la línea de tu sistema y pulsa Enter. Instala Git y Node.js si faltan, descarga CocinIN en la carpeta `cocinin` de tu usuario, instala lo necesario y lanza el asistente de Firebase. Puedes leer el script antes de ejecutarlo: [`instalar.sh`](instalar.sh) · [`instalar.ps1`](instalar.ps1).
 
 | Sistema | Comando |
 | --- | --- |
 | Windows | `irm https://raw.githubusercontent.com/nithreel/cocinin/main/instalar.ps1 \| iex` |
 | macOS / Linux | `curl -fsSL https://raw.githubusercontent.com/nithreel/cocinin/main/instalar.sh \| bash` |
 
-Te pedirá confirmación antes de instalar nada (y, en Linux, tu contraseña para instalar Git). Se detiene en el único paso que no se puede automatizar, **activar el acceso por correo en Firebase**, y te explica cómo.
+Te pedirá confirmación antes de instalar nada (y, en Linux, tu contraseña para instalar Git). Se detiene en el único paso que no se puede automatizar, **activar el acceso por correo en Firebase**, y te explica cómo. Con esto has terminado: salta a «Ya está instalada…» más abajo.
 
-**Paso a paso, a mano** (unos 15 minutos). Tras cada paso hay una **comprobación**; si no sale lo esperado, no sigas y mira [Problemas frecuentes](#problemas-frecuentes).
+---
+
+#### Opción B · Paso a paso, a mano
+
+Es lo mismo que hace el instalador, pero tecleando tú cada comando (unos 15 minutos). Tras cada paso hay una **comprobación**; si no sale lo esperado, no sigas y mira [Problemas frecuentes](#problemas-frecuentes).
 
 1. **Instalar Node.js y Git.**
    - Windows (PowerShell): `winget install OpenJS.NodeJS.LTS` y `winget install Git.Git`. Sin `winget`, los instaladores de <https://nodejs.org> y <https://git-scm.com>.
@@ -94,9 +102,13 @@ Te pedirá confirmación antes de instalar nada (y, en Linux, tu contraseña par
    5. **Paso manual (1 minuto):** abre la dirección de Authentication que te muestra, pulsa **Comenzar** y, en *Correo electrónico/contraseña*, **Habilitar** y **Guardar**. Vuelve y pulsa Enter.
    6. Compila y publica la web (1-2 minutos). ✅ Termina con `✔ Listo. Abre https://<tu-id>.web.app …`.
 
-Ya está instalada cuando tu URL abre CocinIN y has creado tu usuario. Lo demás ([usuarios](#usuarios-y-seguridad), [avisos](#avisos-en-el-móvil-opcional), [instalarla como app](#instalarla-como-app)) es configuración opcional.
+---
 
-**Ten en cuenta**
+#### Ya está instalada
+
+Tanto con la opción A como con la B, la instalación ha terminado cuando tu URL abre CocinIN y has creado tu usuario. Lo demás ([usuarios](#usuarios-y-seguridad), [avisos](#avisos-en-el-móvil-opcional), [instalarla como app](#instalarla-como-app)) es configuración opcional.
+
+**Ten en cuenta** (vale para las dos opciones)
 - No hace falta activar facturación: ignora cualquier oferta de pasar al plan Blaze.
 - La base de datos se crea en Europa (`eur3`) y la región no se puede cambiar después.
 - Una instalación (un proyecto de Firebase) por casa, para no mezclar datos.
