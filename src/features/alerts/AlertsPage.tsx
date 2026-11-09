@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react'
+import Switch from '../../components/Switch'
+import StickyHeader from '../../components/StickyHeader'
 import { useAuth } from '../../auth/AuthContext'
 import { cancelButton, outlineButton, primaryButton } from '../../components/buttonStyles'
 import type { PushPrefs } from '../../lib/collections'
@@ -13,7 +15,7 @@ import {
 } from '../../lib/push'
 
 const KINDS: { key: keyof PushPrefs; label: string; hint: string }[] = [
-  { key: 'gastado', label: 'Elemento gastado', hint: 'Cuando algo de la despensa se marca como agotado' },
+  { key: 'gastado', label: 'Ingrediente agotado', hint: 'Cuando algo de la despensa se marca como agotado' },
   { key: 'lista', label: 'Lista de la compra', hint: 'Cuando se están añadiendo varios elementos' },
   { key: 'compra', label: 'Compra hecha', hint: 'Cuando se confirma la compra' },
   { key: 'receta', label: 'Receta nueva', hint: 'Cuando entra una receta en el recetario' },
@@ -47,7 +49,8 @@ export default function AlertsPage() {
       })
       .catch((e: Error) => {
         if (cancelled) return
-        setError(e.message)
+        console.error(e)
+        setError('No se han podido cargar los avisos. Inténtalo de nuevo.')
         setState('off')
       })
     return () => {
@@ -61,7 +64,8 @@ export default function AlertsPage() {
     try {
       await action()
     } catch (e) {
-      setError((e as Error).message)
+      console.error(e)
+      setError('No se ha podido completar la acción. Inténtalo de nuevo.')
     } finally {
       setBusy(false)
     }
@@ -95,7 +99,7 @@ export default function AlertsPage() {
 
   return (
     <div>
-      <h2 className="mb-4 text-2xl font-semibold text-gray-900 dark:text-gray-100">Avisos</h2>
+      <StickyHeader title="Avisos" />
 
       {state === null && <p className="text-gray-500 dark:text-gray-400">Cargando…</p>}
 
@@ -125,27 +129,19 @@ export default function AlertsPage() {
             )}
           </div>
 
-          <ul
-            className={
-              'mb-4 listbox ' +
-              (state === 'on' ? '' : 'opacity-60')
-            }
-          >
+          {state !== 'on' && (
+            <p className="mb-2 text-sm text-gray-500 dark:text-gray-400">
+              Elige qué avisos quieres; se aplicarán al activarlos en este dispositivo.
+            </p>
+          )}
+          <ul className="mb-4 listbox">
             {KINDS.map((k) => (
-              <li key={k.key}>
-                <label className="flex items-center justify-between gap-3 px-4 py-3">
-                  <span className="min-w-0">
-                    <span className="block text-sm text-gray-900 dark:text-gray-100">{k.label}</span>
-                    <span className="block text-xs text-gray-500 dark:text-gray-400">{k.hint}</span>
-                  </span>
-                  <input
-                    type="checkbox"
-                    checked={prefs[k.key]}
-                    disabled={busy}
-                    onChange={() => toggle(k.key)}
-                    className="h-5 w-5 shrink-0"
-                  />
-                </label>
+              <li key={k.key} className="flex items-center gap-3 px-4 py-3">
+                <Switch checked={prefs[k.key]} disabled={busy} onChange={() => toggle(k.key)} label={k.label} />
+                <span className="min-w-0">
+                  <span className="block text-sm text-gray-900 dark:text-gray-100">{k.label}</span>
+                  <span className="block text-xs text-gray-500 dark:text-gray-400">{k.hint}</span>
+                </span>
               </li>
             ))}
           </ul>

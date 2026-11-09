@@ -8,7 +8,6 @@ import {
   setIngredientInPantry,
   updateGroup,
   updateIngredient,
-  updateIngredientExpiry,
   useGroups,
   useIngredients,
   useRecipes,
@@ -96,7 +95,6 @@ function IngredientRow({
   const [busy, setBusy] = useState(false)
   const [panelOpen, setPanelOpen] = useState(false)
   const rowRef = useRef<HTMLLIElement>(null)
-  const [editing, setEditing] = useState(false)
   const [confirmingDelete, setConfirmingDelete] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [name, setName] = useState(ingredient.name)
@@ -137,6 +135,8 @@ function IngredientRow({
       closePanel()
       return
     }
+    setName(ingredient.name)
+    setGroupId(ingredient.groupId ?? NO_GROUP)
     setExpiryMode(ingredient.expiryMode ?? 'none')
     setExpiryDate(ingredient.expiryDate ?? ingredient.stockedDate ?? '')
     setQuantity(ingredient.quantity ?? '')
@@ -147,18 +147,6 @@ function IngredientRow({
   useEffect(() => {
     if (panelOpen) rowRef.current?.scrollIntoView({ block: 'nearest', behavior: smoothBehavior() })
   }, [panelOpen, confirmingDelete])
-
-  async function handleSaveDates(e: FormEvent) {
-    e.preventDefault()
-    if (!ingredient.inPantry) return
-    setSaving(true)
-    try {
-      await updateIngredientExpiry(ingredient.id, { mode: expiryMode, date: expiryDate || null, quantity })
-      closePanel()
-    } finally {
-      setSaving(false)
-    }
-  }
 
   async function toggleFrozen() {
     setBusy(true)
@@ -195,16 +183,6 @@ function IngredientRow({
     }
   }
 
-  function startEdit() {
-    setName(ingredient.name)
-    setGroupId(ingredient.groupId ?? NO_GROUP)
-    setExpiryMode(ingredient.expiryMode ?? 'none')
-    setExpiryDate(ingredient.expiryDate ?? ingredient.stockedDate ?? '')
-    setQuantity(ingredient.quantity ?? '')
-    closePanel()
-    setEditing(true)
-  }
-
   async function handleSave(e: FormEvent) {
     e.preventDefault()
     if (!name.trim()) return
@@ -212,62 +190,10 @@ function IngredientRow({
     try {
       const expiry: ExpiryInput = { mode: expiryMode, date: expiryDate || null, quantity }
       await updateIngredient(ingredient.id, name.trim(), groupId === NO_GROUP ? null : groupId, expiry)
-      setEditing(false)
+      closePanel()
     } finally {
       setSaving(false)
     }
-  }
-
-  if (editing) {
-    return (
-      <li
-        className={
-          'py-2 pl-3 pr-1'
-        }
-      >
-        <form onSubmit={handleSave} className="flex flex-col gap-2">
-          <div className="flex flex-wrap items-center gap-2">
-            <input
-              autoFocus
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="min-w-32 flex-1 field"
-            />
-            <select
-              value={groupId}
-              onChange={(e) => setGroupId(e.target.value)}
-              className="field"
-            >
-              <option value={NO_GROUP}>Sin grupo</option>
-              {groups.map((g) => (
-                <option key={g.id} value={g.id}>
-                  {g.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <ExpiryFields mode={expiryMode} date={expiryDate} onModeChange={setExpiryMode} onDateChange={setExpiryDate} quantity={quantity} onQuantityChange={setQuantity} />
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              type="submit"
-              disabled={saving}
-              className={primaryButton}
-            >
-              Guardar
-            </button>
-            <button
-              type="button"
-              onClick={() => setEditing(false)}
-              className={cancelButton}
-            >
-              Cancelar
-            </button>
-          </div>
-        </form>
-      </li>
-    )
   }
 
   const expiryInfo = getExpiryInfo(ingredient)
@@ -344,13 +270,33 @@ function IngredientRow({
 
       {panelOpen && (
         <form
-          onSubmit={handleSaveDates}
+          onSubmit={handleSave}
           className="mt-2 flex flex-col gap-2 border-t border-gray-100 pt-2 dark:border-moss-800"
         >
-          {ingredient.inPantry && !confirmingDelete && (
-            <div className="flex flex-wrap items-center gap-2">
-              <ExpiryFields mode={expiryMode} date={expiryDate} onModeChange={setExpiryMode} onDateChange={setExpiryDate} quantity={quantity} onQuantityChange={setQuantity} />
-            </div>
+          {!confirmingDelete && (
+            <>
+              <div className="flex flex-wrap items-center gap-2">
+                <input
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  aria-label="Nombre"
+                  className="field min-w-32 flex-1"
+                />
+                <select value={groupId} onChange={(e) => setGroupId(e.target.value)} aria-label="Grupo" className="field">
+                  <option value={NO_GROUP}>Sin grupo</option>
+                  {groups.map((g) => (
+                    <option key={g.id} value={g.id}>
+                      {g.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              {ingredient.inPantry && (
+                <div className="flex flex-wrap items-center gap-2">
+                  <ExpiryFields mode={expiryMode} date={expiryDate} onModeChange={setExpiryMode} onDateChange={setExpiryDate} quantity={quantity} onQuantityChange={setQuantity} />
+                </div>
+              )}
+            </>
           )}
 
           {confirmingDelete ? (
@@ -371,28 +317,15 @@ function IngredientRow({
             </>
           ) : (
             <div className="flex items-center gap-2">
-              {ingredient.inPantry && (
-                <>
-                  <button
-                    type="submit"
-                    disabled={saving}
-                    className={primaryButton}
-                  >
-                    Guardar
-                  </button>
-                  <button type="button" onClick={closePanel} className={cancelButton}>
-                    Cancelar
-                  </button>
-                </>
-              )}
-              <div className="ml-auto flex items-center gap-1">
-                <button type="button" onClick={startEdit} className={cancelButton}>
-                  Editar
-                </button>
-                <button type="button" onClick={() => setConfirmingDelete(true)} className={dangerTextButton}>
-                  Eliminar
-                </button>
-              </div>
+              <button type="submit" disabled={saving || !name.trim()} className={primaryButton}>
+                Guardar
+              </button>
+              <button type="button" onClick={closePanel} className={cancelButton}>
+                Cancelar
+              </button>
+              <button type="button" onClick={() => setConfirmingDelete(true)} className={dangerTextButton + ' ml-auto'}>
+                Eliminar
+              </button>
             </div>
           )}
         </form>

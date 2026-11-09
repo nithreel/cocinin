@@ -7,6 +7,7 @@ import PantryPage from './features/pantry/PantryPage'
 import ShoppingListPage from './features/shopping-list/ShoppingListPage'
 import UsersPage from './features/users/UsersPage'
 import AlertsPage from './features/alerts/AlertsPage'
+import MorePage from './features/more/MorePage'
 import NotesPage from './features/notes/NotesPage'
 import RecipesPage from './features/recipes/RecipesPage'
 import { isFirebaseConfigured } from './firebase'
@@ -39,6 +40,7 @@ export default function App() {
           <Route path="/lista" element={<ShoppingListPage />} />
           <Route path="/recetario" element={<RecipesPage />} />
           <Route path="/notas" element={<NotesPage />} />
+          <Route path="/mas" element={<MorePage />} />
           <Route path="/avisos" element={<AlertsPage />} />
           <Route path="/usuarios" element={<UsersPage />} />
         </Route>

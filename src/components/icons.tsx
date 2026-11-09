@@ -174,3 +174,13 @@ export function CheckIcon() {
     </Icon>
   )
 }
+
+export function MoreIcon() {
+  return (
+    <Icon>
+      <circle cx="5.5" cy="12" r="1.5" />
+      <circle cx="12" cy="12" r="1.5" />
+      <circle cx="18.5" cy="12" r="1.5" />
+    </Icon>
+  )
+}
