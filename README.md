@@ -54,21 +54,9 @@ Tecnología: React 19 + TypeScript + Vite + Tailwind, y Firebase (Authentication
 
 ## Instalación
 
-Necesitas **Node.js 20+**, **Git** y una **cuenta de Google** (sin tarjeta: plan gratuito de Firebase). Igual en Windows (PowerShell), macOS y Linux:
-
-```sh
-git clone https://github.com/nithreel/cocinin.git
-cd cocinin
-npm install
-npm run setup
-```
+Necesitas una **cuenta de Google** (sin tarjeta: plan gratuito de Firebase). Node.js y Git los instala el propio instalador, o tú a mano. Igual en Windows, macOS y Linux.
 
 > ⚠️ **Crea tu usuario nada más desplegar:** el primero que se crea es el administrador y, hasta entonces, cualquiera con la URL podría serlo.
-
-**¿Primera vez, o te falta Node o Git?** Abre la guía de abajo: puedes usar un instalador de un solo comando o seguir los pasos a mano.
-
-<details>
-<summary>Guía para quien empieza de cero</summary>
 
 Hay **dos formas** de instalarlo. **Elige una**: con la A no necesitas hacer nada de la B.
 
@@ -93,7 +81,7 @@ Es lo mismo que hace el instalador, pero tecleando tú cada comando (unos 15 min
    - Windows (PowerShell): `winget install OpenJS.NodeJS.LTS` y `winget install Git.Git`. Sin `winget`, los instaladores de <https://nodejs.org> y <https://git-scm.com>.
    - macOS: `brew install node git`. Linux: `nodejs` (v20+), `npm` y `git` con el gestor de tu distribución.
    - **Cierra la terminal y ábrela de nuevo**, y comprueba con `node --version` y `git --version`. ✅ `v20.…` o superior y `git version 2.…`.
-2. **Descargar CocinIN:** `git clone …`, `cd cocinin` y `npm install` (los comandos de arriba, uno por uno; `npm install` tarda 1-2 minutos y los `warn` son normales). ✅ Termina con `added … packages`, sin `ERR!`; `ls` (macOS/Linux) o `dir` (Windows) muestra `package.json`.
+2. **Descargar CocinIN:** `git clone https://github.com/nithreel/cocinin.git`, `cd cocinin` y `npm install` (uno por uno; `npm install` tarda 1-2 minutos y los `warn` son normales). ✅ Termina con `added … packages`, sin `ERR!`; `ls` (macOS/Linux) o `dir` (Windows) muestra `package.json`.
 3. **`npm run setup`.** El asistente comprueba Node, dependencias, Git e internet (`npm run setup -- --comprobar` ejecuta solo eso) y te va preguntando:
    1. Se abre el navegador para iniciar sesión con tu cuenta de Google. Acepta y vuelve a la terminal.
    2. **Id de proyecto:** minúsculas, números y guiones, de 6 a 30 caracteres y empezando por letra (p. ej. `cocinin-maria`). Será tu URL, `https://<id>.web.app`; es único en todo Firebase (si está cogido, pide otro) y público: no pongas nada personal.
@@ -115,7 +103,6 @@ Tanto con la opción A como con la B, la instalación ha terminado cuando tu URL
 - Si `setup` falla a medias, repítelo con el mismo id: reutiliza lo que ya exista.
 - El asistente guarda tu sesión de Firebase en tu ordenador: no lo hagas en uno público o compartido. No subas ni compartas `firebase-debug.log` ni, si montas los avisos, `notifier/secrets/`.
 
-</details>
 
 <details>
 <summary>Instalación manual, sin el asistente</summary>
