@@ -125,7 +125,7 @@ Es un asistente que te va preguntando. Esto es lo que ocurre, en orden:
 
 - **Coste.** No necesitas tarjeta ni activar facturación. Si Firebase o Google Cloud te ofrecen «pasar al plan Blaze» o «activar la facturación», **no hace falta**: puedes ignorarlo.
 - **Inicio de sesión de Google.** El asistente guarda tu sesión de Firebase en tu ordenador. No uses un ordenador público ni compartido.
-- **Región de la base de datos.** El asistente la elige por ti y **no se puede cambiar después**.
+- **Región de la base de datos.** El asistente la crea en Europa (`eur3`) y **no se puede cambiar después**.
 - **Cosas que no debes compartir ni subir a ningún sitio:** el fichero `firebase-debug.log` (si aparece) y, si montas los avisos, `notifier/secrets/`. El `.env` contiene la configuración web de Firebase, que no es secreta, pero tampoco hace falta publicarla.
 - **Una instalación por casa.** No compartas proyecto de Firebase entre casas distintas: se mezclarían los datos.
 - **Si algo falla a medias**, puedes volver a ejecutar `npm run setup` con el mismo id: reutiliza lo que ya exista.
