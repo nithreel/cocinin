@@ -3,6 +3,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useAuth } from '../../auth/AuthContext'
 import { ToastProvider } from '../Toast'
 import ErrorToast from '../ErrorToast'
+import UpdatePrompt from '../UpdatePrompt'
 import { ConfirmDelete } from '../DeleteButton'
 import { BellIcon, BookIcon, CartIcon, DownloadIcon, LogoutIcon, NoteIcon, PantryIcon, UsersIcon } from '../icons'
 import { downloadBackup } from '../../lib/backup'
@@ -189,6 +190,7 @@ export default function AppLayout() {
       </header>
 
       <ErrorToast />
+      <UpdatePrompt />
 
       <main className="flex-1 overflow-y-auto p-4 md:p-8">
         {dataError && (

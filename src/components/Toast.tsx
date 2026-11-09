@@ -22,7 +22,9 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   const show = useCallback((t: ToastOptions) => {
     window.clearTimeout(timer.current)
     setToast(t)
-    timer.current = window.setTimeout(() => setToast(null), t.duration ?? (t.kind === 'error' ? 7000 : 5000))
+    // duration 0 = se queda hasta que se pulse la acción o se cierre
+    const ms = t.duration ?? (t.kind === 'error' ? 7000 : 5000)
+    if (ms > 0) timer.current = window.setTimeout(() => setToast(null), ms)
   }, [])
 
   useEffect(() => () => window.clearTimeout(timer.current), [])
