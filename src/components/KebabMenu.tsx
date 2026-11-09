@@ -1,4 +1,6 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type KeyboardEvent } from 'react'
+import { rowIconButton } from './buttonStyles'
+import { KebabIcon } from './icons'
 
 export interface MenuItem {
   label: string
@@ -9,16 +11,40 @@ export interface MenuItem {
 export function MenuPopup({
   items,
   onClose,
-  className = 'right-0 top-7',
+  className = 'right-0 top-8',
 }: {
   items: MenuItem[]
   onClose: () => void
   className?: string
 }) {
+  const ref = useRef<HTMLDivElement>(null)
+
+  // al abrir, el foco pasa al primer elemento (teclado y lectores de pantalla)
+  useEffect(() => {
+    ref.current?.querySelector<HTMLButtonElement>('[role="menuitem"]')?.focus()
+  }, [])
+
+  function handleKey(e: KeyboardEvent) {
+    const entries = Array.from(ref.current?.querySelectorAll<HTMLButtonElement>('[role="menuitem"]') ?? [])
+    const i = entries.indexOf(document.activeElement as HTMLButtonElement)
+    if (e.key === 'ArrowDown') {
+      e.preventDefault()
+      entries[(i + 1) % entries.length]?.focus()
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault()
+      entries[(i - 1 + entries.length) % entries.length]?.focus()
+    } else if (e.key === 'Escape') {
+      e.stopPropagation()
+      onClose()
+    }
+  }
+
   return (
     <div
+      ref={ref}
       role="menu"
-      className={'absolute z-10 w-36 overflow-hidden rounded-md border border-gray-200 bg-white py-1 shadow-lg dark:border-moss-700 dark:bg-moss-800 ' + className}
+      onKeyDown={handleKey}
+      className={'absolute z-30 w-40 overflow-hidden rounded-md border border-gray-200 bg-white py-1 shadow-lg dark:border-moss-700 dark:bg-moss-800 ' + className}
     >
       {items.map((item) => (
         <button
@@ -31,8 +57,8 @@ export function MenuPopup({
             item.onClick()
           }}
           className={
-            'block w-full px-3 py-1.5 text-left text-sm hover:bg-gray-50 dark:hover:bg-moss-700 ' +
-            (item.danger ? 'text-red-600 dark:text-red-400' : 'text-gray-700 dark:text-gray-200')
+            'block w-full px-3 py-2 text-left text-sm hover:bg-gray-50 focus:bg-gray-50 focus:outline-none dark:hover:bg-moss-700 dark:focus:bg-moss-700 ' +
+            (item.danger ? 'text-red-700 dark:text-red-400' : 'text-gray-700 dark:text-gray-200')
           }
         >
           {item.label}
@@ -48,13 +74,11 @@ export default function KebabMenu({ items }: { items: MenuItem[] }) {
 
   useEffect(() => {
     if (!open) return
-    function handleClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        setOpen(false)
-      }
+    function handleDown(e: Event) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
     }
-    document.addEventListener('mousedown', handleClick)
-    return () => document.removeEventListener('mousedown', handleClick)
+    document.addEventListener('pointerdown', handleDown)
+    return () => document.removeEventListener('pointerdown', handleDown)
   }, [open])
 
   return (
@@ -68,13 +92,9 @@ export default function KebabMenu({ items }: { items: MenuItem[] }) {
         aria-label="Más opciones"
         aria-haspopup="menu"
         aria-expanded={open}
-        className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-moss-800 dark:hover:text-gray-300"
+        className={rowIconButton}
       >
-        <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor">
-          <circle cx="12" cy="5" r="1.75" />
-          <circle cx="12" cy="12" r="1.75" />
-          <circle cx="12" cy="19" r="1.75" />
-        </svg>
+        <KebabIcon />
       </button>
       {open && <MenuPopup items={items} onClose={() => setOpen(false)} />}
     </div>

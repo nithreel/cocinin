@@ -127,7 +127,7 @@ export default function RecipeForm({
         value={title}
         onChange={(e) => setTitle(e.target.value)}
         placeholder="Nombre de la receta"
-        className="mb-4 w-full rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-moss-700 dark:bg-moss-800 dark:text-gray-100"
+        className="mb-4 w-full field"
       />
 
       <p className="mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">Ingredientes</p>
@@ -196,13 +196,13 @@ export default function RecipeForm({
                           value={selected[ing.id].quantity}
                           onChange={(e) => updateSelected(ing.id, 'quantity', e.target.value)}
                           placeholder="Cantidad"
-                          className="w-24 rounded-md border border-gray-300 px-2 py-1 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-moss-700 dark:bg-moss-800 dark:text-gray-100"
+                          className="w-24 field"
                         />
                         <input
                           value={selected[ing.id].unit}
                           onChange={(e) => updateSelected(ing.id, 'unit', e.target.value)}
                           placeholder="Unidad"
-                          className="w-24 rounded-md border border-gray-300 px-2 py-1 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-moss-700 dark:bg-moss-800 dark:text-gray-100"
+                          className="w-24 field"
                         />
                         <label className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-300">
                           <input
@@ -234,7 +234,7 @@ export default function RecipeForm({
         onChange={(e) => setInstructions(e.target.value)}
         rows={6}
         placeholder="Pasos a seguir..."
-        className="mb-4 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-moss-700 dark:bg-moss-800 dark:text-gray-100"
+        className="mb-4 w-full field"
       />
 
       {/* Pie fijo: Guardar y Cancelar siguen a la vista en formularios largos */}

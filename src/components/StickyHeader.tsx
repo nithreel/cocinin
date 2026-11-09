@@ -8,7 +8,7 @@ export default function StickyHeader({ title, children, below }: { title: string
   return (
     <div className="sticky -top-4 z-30 -mt-4 bg-white pb-3 pt-4 md:-top-8 md:-mt-8 md:pt-8 dark:bg-moss-950">
       <div className="flex h-8 items-center justify-between gap-2">
-        <h2 className="truncate text-2xl font-semibold text-gray-900 dark:text-gray-100">{title}</h2>
+        <h2 className="truncate text-xl font-semibold md:text-2xl text-gray-900 dark:text-gray-100">{title}</h2>
         {children && <div className="flex shrink-0 items-center gap-2">{children}</div>}
       </div>
       {below && <div className="mt-3">{below}</div>}

@@ -127,7 +127,7 @@ export default function AlertsPage() {
 
           <ul
             className={
-              'mb-4 divide-y divide-gray-100 rounded-lg border border-gray-200 bg-white dark:divide-moss-800 dark:border-moss-800 dark:bg-moss-900 ' +
+              'mb-4 listbox ' +
               (state === 'on' ? '' : 'opacity-60')
             }
           >

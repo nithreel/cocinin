@@ -3,6 +3,7 @@ import { useGroups, useIngredients } from '../pantry/data'
 import { addRecipe, deleteRecipe, updateRecipe, useRecipes } from './data'
 import RecipeForm from './RecipeForm'
 import { scrollMainToTop } from '../../lib/scroll'
+import { ChevronIcon } from '../../components/icons'
 import StickyHeader from '../../components/StickyHeader'
 import ImportRecipes from './ImportRecipes'
 import DeleteButton from '../../components/DeleteButton'
@@ -81,8 +82,8 @@ function RecipeCard({
         }
       >
         <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{recipe.title}</h3>
-        <span className="text-gray-500 dark:text-gray-400" aria-hidden="true">
-          {open ? '▲' : '▼'}
+        <span className="text-gray-500 dark:text-gray-400">
+          <ChevronIcon open={open} />
         </span>
       </button>
 

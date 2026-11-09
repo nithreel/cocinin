@@ -87,7 +87,7 @@ function errorMessage(err: unknown) {
 }
 
 const inputClasses =
-  'w-full rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-moss-700 dark:bg-moss-800 dark:text-gray-100'
+  'w-full field'
 
 export default function UsersPage() {
   const { user, isAdmin } = useAuth()
@@ -130,7 +130,7 @@ export default function UsersPage() {
 
       {loading && <p className="text-gray-500 dark:text-gray-400">Cargando…</p>}
 
-      <ul className="mb-6 mt-1 divide-y divide-gray-100 rounded-lg border border-gray-200 bg-white dark:divide-moss-800 dark:border-moss-800 dark:bg-moss-900">
+      <ul className="mb-6 mt-1 listbox">
         {members.map((m) => (
           <MemberRow key={m.id} m={m} isSelf={m.id === user?.uid} />
         ))}

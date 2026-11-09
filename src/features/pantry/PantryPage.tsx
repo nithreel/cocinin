@@ -18,6 +18,7 @@ import type { ExpiryMode, Group, Ingredient } from '../../lib/collections'
 import { ConfirmDelete } from '../../components/DeleteButton'
 import { SnowflakeIcon } from '../../components/icons'
 import SearchInput from '../../components/SearchInput'
+import SectionHeader from '../../components/SectionHeader'
 import Switch from '../../components/Switch'
 import StickyHeader from '../../components/StickyHeader'
 import { cancelButton, dangerTextButton, outlineButton, primaryButton } from '../../components/buttonStyles'
@@ -47,7 +48,7 @@ function ExpiryFields({
       <select
         value={mode}
         onChange={(e) => onModeChange(e.target.value as ExpiryMode)}
-        className="rounded-md border border-gray-300 px-2 py-1 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-moss-700 dark:bg-moss-800 dark:text-gray-100"
+        className="field"
       >
         <option value="none">Sin caducidad</option>
         <option value="date">Fecha de caducidad</option>
@@ -58,7 +59,7 @@ function ExpiryFields({
           type="date"
           value={date}
           onChange={(e) => onDateChange(e.target.value)}
-          className="rounded-md border border-gray-300 px-2 py-1 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-moss-700 dark:bg-moss-800 dark:text-gray-100"
+          className="field"
         />
       )}
       <input
@@ -67,7 +68,7 @@ function ExpiryFields({
         placeholder="Cantidad (ej. 500 g)"
         maxLength={40}
         aria-label="Cantidad que tienes"
-        className="w-40 rounded-md border border-gray-300 px-2 py-1 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-moss-700 dark:bg-moss-800 dark:text-gray-100"
+        className="w-40 field"
       />
     </>
   )
@@ -218,12 +219,12 @@ function IngredientRow({
               autoFocus
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="min-w-32 flex-1 rounded-md border border-gray-300 px-2 py-1 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-moss-700 dark:bg-moss-800 dark:text-gray-100"
+              className="min-w-32 flex-1 field"
             />
             <select
               value={groupId}
               onChange={(e) => setGroupId(e.target.value)}
-              className="rounded-md border border-gray-300 px-2 py-1 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-moss-700 dark:bg-moss-800 dark:text-gray-100"
+              className="field"
             >
               <option value={NO_GROUP}>Sin grupo</option>
               {groups.map((g) => (
@@ -438,7 +439,7 @@ function AddGroupForm({ onDone }: { onDone: () => void }) {
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Nombre del grupo"
-          className="flex-1 rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-moss-700 dark:bg-moss-800 dark:text-gray-100"
+          className="flex-1 field"
         />
       </div>
       <IsFoodCheckbox checked={isFood} onChange={setIsFood} />
@@ -494,12 +495,12 @@ function AddIngredientForm({
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Nombre del ingrediente"
-          className="min-w-40 flex-1 rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-moss-700 dark:bg-moss-800 dark:text-gray-100"
+          className="min-w-40 flex-1 field"
         />
         <select
           value={groupId}
           onChange={(e) => setGroupId(e.target.value)}
-          className="rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-moss-700 dark:bg-moss-800 dark:text-gray-100"
+          className="field"
         >
           <option value={NO_GROUP}>Sin grupo</option>
           {groups.map((g) => (
@@ -572,7 +573,7 @@ function GroupHeader({
           autoFocus
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="flex-1 rounded-md border border-gray-300 px-2 py-1 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-moss-700 dark:bg-moss-800 dark:text-gray-100"
+          className="flex-1 field"
         />
         <IsFoodCheckbox checked={isFood} onChange={setIsFood} />
         <div className="flex items-center gap-2">
@@ -597,20 +598,7 @@ function GroupHeader({
 
   return (
     <div className="mb-1 flex items-center justify-between gap-2">
-      <button
-        type="button"
-        onClick={onToggleCollapsed}
-        aria-expanded={!isCollapsed}
-        className="flex min-w-0 flex-1 items-center gap-1.5 text-sm font-semibold uppercase tracking-wide text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-      >
-        <span aria-hidden="true" className="shrink-0 text-gray-500 dark:text-gray-400">
-          {isCollapsed ? '▶' : '▼'}
-        </span>
-        <span className="truncate">{section.name}</span>
-        <span className="shrink-0 font-normal normal-case text-gray-500 dark:text-gray-400">
-          ({section.items.length})
-        </span>
-      </button>
+      <SectionHeader name={section.name} count={section.items.length} open={!isCollapsed} onToggle={onToggleCollapsed} className="flex-1" />
       {section.deletable &&
         (confirmingDelete ? (
           <ConfirmDelete
@@ -779,7 +767,7 @@ export default function PantryPage() {
                     Sin ingredientes en este grupo.
                   </p>
                 ) : (
-                  <ul className="divide-y divide-gray-100 rounded-lg border border-gray-200 bg-white dark:divide-moss-800 dark:border-moss-800 dark:bg-moss-900">
+                  <ul className="listbox">
                     {section.items.map((ing) => (
                       <IngredientRow
                         key={ing.id}

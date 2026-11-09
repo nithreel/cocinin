@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react'
 import { addIngredient } from '../pantry/data'
 import { addImportedRecipes, undoImport } from './data'
-import { cancelButton, primaryButton } from '../../components/buttonStyles'
+import { cancelButton, linkButton, primaryButton } from '../../components/buttonStyles'
 import BackupButton from '../../components/BackupButton'
-import { XIcon } from '../../components/icons'
+import { CheckIcon, CopyIcon, XIcon } from '../../components/icons'
 import { parseImport, resolveRecipes } from '../../lib/importRecipes'
 import type { Group, Ingredient, Recipe } from '../../lib/collections'
 
@@ -42,7 +42,7 @@ function CreateMissing({ names, groups }: { names: string[]; groups: Group[] }) 
 
   if (!open) {
     return (
-      <button type="button" onClick={() => setOpen(true)} className={cancelButton + ' ml-4 mt-1 text-emerald-700 dark:text-emerald-400'}>
+      <button type="button" onClick={() => setOpen(true)} className={linkButton + ' ml-4 mt-1'}>
         Crear los que faltan…
       </button>
     )
@@ -55,7 +55,7 @@ function CreateMissing({ names, groups }: { names: string[]; groups: Group[] }) 
           <select
             value={picked[n] ?? ''}
             onChange={(e) => setPicked((p) => ({ ...p, [n]: e.target.value }))}
-            className="w-40 rounded-md border border-gray-300 px-2 py-1 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-moss-700 dark:bg-moss-800 dark:text-gray-100"
+            className="w-40 field"
           >
             <option value="">Grupo…</option>
             {foodGroups.map((g) => (
@@ -76,23 +76,6 @@ function CreateMissing({ names, groups }: { names: string[]; groups: Group[] }) 
         </button>
       </div>
     </div>
-  )
-}
-
-function CopyIcon() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <rect x="9" y="9" width="11" height="11" rx="2.5" />
-      <path d="M5 15V6.5A2.5 2.5 0 0 1 7.5 4H15" />
-    </svg>
-  )
-}
-
-function CheckIcon() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M5 12.5l4.5 4.5L19 7.5" />
-    </svg>
   )
 }
 
@@ -221,7 +204,7 @@ export default function ImportRecipes({
         }}
         rows={5}
         placeholder="Pega aquí el JSON que te devuelva Claude…"
-        className="mb-3 w-full rounded-md border border-gray-300 px-3 py-2 font-mono text-xs focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-moss-700 dark:bg-moss-800 dark:text-gray-100"
+        className="field mb-3 w-full font-mono !text-xs"
       />
 
       {parsed && !parsed.ok && <p className="mb-3 text-sm text-red-600 dark:text-red-400">{parsed.error}</p>}

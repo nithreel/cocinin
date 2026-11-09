@@ -101,7 +101,7 @@ export default function LoginPage() {
           autoComplete="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="mb-4 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-moss-700 dark:bg-moss-800 dark:text-gray-100"
+          className="field mb-4 w-full"
         />
 
         <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300" htmlFor="password">
@@ -115,7 +115,7 @@ export default function LoginPage() {
           minLength={setupMode ? 6 : undefined}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="mb-4 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-moss-700 dark:bg-moss-800 dark:text-gray-100"
+          className="field mb-4 w-full"
         />
 
         {error && <p className="mb-4 text-sm text-red-600 dark:text-red-400">{error}</p>}

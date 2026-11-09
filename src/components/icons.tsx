@@ -1,11 +1,14 @@
 import type { ReactNode } from 'react'
 
 // Iconos de la navegación: trazo redondeado grueso, en la línea del icono de la app.
-function Icon({ children }: { children: ReactNode }) {
+export type IconSize = 16 | 20 | 24
+const SIZE: Record<IconSize, string> = { 16: 'h-4 w-4', 20: 'h-5 w-5', 24: 'h-6 w-6' }
+
+function Icon({ children, size = 24 }: { children: ReactNode; size?: IconSize }) {
   return (
     <svg
       viewBox="0 0 24 24"
-      className="h-6 w-6 shrink-0"
+      className={SIZE[size] + ' shrink-0'}
       fill="none"
       stroke="currentColor"
       strokeWidth={2}
@@ -58,11 +61,11 @@ export function UsersIcon() {
   )
 }
 
-export function XIcon() {
+export function XIcon({ size = 16 }: { size?: IconSize }) {
   return (
-    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round">
+    <Icon size={size}>
       <path d="M6 6l12 12M18 6L6 18" />
-    </svg>
+    </Icon>
   )
 }
 
@@ -84,9 +87,9 @@ export function SnowflakeIcon({ className = 'h-5 w-5' }: { className?: string })
   )
 }
 
-export function BellIcon() {
+export function BellIcon({ size }: { size?: IconSize }) {
   return (
-    <Icon>
+    <Icon size={size}>
       <path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2h-15z" />
       <path d="M10 21.5h4" />
     </Icon>
@@ -120,10 +123,54 @@ export function NoteIcon() {
   )
 }
 
-export function PlusIcon() {
+export function PlusIcon({ size = 16 }: { size?: IconSize }) {
   return (
-    <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round">
+    <Icon size={size}>
       <path d="M12 5v14M5 12h14" />
+    </Icon>
+  )
+}
+
+export function ChevronIcon({ open }: { open: boolean }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className={'h-4 w-4 shrink-0 transition-transform motion-reduce:transition-none ' + (open ? 'rotate-90' : '')}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M9 6l6 6-6 6" />
     </svg>
+  )
+}
+
+export function KebabIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor" aria-hidden="true">
+      <circle cx="12" cy="5" r="1.75" />
+      <circle cx="12" cy="12" r="1.75" />
+      <circle cx="12" cy="19" r="1.75" />
+    </svg>
+  )
+}
+
+export function CopyIcon() {
+  return (
+    <Icon size={20}>
+      <rect x="9" y="9" width="11" height="11" rx="2.5" />
+      <path d="M5 15V6.5A2.5 2.5 0 0 1 7.5 4H15" />
+    </Icon>
+  )
+}
+
+export function CheckIcon() {
+  return (
+    <Icon size={20}>
+      <path d="M5 12.5l4.5 4.5L19 7.5" />
+    </Icon>
   )
 }

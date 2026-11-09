@@ -13,9 +13,10 @@ import type { Ingredient, PurchaseHistoryEntry, ShoppingItem } from '../../lib/c
 import { groupByPantryGroup } from '../../lib/groupByPantryGroup'
 import DeleteButton from '../../components/DeleteButton'
 import SearchInput from '../../components/SearchInput'
+import SectionHeader from '../../components/SectionHeader'
 import StickyHeader from '../../components/StickyHeader'
 import { primaryButton, rowAddButton, rowIconButton } from '../../components/buttonStyles'
-import { PlusIcon, XIcon } from '../../components/icons'
+import { ChevronIcon, PlusIcon, XIcon } from '../../components/icons'
 import { matchesSearch } from '../../lib/search'
 
 function formatRelativeDate(timestamp: number) {
@@ -59,33 +60,6 @@ function useCollapsedSet() {
     })
   }
   return { collapsed, toggle }
-}
-
-function SectionHeader({
-  name,
-  count,
-  isCollapsed,
-  onToggle,
-}: {
-  name: string
-  count: number
-  isCollapsed: boolean
-  onToggle: () => void
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onToggle}
-      aria-expanded={!isCollapsed}
-      className="mb-1 flex items-center gap-1.5 text-sm font-semibold uppercase tracking-wide text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-    >
-      <span aria-hidden="true" className="text-gray-500 dark:text-gray-400">
-        {isCollapsed ? '▶' : '▼'}
-      </span>
-      {name}
-      <span className="font-normal normal-case text-gray-500 dark:text-gray-400">({count})</span>
-    </button>
-  )
 }
 
 export default function ShoppingListPage() {
@@ -163,11 +137,11 @@ export default function ShoppingListPage() {
                     <SectionHeader
                       name={section.name}
                       count={section.items.length}
-                      isCollapsed={isCollapsed}
+                      open={!isCollapsed}
                       onToggle={() => cartCollapse.toggle(section.id)}
                     />
                     {!isCollapsed && (
-                      <ul className="divide-y divide-gray-100 rounded-lg border border-gray-200 bg-white dark:divide-moss-800 dark:border-moss-800 dark:bg-moss-900">
+                      <ul className="listbox">
                         {section.items.map((item) => {
                           const ingredient = ingredientsById.get(item.ingredientId)
                           return (
@@ -177,7 +151,6 @@ export default function ShoppingListPage() {
                                   type="checkbox"
                                   checked={item.checked}
                                   onChange={(e) => setShoppingItemChecked(item.id, e.target.checked)}
-                                  className="h-4 w-4 rounded border-gray-300 text-emerald-700 focus:ring-emerald-500 max-md:h-5 max-md:w-5 dark:border-moss-600 dark:bg-moss-800"
                                 />
                                 <span
                                   className={
@@ -226,7 +199,7 @@ export default function ShoppingListPage() {
       {/* El contenedor acaba antes del historial: al llegar a él, «Te falta» y el buscador dejan de estar fijos */}
       <div className="mb-8">
         <div className="sticky top-[var(--head-h)] z-20 bg-white pb-3 dark:bg-moss-950">
-          <h3 className="mb-2 text-lg font-semibold text-gray-900 dark:text-gray-100">Te falta</h3>
+          <h3 className="mb-1 text-base font-semibold text-gray-900 dark:text-gray-100">Te falta</h3>
           {missingAll.length > 0 && <SearchInput value={missingSearch} onChange={setMissingSearch} className="" />}
         </div>
 
@@ -247,11 +220,11 @@ export default function ShoppingListPage() {
                   <SectionHeader
                     name={section.name}
                     count={section.items.length}
-                    isCollapsed={isCollapsed}
+                    open={!isCollapsed}
                     onToggle={() => missingCollapse.toggle(section.id)}
                   />
                   {!isCollapsed && (
-                    <ul className="divide-y divide-gray-100 rounded-lg border border-gray-200 bg-white dark:divide-moss-800 dark:border-moss-800 dark:bg-moss-900">
+                    <ul className="listbox">
                       {section.items.map((ingredient) => (
                         <li key={ingredient.id} className="flex items-center justify-between gap-3 py-1 pl-4 pr-2">
                           <span className="text-gray-900 dark:text-gray-100">{ingredient.name}</span>
@@ -284,7 +257,7 @@ export default function ShoppingListPage() {
           <SectionHeader
             name="Historial de compras"
             count={purchaseBatches.length}
-            isCollapsed={historyCollapsed}
+            open={!historyCollapsed}
             onToggle={() => setHistoryCollapsed((v) => !v)}
           />
           {historyEntries.length > 0 && (
@@ -311,9 +284,7 @@ export default function ShoppingListPage() {
                       className="flex w-full items-center justify-between gap-2 py-2 text-sm text-gray-700 dark:text-gray-300"
                     >
                       <span className="flex items-center gap-1.5">
-                        <span aria-hidden="true" className="text-gray-500 dark:text-gray-400">
-                          {isCollapsed ? '▶' : '▼'}
-                        </span>
+                        <ChevronIcon open={!isCollapsed} />
                         Compra de {formatRelativeDate(batch.purchasedAt)}
                       </span>
                       <span className="shrink-0 text-gray-500 dark:text-gray-400">

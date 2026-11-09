@@ -22,10 +22,11 @@ function navLinkClasses(isActive: boolean) {
   ].join(' ')
 }
 
-const iconButton =
-  'flex h-9 w-9 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-moss-800 dark:hover:text-gray-200'
-
-const activeIcon = ' !text-emerald-700 dark:!text-emerald-400'
+const iconBase =
+  "relative flex h-9 w-9 items-center justify-center rounded-lg after:absolute after:-inset-0.5 after:content-[''] hover:bg-gray-100 dark:hover:bg-moss-800"
+const iconIdle = ' text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+const iconActive = ' text-emerald-700 dark:text-emerald-400'
+const iconButton = iconBase + iconIdle
 
 function TopLink({ to, label, children }: { to: string; label: string; children: ReactNode }) {
   return (
@@ -33,7 +34,7 @@ function TopLink({ to, label, children }: { to: string; label: string; children:
       to={to}
       aria-label={label}
       title={label}
-      className={({ isActive }) => iconButton + (isActive ? activeIcon : '')}
+      className={({ isActive }) => iconBase + (isActive ? iconActive : iconIdle)}
     >
       {children}
     </NavLink>
@@ -60,7 +61,7 @@ function BackupIcon({ withUsers }: { withUsers: boolean }) {
       disabled={state === 'busy'}
       aria-label={label}
       title={label}
-      className={iconButton + ' disabled:animate-pulse disabled:opacity-50' + (state === 'error' ? ' !text-red-600' : '')}
+      className={(state === 'error' ? iconBase + ' text-red-600' : iconButton) + ' disabled:opacity-50 motion-safe:disabled:animate-pulse'}
     >
       <DownloadIcon />
     </button>
@@ -145,7 +146,7 @@ export default function AppLayout() {
         </div>
       </main>
 
-      <nav className="flex shrink-0 border-t border-gray-200 bg-white pb-[env(safe-area-inset-bottom)] md:hidden dark:border-moss-800 dark:bg-moss-900">
+      <nav className="flex shrink-0 border-t border-gray-200 bg-white pb-[env(safe-area-inset-bottom)] max-md:[@media(max-height:480px)]:hidden md:hidden dark:border-moss-800 dark:bg-moss-900">
         {NAV_ITEMS.map((item) => (
           <NavLink
             key={item.to}
