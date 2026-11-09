@@ -133,27 +133,14 @@ Si la máquina está apagada, los avisos de ese rato se pierden. Más detalles e
 
 ## Actualizar y mantener
 
-### Despliegue automático al publicar una release (opcional)
 
-Con esto no necesitas terminal: al **publicar una release** en tu copia (fork) del repositorio, GitHub compila y despliega la app y las reglas en tu Firebase. Se configura una sola vez:
-
-1. **Cuenta de servicio.** Consola de Firebase → Configuración del proyecto → *Cuentas de servicio* → *Generar nueva clave privada* (descarga un JSON). En la consola de Google Cloud → IAM, a esa cuenta dale el rol **Firebase Admin**.
-2. **Secretos en GitHub** (tu repo → Settings → Secrets and variables → Actions → *New repository secret*):
-   - `FIREBASE_SERVICE_ACCOUNT`: pega el contenido completo del JSON.
-   - `DOTENV`: pega el contenido de tu fichero `.env`.
-3. Para actualizar: sube `version` en `package.json`, crea la release con esa etiqueta (por ejemplo `v1.2.0`) y listo. El flujo falla a propósito si la etiqueta y `package.json` no coinciden. También puedes lanzarlo a mano desde la pestaña *Actions → Desplegar → Run workflow*.
-
-Sin los dos secretos el flujo no hace nada. Después de desplegar, la app instalada muestra un aviso «Hay una versión nueva» con el botón *Actualizar*. Borra el JSON descargado cuando lo hayas pegado en GitHub.
-
-### A mano
-
-Cuando haya cambios en este repositorio, tu copia no se actualiza sola. Desde la carpeta `cocinin`:
+Cuando haya cambios en este repositorio, tu copia no se actualiza sola. Desde la carpeta `cocinin`, un solo comando:
 
 ```sh
-git pull
-npm install
-npm run deploy
+npm run actualizar
 ```
+
+(equivale a `git pull`, `npm install` y `npm run deploy`).
 
 Tu `.env` y `.firebaserc` no se tocan, así que sigues con tu proyecto y tus datos. La app instalada puede enseñar la versión anterior hasta que la cierres y abras una o dos veces (en el navegador, `Ctrl+Shift+R`). Si `git pull` se queja de cambios locales, guárdalos con `git stash`, haz el `pull` y recupéralos con `git stash pop`.
 

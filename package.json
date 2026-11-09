@@ -13,6 +13,7 @@
     "lint": "oxlint",
     "preview": "vite preview",
     "deploy": "npm run build && firebase deploy --only firestore:rules,hosting",
+    "actualizar": "git pull && npm install && npm run deploy",
     "deploy:rules": "firebase deploy --only firestore:rules",
     "setup": "node scripts/setup.mjs",
     "emulators": "firebase emulators:start --only auth,firestore",

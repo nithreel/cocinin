@@ -60,7 +60,7 @@ export default function ReleaseNotice() {
       className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-md bg-emerald-50 px-3 py-2 text-sm text-emerald-900 dark:bg-emerald-950 dark:text-emerald-100"
     >
       <span>
-        Hay una versión nueva de CocinIN en GitHub: {latest.tag} (esta instalación es la v{__APP_VERSION__}).
+        Hay una versión nueva de CocinIN en GitHub: {latest.tag} (esta instalación es la v{__APP_VERSION__}). Para actualizar, ejecuta npm run actualizar en la carpeta del proyecto.
       </span>
       <span className="flex items-center gap-1">
         <a href={latest.url} target="_blank" rel="noreferrer" className={linkButton}>
