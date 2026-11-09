@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from './AuthContext'
+import { primaryButton } from '../components/buttonStyles'
 
 export default function ProtectedRoute({ children }: { children: ReactNode }) {
   const { user, isMember, loading, signOut } = useAuth()
@@ -26,7 +27,7 @@ export default function ProtectedRoute({ children }: { children: ReactNode }) {
         <button
           type="button"
           onClick={() => signOut()}
-          className="rounded-md bg-emerald-700 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-800"
+          className={primaryButton}
         >
           Cerrar sesión
         </button>

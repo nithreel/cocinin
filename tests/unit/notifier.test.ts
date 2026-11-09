@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest'
 import {
   createCollector,
   createShoppingBurst,
+  dueNotes,
+  noteRecipients,
   expiryMessage,
   inSendWindow,
   newlyExpiring,
@@ -113,5 +115,26 @@ describe('agrupación', () => {
     c.push(2)
     fire!()
     expect(out).toEqual([[1, 2]])
+  })
+})
+
+describe('notas', () => {
+  const note = (extra = {}) => ({ text: 'Sacar pollo', notify: true, remindAt: 1000, recipients: ['a'], ...extra })
+  it('solo vencen las notas con aviso, ya llegada la hora y aún no enviadas', () => {
+    const notes = new Map([
+      ['1', note()],
+      ['futura', note({ remindAt: 9_999 })],
+      ['enviada', note({ sent: true })],
+      ['sin-aviso', note({ notify: false })],
+    ])
+    expect(dueNotes(notes, 2000).map((n) => n.id)).toEqual(['1'])
+  })
+  it('avisa solo a los dispositivos de los usuarios elegidos y respeta la preferencia', () => {
+    const subs = [
+      { id: 's1', uid: 'a', prefs: {} },
+      { id: 's2', uid: 'b', prefs: {} },
+      { id: 's3', uid: 'a', prefs: { nota: false } },
+    ]
+    expect(noteRecipients(subs, note()).map((s) => s.id)).toEqual(['s1'])
   })
 })

@@ -13,6 +13,9 @@ import type { Ingredient, PurchaseHistoryEntry, ShoppingItem } from '../../lib/c
 import { groupByPantryGroup } from '../../lib/groupByPantryGroup'
 import DeleteButton from '../../components/DeleteButton'
 import SearchInput from '../../components/SearchInput'
+import StickyHeader from '../../components/StickyHeader'
+import { primaryButton, rowAddButton, rowIconButton } from '../../components/buttonStyles'
+import { PlusIcon, XIcon } from '../../components/icons'
 import { matchesSearch } from '../../lib/search'
 
 function formatRelativeDate(timestamp: number) {
@@ -139,9 +142,10 @@ export default function ShoppingListPage() {
   }
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h2 className="mb-3 text-2xl font-semibold text-gray-900 dark:text-gray-100">Lista de la compra</h2>
+    <div>
+      <StickyHeader title="Lista de la compra" />
+
+      <div className="mb-8">
 
         {loading && <p className="text-gray-500 dark:text-gray-400">Cargando…</p>}
 
@@ -188,9 +192,11 @@ export default function ShoppingListPage() {
                               <button
                                 type="button"
                                 onClick={() => removeFromShoppingList(item.id)}
-                                className="text-sm text-gray-500 hover:text-red-600 max-md:py-3 dark:text-gray-400 dark:hover:text-red-400"
+                                aria-label="Quitar de la lista"
+                                title="Quitar de la lista"
+                                className={rowIconButton}
                               >
-                                Quitar
+                                <XIcon />
                               </button>
                             </li>
                           )
@@ -208,7 +214,7 @@ export default function ShoppingListPage() {
                 onClick={handleConfirmPurchase}
                 disabled={confirming || !hasChecked}
                 title={hasChecked ? undefined : 'Tacha al menos un artículo para confirmar la compra'}
-                className="w-full rounded-md bg-emerald-700 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-800 disabled:opacity-50 sm:w-auto"
+                className={primaryButton + ' w-full sm:w-auto'}
               >
                 {confirming ? 'Confirmando…' : 'Confirmar compra'}
               </button>
@@ -217,14 +223,12 @@ export default function ShoppingListPage() {
         )}
       </div>
 
-      <div>
-        <h3 className="mb-3 text-lg font-semibold text-gray-900 dark:text-gray-100">Te falta</h3>
-
-        {missingAll.length > 0 && (
-          <div className="sticky -top-4 z-10 bg-white pb-3 pt-2 md:-top-8 dark:bg-moss-950">
-            <SearchInput value={missingSearch} onChange={setMissingSearch} className="" />
-          </div>
-        )}
+      {/* El contenedor acaba antes del historial: al llegar a él, «Te falta» y el buscador dejan de estar fijos */}
+      <div className="mb-8">
+        <div className="sticky top-[var(--head-h)] z-20 bg-white pb-3 dark:bg-moss-950">
+          <h3 className="mb-2 text-lg font-semibold text-gray-900 dark:text-gray-100">Te falta</h3>
+          {missingAll.length > 0 && <SearchInput value={missingSearch} onChange={setMissingSearch} className="" />}
+        </div>
 
         {!loading && missingAll.length === 0 && (
           <p className="text-gray-500 dark:text-gray-400">No te falta nada por ahora.</p>
@@ -249,7 +253,7 @@ export default function ShoppingListPage() {
                   {!isCollapsed && (
                     <ul className="divide-y divide-gray-100 rounded-lg border border-gray-200 bg-white dark:divide-moss-800 dark:border-moss-800 dark:bg-moss-900">
                       {section.items.map((ingredient) => (
-                        <li key={ingredient.id} className="flex items-center justify-between gap-3 py-1.5 pl-4 pr-3 max-md:min-h-11 max-md:py-0.5">
+                        <li key={ingredient.id} className="flex items-center justify-between gap-3 py-1 pl-4 pr-2">
                           <span className="text-gray-900 dark:text-gray-100">{ingredient.name}</span>
                           <button
                             type="button"
@@ -258,9 +262,11 @@ export default function ShoppingListPage() {
                               // tras añadir, la búsqueda se reinicia y vuelve a verse todo lo que falta
                               setMissingSearch('')
                             }}
-                            className="shrink-0 rounded-md border border-emerald-300 bg-emerald-50 px-3 py-1 text-sm text-emerald-800 hover:bg-emerald-100 max-md:py-2"
+                            aria-label={`Añadir ${ingredient.name} a la lista`}
+                            title="Añadir a la lista"
+                            className={rowAddButton}
                           >
-                            Añadir a la lista
+                            <PlusIcon />
                           </button>
                         </li>
                       ))}
@@ -274,7 +280,7 @@ export default function ShoppingListPage() {
       </div>
 
       <div>
-        <div className="flex items-center justify-between gap-2">
+        <div className="sticky top-[var(--head-h)] z-20 flex items-center justify-between gap-2 bg-white pb-1 pt-1 dark:bg-moss-950">
           <SectionHeader
             name="Historial de compras"
             count={purchaseBatches.length}

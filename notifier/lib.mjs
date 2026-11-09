@@ -116,3 +116,22 @@ export function createCollector(waitMs, flush, setTimer = setTimeout, clearTimer
     },
   }
 }
+
+/** Notas con aviso pendiente cuya hora ya ha llegado: [{ id, ...datos }]. */
+export function dueNotes(notes, now = Date.now()) {
+  const out = []
+  for (const [id, n] of notes) {
+    if (n.notify === true && n.sent !== true && typeof n.remindAt === 'number' && n.remindAt <= now) out.push({ id, ...n })
+  }
+  return out.sort((a, b) => a.remindAt - b.remindAt)
+}
+
+export function noteMessage(note) {
+  return { title: 'Nota', body: note.text }
+}
+
+/** Dispositivos de los usuarios elegidos en la nota (con el aviso «nota» activado). */
+export function noteRecipients(subscriptions, note) {
+  const uids = new Set(note.recipients ?? [])
+  return subscriptions.filter((s) => uids.has(s.uid) && s.prefs?.nota !== false)
+}

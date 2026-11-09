@@ -3,11 +3,13 @@ import { limit, onSnapshot, orderBy, query } from 'firebase/firestore'
 import {
   groupsCol,
   ingredientsCol,
+  notesCol,
   purchaseHistoryCol,
   recipesCol,
   shoppingListCol,
   type Group,
   type Ingredient,
+  type Note,
   type PurchaseHistoryEntry,
   type Recipe,
   type ShoppingItem,
@@ -24,6 +26,8 @@ interface AppDataValue {
   recipesLoading: boolean
   purchaseHistory: PurchaseHistoryEntry[]
   purchaseHistoryLoading: boolean
+  notes: Note[]
+  notesLoading: boolean
   /** mensaje si algún listener falla (p. ej. permission-denied); null si todo va bien */
   dataError: string | null
 }
@@ -41,6 +45,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const [recipesLoading, setRecipesLoading] = useState(true)
   const [purchaseHistory, setPurchaseHistory] = useState<PurchaseHistoryEntry[]>([])
   const [purchaseHistoryLoading, setPurchaseHistoryLoading] = useState(true)
+  const [notes, setNotes] = useState<Note[]>([])
+  const [notesLoading, setNotesLoading] = useState(true)
   const [dataError, setDataError] = useState<string | null>(null)
 
   function handleError(stopLoading: () => void) {
@@ -91,6 +97,14 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     }, handleError(() => setPurchaseHistoryLoading(false)))
   }, [])
 
+  useEffect(() => {
+    const q = query(notesCol, orderBy('createdAt', 'desc'))
+    return onSnapshot(q, (snap) => {
+      setNotes(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Note))
+      setNotesLoading(false)
+    }, handleError(() => setNotesLoading(false)))
+  }, [])
+
   return (
     <AppDataContext.Provider
       value={{
@@ -104,6 +118,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         recipesLoading,
         purchaseHistory,
         purchaseHistoryLoading,
+        notes,
+        notesLoading,
         dataError,
       }}
     >
@@ -141,6 +157,11 @@ export function useRecipes() {
 export function usePurchaseHistory() {
   const { purchaseHistory, purchaseHistoryLoading } = useAppData()
   return { entries: purchaseHistory, loading: purchaseHistoryLoading }
+}
+
+export function useNotes() {
+  const { notes, notesLoading } = useAppData()
+  return { notes, loading: notesLoading }
 }
 
 export function useDataError() {

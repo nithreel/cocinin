@@ -1,15 +1,16 @@
 import { NavLink, Outlet } from 'react-router-dom'
+import { useState, type ReactNode } from 'react'
 import { useAuth } from '../../auth/AuthContext'
 import ErrorToast from '../ErrorToast'
-import { BellIcon, BookIcon, CartIcon, LogoutIcon, PantryIcon, UsersIcon } from '../icons'
+import { BellIcon, BookIcon, CartIcon, DownloadIcon, LogoutIcon, NoteIcon, PantryIcon, UsersIcon } from '../icons'
+import { downloadBackup } from '../../lib/backup'
 import { useDataError } from '../../lib/AppDataContext'
 
-const USERS_ITEM = { to: '/usuarios', label: 'Usuarios', Icon: UsersIcon }
-
-const BASE_NAV_ITEMS = [
+const NAV_ITEMS = [
   { to: '/despensa', label: 'Despensa', Icon: PantryIcon },
   { to: '/lista', label: 'Lista', Icon: CartIcon },
   { to: '/recetario', label: 'Recetario', Icon: BookIcon },
+  { to: '/notas', label: 'Notas', Icon: NoteIcon },
 ]
 
 function navLinkClasses(isActive: boolean) {
@@ -22,32 +23,89 @@ function navLinkClasses(isActive: boolean) {
 }
 
 const iconButton =
-  'flex h-10 w-10 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-moss-800 dark:hover:text-gray-200'
+  'flex h-9 w-9 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-moss-800 dark:hover:text-gray-200'
 
-/** Acceso a la pantalla de avisos; se resalta cuando está abierta. */
-function AlertsLink() {
+const activeIcon = ' !text-emerald-700 dark:!text-emerald-400'
+
+function TopLink({ to, label, children }: { to: string; label: string; children: ReactNode }) {
   return (
     <NavLink
-      to="/avisos"
-      aria-label="Avisos"
-      title="Avisos"
-      className={({ isActive }) => iconButton + (isActive ? ' !text-emerald-700 dark:!text-emerald-400' : '')}
+      to={to}
+      aria-label={label}
+      title={label}
+      className={({ isActive }) => iconButton + (isActive ? activeIcon : '')}
     >
-      <BellIcon />
+      {children}
     </NavLink>
   )
 }
 
+/** Descarga la base de datos (JSON). Los correos de los miembros solo van en la copia del admin. */
+function BackupIcon({ withUsers }: { withUsers: boolean }) {
+  const [state, setState] = useState<'idle' | 'busy' | 'error'>('idle')
+  async function handleClick() {
+    setState('busy')
+    try {
+      await downloadBackup(withUsers)
+      setState('idle')
+    } catch {
+      setState('error')
+    }
+  }
+  const label = state === 'error' ? 'No se pudo descargar; reintentar' : 'Descargar copia de seguridad'
+  return (
+    <button
+      type="button"
+      onClick={handleClick}
+      disabled={state === 'busy'}
+      aria-label={label}
+      title={label}
+      className={iconButton + ' disabled:animate-pulse disabled:opacity-50' + (state === 'error' ? ' !text-red-600' : '')}
+    >
+      <DownloadIcon />
+    </button>
+  )
+}
+
+/** Iconos de la barra: Usuarios (solo admin), copia, avisos y cerrar sesión. */
+function TopIcons() {
+  const { isAdmin, signOut } = useAuth()
+  return (
+    <>
+      {isAdmin && (
+        <TopLink to="/usuarios" label="Usuarios">
+          <UsersIcon />
+        </TopLink>
+      )}
+      <BackupIcon withUsers={isAdmin} />
+      <TopLink to="/avisos" label="Avisos">
+        <BellIcon />
+      </TopLink>
+      <button type="button" onClick={() => signOut()} aria-label="Cerrar sesión" title="Cerrar sesión" className={iconButton}>
+        <LogoutIcon />
+      </button>
+    </>
+  )
+}
+
+function Brand({ size }: { size: string }) {
+  return (
+    <div className="flex items-center gap-2">
+      <img src="/icons/icon.svg" alt="" className={size + ' rounded-lg'} />
+      <span className="text-lg font-semibold text-gray-900 dark:text-gray-100">CocinIn</span>
+    </div>
+  )
+}
+
 export default function AppLayout() {
-  const { user, isAdmin, signOut } = useAuth()
+  const { user } = useAuth()
   const dataError = useDataError()
-  const NAV_ITEMS = isAdmin ? [...BASE_NAV_ITEMS, USERS_ITEM] : BASE_NAV_ITEMS
 
   return (
     <div className="flex h-dvh flex-col md:flex-row">
       <nav className="hidden shrink-0 border-r border-gray-200 bg-white p-3 md:flex md:w-56 md:flex-col md:gap-1 dark:border-moss-800 dark:bg-moss-900">
         <div className="px-2 py-1">
-          <img src="/icons/icon.svg" alt="CocinIN" className="h-10 w-10 rounded-lg" />
+          <Brand size="h-10 w-10" />
         </div>
         {NAV_ITEMS.map((item) => (
           <NavLink
@@ -59,22 +117,18 @@ export default function AppLayout() {
             <span>{item.label}</span>
           </NavLink>
         ))}
-        <div className="mt-auto flex items-center gap-1 border-t border-gray-100 pt-3 dark:border-moss-800">
-          <p className="min-w-0 flex-1 truncate px-2 text-xs text-gray-500 dark:text-gray-400">{user?.email}</p>
-          <AlertsLink />
-          <button type="button" onClick={() => signOut()} aria-label="Cerrar sesión" title="Cerrar sesión" className={iconButton}>
-            <LogoutIcon />
-          </button>
+        <div className="mt-auto border-t border-gray-100 pt-3 dark:border-moss-800">
+          <p className="mb-1 truncate px-2 text-xs text-gray-500 dark:text-gray-400">{user?.email}</p>
+          <div className="flex items-center justify-between">
+            <TopIcons />
+          </div>
         </div>
       </nav>
 
-      <header className="flex shrink-0 items-center justify-between border-b border-gray-200 bg-white px-4 py-3 md:hidden dark:border-moss-800 dark:bg-moss-900">
-        <img src="/icons/icon.svg" alt="CocinIN" className="h-9 w-9 rounded-lg" />
-        <div className="flex items-center gap-1">
-          <AlertsLink />
-          <button type="button" onClick={() => signOut()} aria-label="Cerrar sesión" title="Cerrar sesión" className={iconButton}>
-            <LogoutIcon />
-          </button>
+      <header className="flex shrink-0 items-center justify-between border-b border-gray-200 bg-white px-3 py-1 md:hidden dark:border-moss-800 dark:bg-moss-900">
+        <Brand size="h-7 w-7" />
+        <div className="flex items-center">
+          <TopIcons />
         </div>
       </header>
 

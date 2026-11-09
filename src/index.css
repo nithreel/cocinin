@@ -21,6 +21,12 @@
   --color-moss-950: #0a1512;
 }
 
+/* Offset sticky bajo la cabecera de pantalla. Se mide desde el área de contenido de <main> (inset por su padding),
+   no desde el borde: cabecera (pt + h-8 + pb) menos ese padding = 60-16 = 76-32 = 44 px en móvil y escritorio. */
+:root {
+  --head-h: 44px;
+}
+
 html,
 body,
 #root {

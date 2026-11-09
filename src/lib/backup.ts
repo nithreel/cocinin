@@ -1,6 +1,7 @@
 import { getDocs } from 'firebase/firestore'
 import {
   groupsCol,
+  notesCol,
   ingredientsCol,
   purchaseHistoryCol,
   recipesCol,
@@ -14,6 +15,7 @@ const COLLECTIONS = {
   shoppingList: shoppingListCol,
   recipes: recipesCol,
   purchaseHistory: purchaseHistoryCol,
+  notes: notesCol,
   users: usersCol,
 }
 

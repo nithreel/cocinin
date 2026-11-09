@@ -19,6 +19,7 @@ const KINDS: { key: keyof PushPrefs; label: string; hint: string }[] = [
   { key: 'receta', label: 'Receta nueva', hint: 'Cuando entra una receta en el recetario' },
   { key: 'usuario', label: 'Usuario nuevo', hint: 'Cuando se añade alguien a la familia' },
   { key: 'caducidad', label: 'Caducidad', hint: 'Cuando un ingrediente pasa a caducar en 3 días o menos' },
+  { key: 'nota', label: 'Notas', hint: 'Cuando llega la hora de una nota que te han asignado' },
 ]
 
 const MESSAGES: Partial<Record<PushState, string>> = {

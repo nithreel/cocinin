@@ -18,18 +18,12 @@ import type { ExpiryMode, Group, Ingredient } from '../../lib/collections'
 import { ConfirmDelete } from '../../components/DeleteButton'
 import { SnowflakeIcon } from '../../components/icons'
 import SearchInput from '../../components/SearchInput'
-import BackupButton from '../../components/BackupButton'
+import StickyHeader from '../../components/StickyHeader'
 import { cancelButton, dangerTextButton, outlineButton, primaryButton } from '../../components/buttonStyles'
 import { matchesSearch } from '../../lib/search'
 import KebabMenu from '../../components/KebabMenu'
 import { expiryBadgeClasses, getExpiryInfo, remainingLabel } from '../../lib/expiry'
 import { NO_GROUP } from '../../lib/groupByPantryGroup'
-
-/** Color de la barra lateral: verde disponible, azul congelado, rojo agotado. */
-function barColor(ingredient: Ingredient) {
-  if (!ingredient.inPantry) return 'border-l-red-400'
-  return ingredient.frozen ? 'border-l-frost-400' : 'border-l-emerald-500'
-}
 
 function ExpiryFields({
   mode,
@@ -213,7 +207,7 @@ function IngredientRow({
     return (
       <li
         className={
-          'border-l-4 py-2 pl-3 pr-1 ' + barColor(ingredient)
+          'py-2 pl-3 pr-1'
         }
       >
         <form onSubmit={handleSave} className="flex flex-col gap-2">
@@ -267,12 +261,56 @@ function IngredientRow({
     <li
       ref={rowRef}
       className={
-        'scroll-mb-20 scroll-mt-28 border-l-4 py-2 pl-3 pr-3 transition-colors duration-700 ' +
-        barColor(ingredient) +
+        'scroll-mb-20 scroll-mt-28 py-2 pl-3 pr-3 transition-colors duration-700' +
         (highlight ? ' bg-emerald-50 dark:bg-emerald-950' : '')
       }
     >
-      <div className="flex items-center justify-between gap-3 max-md:min-h-7">
+      <div className="flex items-center gap-3 max-md:min-h-7">
+          <button
+            type="button"
+            role="switch"
+            aria-checked={ingredient.inPantry}
+            aria-label={
+              ingredient.inPantry
+                ? `${ingredient.name}: ${ingredient.frozen ? 'congelado' : 'disponible'}, pulsa para marcar como agotado`
+                : `${ingredient.name}: agotado, pulsa para marcar como disponible`
+            }
+            onClick={toggle}
+            disabled={busy}
+            className={
+              'relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors disabled:opacity-50 max-md:after:absolute max-md:after:-inset-2.5 max-md:after:content-[\'\'] ' +
+              (ingredient.inPantry ? (ingredient.frozen ? 'bg-frost-400' : 'bg-emerald-500') : 'bg-gray-300')
+            }
+          >
+            <span
+              className={
+                'inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ' +
+                (ingredient.inPantry ? 'translate-x-6' : 'translate-x-1')
+              }
+            />
+          </button>
+          {(canFreeze || ingredient.frozen) && (
+            <button
+              type="button"
+              aria-pressed={!!ingredient.frozen}
+              aria-label={
+                ingredient.frozen
+                  ? `${ingredient.name}: en el congelador, pulsa para sacarlo`
+                  : `${ingredient.name}: pulsa para marcarlo como congelado`
+              }
+              title={ingredient.frozen ? 'En el congelador' : 'Marcar como congelado'}
+              onClick={toggleFrozen}
+              disabled={busy}
+              className={
+                'relative flex h-7 w-7 items-center justify-center rounded-full transition-colors disabled:opacity-50 max-md:after:absolute max-md:after:-inset-2 max-md:after:content-[\'\'] ' +
+                (ingredient.frozen
+                  ? 'bg-frost-100 text-frost-700 dark:bg-frost-950 dark:text-frost-400'
+                  : 'text-gray-400 hover:bg-gray-100 hover:text-frost-700 dark:text-gray-500 dark:hover:bg-moss-800 dark:hover:text-frost-400')
+              }
+            >
+              <SnowflakeIcon />
+            </button>
+          )}
         <div
           role="button"
           tabIndex={0}
@@ -298,53 +336,6 @@ function IngredientRow({
               {expiryInfo && <span className={expiryBadgeClasses(expiryInfo.status)}>{expiryInfo.label}</span>}
             </span>
           )}
-        </div>
-        <div className="flex shrink-0 items-center gap-2">
-          {(canFreeze || ingredient.frozen) && (
-            <button
-              type="button"
-              aria-pressed={!!ingredient.frozen}
-              aria-label={
-                ingredient.frozen
-                  ? `${ingredient.name}: en el congelador, pulsa para sacarlo`
-                  : `${ingredient.name}: pulsa para marcarlo como congelado`
-              }
-              title={ingredient.frozen ? 'En el congelador' : 'Marcar como congelado'}
-              onClick={toggleFrozen}
-              disabled={busy}
-              className={
-                'relative flex h-7 w-7 items-center justify-center rounded-full transition-colors disabled:opacity-50 max-md:after:absolute max-md:after:-inset-2 max-md:after:content-[\'\'] ' +
-                (ingredient.frozen
-                  ? 'bg-frost-100 text-frost-700 dark:bg-frost-950 dark:text-frost-400'
-                  : 'text-gray-400 hover:bg-gray-100 hover:text-frost-700 dark:text-gray-500 dark:hover:bg-moss-800 dark:hover:text-frost-400')
-              }
-            >
-              <SnowflakeIcon />
-            </button>
-          )}
-          <button
-            type="button"
-            role="switch"
-            aria-checked={ingredient.inPantry}
-            aria-label={
-              ingredient.inPantry
-                ? `${ingredient.name}: ${ingredient.frozen ? 'congelado' : 'disponible'}, pulsa para marcar como agotado`
-                : `${ingredient.name}: agotado, pulsa para marcar como disponible`
-            }
-            onClick={toggle}
-            disabled={busy}
-            className={
-              'relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors disabled:opacity-50 max-md:after:absolute max-md:after:-inset-2.5 max-md:after:content-[\'\'] ' +
-              (ingredient.inPantry ? (ingredient.frozen ? 'bg-frost-400' : 'bg-emerald-500') : 'bg-gray-300')
-            }
-          >
-            <span
-              className={
-                'inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ' +
-                (ingredient.inPantry ? 'translate-x-6' : 'translate-x-1')
-              }
-            />
-          </button>
         </div>
       </div>
 
@@ -748,30 +739,17 @@ export default function PantryPage() {
   return (
     <div>
       {/* Cabecera fija (título, botones y buscador); los formularios se abren debajo, en el flujo normal. */}
-      <div className="sticky -top-4 z-20 -mt-4 bg-white pb-3 pt-4 md:-top-8 md:-mt-8 md:pt-8 dark:bg-moss-950">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Despensa</h2>
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={() => openForm(setShowAddGroup)}
-            className={outlineButton}
-          >
-            + Grupo
-          </button>
-          <button
-            type="button"
-            onClick={() => openForm(setShowAddIngredient)}
-            className="rounded-md bg-emerald-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-800"
-          >
-            + Ingrediente
-          </button>
-        </div>
-      </div>
-      {(ingredients.length > 0 || search) && (
-        <SearchInput value={search} onChange={setSearch} className="mt-3" />
-      )}
-      </div>
+      <StickyHeader
+        title="Despensa"
+        below={(ingredients.length > 0 || search) && <SearchInput value={search} onChange={setSearch} className="" />}
+      >
+        <button type="button" onClick={() => openForm(setShowAddGroup)} className={outlineButton}>
+          + Grupo
+        </button>
+        <button type="button" onClick={() => openForm(setShowAddIngredient)} className={primaryButton}>
+          + Ingrediente
+        </button>
+      </StickyHeader>
 
       {showAddGroup && <AddGroupForm onDone={() => setShowAddGroup(false)} />}
       {showAddIngredient && (
@@ -824,9 +802,6 @@ export default function PantryPage() {
         })}
       </div>
 
-      <div className="mt-8 text-center">
-        <BackupButton />
-      </div>
     </div>
   )
 }

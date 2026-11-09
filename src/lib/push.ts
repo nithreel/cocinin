@@ -10,6 +10,7 @@ export const DEFAULT_PREFS: PushPrefs = {
   receta: true,
   usuario: true,
   caducidad: true,
+  nota: true,
 }
 
 export type PushState =

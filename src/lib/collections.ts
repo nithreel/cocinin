@@ -66,6 +66,7 @@ export interface PushPrefs {
   receta: boolean
   usuario: boolean
   caducidad: boolean
+  nota: boolean
 }
 
 /** Suscripción push de un dispositivo (id = hash del endpoint). La envía la Raspberry, no la app. */
@@ -77,11 +78,28 @@ export interface PushSubscriptionDoc {
   createdAt: number
 }
 
+/** Nota con recordatorio opcional: avisa por push a los usuarios elegidos a la hora indicada. */
+export interface Note {
+  id: string
+  text: string
+  createdAt: number
+  /** ¿salta aviso? */
+  notify: boolean
+  /** momento del aviso (ms desde epoch); null si no hay aviso */
+  remindAt: number | null
+  /** uids que reciben el aviso */
+  recipients: string[]
+  /** lo marca el servicio de avisos cuando ya lo ha enviado */
+  sent?: boolean
+}
+
 export type Role = 'admin' | 'member'
 
 export interface Member {
   id: string
   email: string
+  /** nombre corto que pone el admin (p. ej. «Dani»); se muestra en vez del correo */
+  alias?: string
   role?: Role
   createdAt: number
 }
@@ -92,5 +110,6 @@ export const shoppingListCol = collection(db, 'shoppingList')
 export const recipesCol = collection(db, 'recipes')
 export const purchaseHistoryCol = collection(db, 'purchaseHistory')
 export const pushSubscriptionsCol = collection(db, 'pushSubscriptions')
+export const notesCol = collection(db, 'notes')
 export const usersCol = collection(db, 'users')
 export const setupDoc = doc(db, 'meta', 'setup')

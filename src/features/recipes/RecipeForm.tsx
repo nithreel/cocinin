@@ -1,7 +1,7 @@
 import { useMemo, useState, type FormEvent } from 'react'
 import type { Group, Ingredient, RecipeIngredient } from '../../lib/collections'
 import { groupByPantryGroup } from '../../lib/groupByPantryGroup'
-import { cancelButton } from '../../components/buttonStyles'
+import { cancelButton, primaryButton } from '../../components/buttonStyles'
 import SearchInput from '../../components/SearchInput'
 import { matchesSearch } from '../../lib/search'
 
@@ -47,6 +47,8 @@ export default function RecipeForm({
   })
   const [submitting, setSubmitting] = useState(false)
   const [search, setSearch] = useState('')
+  // al editar una receta con ingredientes solo se ven los suyos (cantidades y unidades a mano); «Todos» permite añadir más
+  const [view, setView] = useState<'recipe' | 'all'>(Object.keys(selected).length > 0 ? 'recipe' : 'all')
 
   function toggleIngredient(id: string) {
     // al pulsar un ingrediente, la búsqueda se reinicia y vuelve a verse toda la lista
@@ -84,9 +86,14 @@ export default function RecipeForm({
     if (!search.trim()) return availableIngredients
     return availableIngredients.filter((i) => matchesSearch(i.name, search))
   }, [availableIngredients, search])
+  const shownIngredients = useMemo(
+    () => (view === 'recipe' ? visibleIngredients.filter((i) => i.id in selected) : visibleIngredients),
+    [view, visibleIngredients, selected],
+  )
+  const selectedCount = Object.keys(selected).length
   const sections = useMemo(
-    () => groupByPantryGroup(visibleIngredients, (i) => i.id, ingredientsById, groups),
-    [visibleIngredients, ingredientsById, groups],
+    () => groupByPantryGroup(shownIngredients, (i) => i.id, ingredientsById, groups),
+    [shownIngredients, ingredientsById, groups],
   )
 
   async function handleSubmit(e: FormEvent) {
@@ -125,12 +132,40 @@ export default function RecipeForm({
 
       <p className="mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">Ingredientes</p>
       {availableIngredients.length > 0 && (
-        <div className="sticky -top-4 z-10 -mx-4 bg-white px-4 pb-3 pt-2 md:-top-8 dark:bg-moss-900">
+        <div className="sticky top-[calc(var(--head-h)+var(--card-h,0px))] z-10 -mx-4 space-y-2 bg-white px-4 pb-3 pt-2 dark:bg-moss-900">
+          <div role="group" aria-label="Qué ingredientes ver" className="flex gap-1 rounded-md bg-gray-100 p-0.5 text-sm dark:bg-moss-800">
+            {(
+              [
+                ['recipe', `De la receta (${selectedCount})`],
+                ['all', 'Todos'],
+              ] as const
+            ).map(([key, label]) => (
+              <button
+                key={key}
+                type="button"
+                aria-pressed={view === key}
+                onClick={() => setView(key)}
+                className={
+                  'flex-1 rounded px-2 py-1 ' +
+                  (view === key
+                    ? 'bg-white font-medium text-gray-900 shadow-sm dark:bg-moss-700 dark:text-gray-100'
+                    : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100')
+                }
+              >
+                {label}
+              </button>
+            ))}
+          </div>
           <SearchInput value={search} onChange={setSearch} className="" />
         </div>
       )}
       {availableIngredients.length === 0 && (
         <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">Añade ingredientes de comida en la Despensa primero.</p>
+      )}
+      {view === 'recipe' && selectedCount === 0 && !search.trim() && (
+        <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
+          Aún no hay ingredientes en la receta. Pulsa «Todos» para elegirlos.
+        </p>
       )}
       {search.trim() && sections.length === 0 && (
         <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">Nada que coincida con "{search.trim()}".</p>
@@ -207,7 +242,7 @@ export default function RecipeForm({
         <button
           type="submit"
           disabled={submitting}
-          className="rounded-md bg-emerald-700 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-800 disabled:opacity-50"
+          className={primaryButton}
         >
           {submitting ? 'Guardando…' : submitLabel}
         </button>

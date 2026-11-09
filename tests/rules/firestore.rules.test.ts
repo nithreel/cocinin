@@ -71,7 +71,15 @@ describe('instalación hecha', () => {
     const db = env.authenticatedContext('member').firestore()
     await assertFails(setDoc(doc(db, 'users/nuevo'), { email: 'n@x.es', role: 'member', createdAt: 3 }))
     await assertFails(updateDoc(doc(db, 'users/member'), { role: 'admin' }))
+    await assertFails(updateDoc(doc(db, 'users/member'), { alias: 'Yo' }))
     await assertFails(deleteDoc(doc(db, 'users/admin')))
+  })
+
+  it('el admin pone alias a cualquiera, pero no cambia roles', async () => {
+    const db = env.authenticatedContext('admin').firestore()
+    await assertSucceeds(updateDoc(doc(db, 'users/member'), { alias: 'Ángela' }))
+    await assertSucceeds(updateDoc(doc(db, 'users/admin'), { alias: 'Dani' }))
+    await assertFails(updateDoc(doc(db, 'users/member'), { alias: 'X', role: 'admin' }))
   })
 
   it('el admin crea miembros, pero no otro admin', async () => {

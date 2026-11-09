@@ -1,11 +1,11 @@
-import { useMemo, useState } from 'react'
+import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useGroups, useIngredients } from '../pantry/data'
 import { addRecipe, deleteRecipe, updateRecipe, useRecipes } from './data'
 import RecipeForm from './RecipeForm'
-import BackupButton from '../../components/BackupButton'
+import StickyHeader from '../../components/StickyHeader'
 import ImportRecipes from './ImportRecipes'
 import DeleteButton from '../../components/DeleteButton'
-import { cancelButton, outlineButton } from '../../components/buttonStyles'
+import { cancelButton, outlineButton, primaryButton } from '../../components/buttonStyles'
 import type { Group, Ingredient, Recipe } from '../../lib/collections'
 
 type RecipeStatus = 'full' | 'partial' | 'missing'
@@ -28,6 +28,10 @@ const statusBorderClasses: Record<RecipeStatus, string> = {
   missing: 'border-l-red-400',
 }
 
+/** Cabecera de sección de una receta abierta: se queda pegada bajo el nombre mientras se recorre su sección. */
+const sectionHead =
+  'sticky top-[calc(var(--head-h)+var(--card-h,0px))] z-10 -mx-4 mb-2 bg-white px-4 py-1.5 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:bg-moss-900 dark:text-gray-400'
+
 function RecipeCard({
   recipe,
   status,
@@ -43,18 +47,37 @@ function RecipeCard({
 }) {
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState(false)
+  const articleRef = useRef<HTMLElement>(null)
+  const titleRef = useRef<HTMLButtonElement>(null)
+
+  // alto real del nombre fijo (puede ocupar 2 líneas): las cabeceras de sección se pegan justo debajo
+  useLayoutEffect(() => {
+    const art = articleRef.current
+    const title = titleRef.current
+    if (!art || !title) return
+    const apply = () => art.style.setProperty('--card-h', `${title.offsetHeight}px`)
+    apply()
+    const ro = new ResizeObserver(apply)
+    ro.observe(title)
+    return () => ro.disconnect()
+  }, [])
 
   return (
     <article
+      ref={articleRef}
       className={
         'overflow-clip rounded-lg border-y border-r border-t-gray-200 border-r-gray-200 border-b-gray-200 border-l-4 bg-white dark:border-t-moss-800 dark:border-r-moss-800 dark:border-b-moss-800 dark:bg-moss-900 ' +
         statusBorderClasses[status]
       }
     >
       <button
+        ref={titleRef}
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center justify-between gap-3 p-4 text-left"
+        className={
+          'flex w-full items-center justify-between gap-3 bg-white p-4 text-left dark:bg-moss-900' +
+          (open ? ' sticky top-[var(--head-h)] z-20' : '')
+        }
       >
         <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{recipe.title}</h3>
         <span className="text-gray-500 dark:text-gray-400" aria-hidden="true">
@@ -81,9 +104,8 @@ function RecipeCard({
             />
           ) : (
             <>
-              <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                Ingredientes
-              </h4>
+              <section>
+              <h4 className={sectionHead}>Ingredientes</h4>
               <ul className="mb-4 space-y-1 text-sm text-gray-600 dark:text-gray-300">
                 {recipe.ingredients.map((ri) => {
                   const ing = ingredientsById.get(ri.ingredientId)
@@ -107,14 +129,13 @@ function RecipeCard({
                   )
                 })}
               </ul>
+              </section>
 
               {recipe.instructions && (
-                <div className="border-t-2 border-gray-200 pt-4 dark:border-moss-700">
-                  <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                    Preparación
-                  </h4>
+                <section className="border-t-2 border-gray-200 dark:border-moss-700">
+                  <h4 className={sectionHead + ' pt-3'}>Preparación</h4>
                   <p className="whitespace-pre-wrap text-sm text-gray-700 dark:text-gray-300">{recipe.instructions}</p>
-                </div>
+                </section>
               )}
 
               {/* Pie fijo: Editar y Eliminar siguen a la vista aunque la receta sea larga */}
@@ -143,21 +164,14 @@ export default function RecipesPage() {
 
   return (
     <div>
-      <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Recetario</h2>
-        <div className="flex items-center gap-2">
-          <button type="button" onClick={() => setShowImport((v) => !v)} className={outlineButton}>
-            Importar
-          </button>
-          <button
-            type="button"
-            onClick={() => setShowForm((v) => !v)}
-            className="rounded-md bg-emerald-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-800"
-          >
-            + Receta
-          </button>
-        </div>
-      </div>
+      <StickyHeader title="Recetario">
+        <button type="button" onClick={() => setShowImport((v) => !v)} className={outlineButton}>
+          Importar
+        </button>
+        <button type="button" onClick={() => setShowForm((v) => !v)} className={primaryButton}>
+          + Receta
+        </button>
+      </StickyHeader>
 
       {showImport && <ImportRecipes ingredients={ingredients} groups={groups} recipes={recipes} onClose={() => setShowImport(false)} />}
 
@@ -189,9 +203,6 @@ export default function RecipesPage() {
         ))}
       </div>
 
-      <div className="mt-8 text-center">
-        <BackupButton />
-      </div>
     </div>
   )
 }

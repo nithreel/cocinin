@@ -38,6 +38,9 @@ service cloud.firestore {
           request.resource.data.role == 'admin' &&
           existsAfter(/databases/$(database)/documents/meta/setup)) ||
         (isAdmin() && request.resource.data.role == 'member');
+      // El admin puede poner o cambiar el alias de cualquiera (solo ese campo).
+      allow update: if isAdmin() &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['alias']);
       // Solo el admin quita accesos, y nunca el suyo.
       allow delete: if isAdmin() && request.auth.uid != uid;
     }
@@ -47,6 +50,7 @@ service cloud.firestore {
     match /shoppingList/{id} { allow read, write: if isMember(); }
     match /recipes/{id} { allow read, write: if isMember(); }
     match /purchaseHistory/{id} { allow read, write: if isMember(); }
+    match /notes/{id} { allow read, write: if isMember(); }
 
     // Suscripciones push: cada miembro gestiona solo las suyas. La Raspberry las lee con la
     // cuenta de servicio (que no pasa por estas reglas).

@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
 import { FirebaseError } from 'firebase/app'
 import { useAuth } from './AuthContext'
+import { primaryButton } from '../components/buttonStyles'
 
 function errorMessage(err: unknown) {
   if (err instanceof FirebaseError) {
@@ -123,7 +124,7 @@ export default function LoginPage() {
         <button
           type="submit"
           disabled={submitting}
-          className="w-full rounded-md bg-emerald-700 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-800 disabled:opacity-50"
+          className={primaryButton + ' w-full'}
         >
           {submitting ? (setupMode ? 'Creando…' : 'Entrando…') : setupMode ? 'Crear usuario' : 'Entrar'}
         </button>

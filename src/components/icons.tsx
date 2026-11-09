@@ -101,3 +101,29 @@ export function LogoutIcon() {
     </Icon>
   )
 }
+
+export function DownloadIcon() {
+  return (
+    <Icon>
+      <path d="M12 4v11M7.5 10.5 12 15l4.5-4.5" />
+      <path d="M5 19.5h14" />
+    </Icon>
+  )
+}
+
+export function NoteIcon() {
+  return (
+    <Icon>
+      <path d="M6.5 3.5h11A1.5 1.5 0 0 1 19 5v10l-4 5H6.5A1.5 1.5 0 0 1 5 18.5V5a1.5 1.5 0 0 1 1.5-1.5z" />
+      <path d="M15 20v-3.5a1 1 0 0 1 1-1h3M8.5 8.5h7M8.5 12h5" />
+    </Icon>
+  )
+}
+
+export function PlusIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round">
+      <path d="M12 5v14M5 12h14" />
+    </svg>
+  )
+}

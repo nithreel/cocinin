@@ -7,9 +7,12 @@ import webpush from 'web-push'
 import {
   createCollector,
   createShoppingBurst,
+  dueNotes,
   expiryMessage,
   inSendWindow,
   newlyExpiring,
+  noteMessage,
+  noteRecipients,
   purchaseMessage,
   recipeMessage,
   recipients,
@@ -26,13 +29,13 @@ const log = (...a) => console.log(new Date().toISOString(), ...a)
 let subscriptions = [] // { id, uid, endpoint, keys, prefs }
 const ingredients = new Map() // id -> datos
 
-async function send(kind, message, url, exceptUid) {
-  const targets = recipients(subscriptions, kind, exceptUid)
+async function send(kind, message, url, exceptUid, targetsOverride) {
+  const targets = targetsOverride ?? recipients(subscriptions, kind, exceptUid)
   const payload = JSON.stringify({ ...message, url, tag: kind })
   log(`aviso «${kind}»: ${message.body} → ${targets.length} dispositivo(s)`)
   for (const s of targets) {
     try {
-      await webpush.sendNotification({ endpoint: s.endpoint, keys: s.keys }, payload, { TTL: 3600 })
+      await webpush.sendNotification({ endpoint: s.endpoint, keys: s.keys }, payload, { TTL: kind === 'nota' ? 6 * 3600 : 3600 })
     } catch (e) {
       // 404/410: el dispositivo ya no existe; se limpia para no reintentar siempre
       if (e.statusCode === 404 || e.statusCode === 410) {
@@ -107,6 +110,34 @@ listen('users', (type, _id, data, first) => {
     void send('usuario', { title: 'Usuario nuevo', body: `${data.email} se ha unido` }, '/usuarios', data.by)
   }
 })
+
+// Notas con aviso: se revisan cada 30 s. Se marcan como enviadas antes de enviar, para no repetir si falla algo.
+const notes = new Map() // id -> datos
+listen('notes', (type, id, data) => {
+  if (type === 'removed') notes.delete(id)
+  else notes.set(id, data)
+})
+let notesFirstLoad = true
+async function checkNotes() {
+  for (const note of dueNotes(notes)) {
+    note.sent = true
+    notes.set(note.id, { ...notes.get(note.id), sent: true })
+    try {
+      await db.collection('notes').doc(note.id).update({ sent: true, sentAt: Date.now() })
+    } catch (e) {
+      log('no se pudo marcar la nota', note.id, e.message)
+      continue
+    }
+    await send('nota', noteMessage(note), '/notas', null, noteRecipients(subscriptions, note))
+  }
+}
+setTimeout(() => {
+  notesFirstLoad = false
+  void checkNotes()
+}, 10_000)
+setInterval(() => {
+  if (!notesFirstLoad) void checkNotes()
+}, 30_000)
 
 // Caducidad: revisión cada hora. Solo se envía de 8:00 a 22:00; lo que entra de madrugada sale a las 8:00.
 // Primera vez (sin fichero de estado): se marca lo que ya estaba en aviso sin enviar nada.
