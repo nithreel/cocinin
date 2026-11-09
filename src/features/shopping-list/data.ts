@@ -11,8 +11,30 @@ import { localDateString } from '../../lib/expiry'
 
 export { useShoppingList, usePurchaseHistory } from '../../lib/AppDataContext'
 
+/** Devuelve el id del elemento creado (para poder deshacer). */
 export async function addToShoppingList(ingredientId: string) {
-  await addDoc(shoppingListCol, { ingredientId, checked: false, addedAt: Date.now(), by: currentUid() })
+  const ref = await addDoc(shoppingListCol, { ingredientId, checked: false, addedAt: Date.now(), by: currentUid() })
+  return ref.id
+}
+
+/** Añade varios de golpe; devuelve los ids creados. */
+export async function addManyToShoppingList(ingredientIds: string[]) {
+  const batch = writeBatch(db)
+  const addedAt = Date.now()
+  const ids: string[] = []
+  ingredientIds.forEach((ingredientId, i) => {
+    const ref = doc(shoppingListCol)
+    ids.push(ref.id)
+    batch.set(ref, { ingredientId, checked: false, addedAt: addedAt + i, by: currentUid() })
+  })
+  await batch.commit()
+  return ids
+}
+
+export async function removeManyFromShoppingList(ids: string[]) {
+  const batch = writeBatch(db)
+  ids.forEach((id) => batch.delete(doc(shoppingListCol, id)))
+  await batch.commit()
 }
 
 export async function removeFromShoppingList(itemId: string) {

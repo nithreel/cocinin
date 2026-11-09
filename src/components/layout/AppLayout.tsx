@@ -1,6 +1,7 @@
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useState, type ReactNode } from 'react'
 import { useAuth } from '../../auth/AuthContext'
+import { ToastProvider } from '../Toast'
 import ErrorToast from '../ErrorToast'
 import { BellIcon, BookIcon, CartIcon, DownloadIcon, LogoutIcon, NoteIcon, PantryIcon, UsersIcon } from '../icons'
 import { downloadBackup } from '../../lib/backup'
@@ -106,6 +107,7 @@ export default function AppLayout() {
   const dataError = useDataError()
 
   return (
+    <ToastProvider>
     <div className="flex h-dvh flex-col md:flex-row">
       <nav className="hidden shrink-0 border-r border-gray-200 bg-white p-3 md:flex md:w-56 md:flex-col md:gap-1 dark:border-moss-800 dark:bg-moss-900">
         <div className="px-2 py-1">
@@ -162,5 +164,6 @@ export default function AppLayout() {
         ))}
       </nav>
     </div>
+    </ToastProvider>
   )
 }

@@ -19,6 +19,8 @@ import { ConfirmDelete } from '../../components/DeleteButton'
 import { SnowflakeIcon } from '../../components/icons'
 import SearchInput from '../../components/SearchInput'
 import SectionHeader from '../../components/SectionHeader'
+import { useToast } from '../../components/Toast'
+import { addToShoppingList, useShoppingList } from '../shopping-list/data'
 import Switch from '../../components/Switch'
 import StickyHeader from '../../components/StickyHeader'
 import { cancelButton, dangerTextButton, outlineButton, primaryButton } from '../../components/buttonStyles'
@@ -89,6 +91,8 @@ function IngredientRow({
   /** títulos de las recetas que usan este ingrediente (para avisar antes de borrarlo) */
   usedIn: string[]
 }) {
+  const toast = useToast()
+  const onList = useShoppingList().items.some((i) => i.ingredientId === ingredient.id)
   const [busy, setBusy] = useState(false)
   const [panelOpen, setPanelOpen] = useState(false)
   const rowRef = useRef<HTMLLIElement>(null)
@@ -168,7 +172,15 @@ function IngredientRow({
   async function toggle() {
     setBusy(true)
     try {
+      const wasAvailable = ingredient.inPantry
       await setIngredientInPantry(ingredient.id, !ingredient.inPantry)
+      if (wasAvailable && !onList) {
+        toast({
+          message: `${ingredient.name} agotado`,
+          actionLabel: 'Añadir a la lista',
+          onAction: () => void addToShoppingList(ingredient.id),
+        })
+      }
     } finally {
       setBusy(false)
     }

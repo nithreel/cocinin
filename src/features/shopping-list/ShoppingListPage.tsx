@@ -1,10 +1,12 @@
 import { useMemo, useState } from 'react'
 import { useGroups, useIngredients } from '../pantry/data'
 import {
+  addManyToShoppingList,
   addToShoppingList,
   clearPurchaseHistory,
   confirmPurchase,
   removeFromShoppingList,
+  removeManyFromShoppingList,
   setShoppingItemChecked,
   usePurchaseHistory,
   useShoppingList,
@@ -13,9 +15,10 @@ import type { Ingredient, PurchaseHistoryEntry, ShoppingItem } from '../../lib/c
 import { groupByPantryGroup } from '../../lib/groupByPantryGroup'
 import DeleteButton from '../../components/DeleteButton'
 import SearchInput from '../../components/SearchInput'
+import { useToast } from '../../components/Toast'
 import SectionHeader from '../../components/SectionHeader'
 import StickyHeader from '../../components/StickyHeader'
-import { primaryButton, rowAddButton, rowIconButton } from '../../components/buttonStyles'
+import { linkButton, primaryButton, rowAddButton, rowIconButton } from '../../components/buttonStyles'
 import { ChevronIcon, PlusIcon, XIcon } from '../../components/icons'
 import { matchesSearch } from '../../lib/search'
 
@@ -67,6 +70,7 @@ export default function ShoppingListPage() {
   const { ingredients, loading: loadingIngredients } = useIngredients()
   const { items, loading: loadingItems } = useShoppingList()
   const { entries: historyEntries, loading: loadingHistory } = usePurchaseHistory()
+  const toast = useToast()
   const [confirming, setConfirming] = useState(false)
   const [historyCollapsed, setHistoryCollapsed] = useState(true)
   const cartCollapse = useCollapsedSet()
@@ -83,7 +87,8 @@ export default function ShoppingListPage() {
 
   const shoppingIngredientIds = useMemo(() => new Set(items.map((i) => i.ingredientId)), [items])
 
-  const hasChecked = items.some((i) => i.checked)
+  const checkedCount = items.filter((i) => i.checked).length
+  const hasChecked = checkedCount > 0
 
   const missingAll = useMemo(
     () => ingredients.filter((i) => !i.inPantry && !shoppingIngredientIds.has(i.id)),
@@ -109,7 +114,9 @@ export default function ShoppingListPage() {
   async function handleConfirmPurchase() {
     setConfirming(true)
     try {
+      const n = items.filter((i) => i.checked).length
       await confirmPurchase(items, ingredientsById)
+      toast({ message: `Compra confirmada: ${n} ${n === 1 ? 'producto pasa' : 'productos pasan'} a la despensa` })
     } finally {
       setConfirming(false)
     }
@@ -124,7 +131,7 @@ export default function ShoppingListPage() {
         {loading && <p className="text-gray-500 dark:text-gray-400">Cargando…</p>}
 
         {!loading && items.length === 0 && (
-          <p className="text-gray-500 dark:text-gray-400">Tu lista está vacía. Añade algo de lo que te falta abajo.</p>
+          <p className="text-gray-500 dark:text-gray-400">Tu lista está vacía. Añade algo de lo que te falta, abajo.</p>
         )}
 
         {items.length > 0 && (
@@ -181,16 +188,16 @@ export default function ShoppingListPage() {
               })}
             </div>
             {/* Pie fijo: el botón de confirmar sigue a la vista con la lista larga */}
-            <div className="sticky -bottom-4 z-10 bg-white py-2 md:-bottom-8 dark:bg-moss-950">
+            <div className="sticky -bottom-4 z-10 flex flex-wrap items-center gap-3 bg-white py-2 md:-bottom-8 dark:bg-moss-950">
               <button
                 type="button"
                 onClick={handleConfirmPurchase}
                 disabled={confirming || !hasChecked}
-                title={hasChecked ? undefined : 'Tacha al menos un artículo para confirmar la compra'}
                 className={primaryButton + ' w-full sm:w-auto'}
               >
-                {confirming ? 'Confirmando…' : 'Confirmar compra'}
+                {confirming ? 'Confirmando…' : `Confirmar compra${checkedCount ? ` (${checkedCount})` : ''}`}
               </button>
+              {!hasChecked && <span className="text-sm text-gray-500 dark:text-gray-400">Tacha lo que hayas comprado.</span>}
             </div>
           </>
         )}
@@ -199,7 +206,26 @@ export default function ShoppingListPage() {
       {/* El contenedor acaba antes del historial: al llegar a él, «Te falta» y el buscador dejan de estar fijos */}
       <div className="mb-8">
         <div className="sticky top-[var(--head-h)] z-20 bg-white pb-3 dark:bg-moss-950">
-          <h3 className="mb-1 text-base font-semibold text-gray-900 dark:text-gray-100">Te falta</h3>
+          <div className="mb-1 flex items-center justify-between gap-2">
+            <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">Te falta</h3>
+            {missing.length > 1 && (
+              <button
+                type="button"
+                className={linkButton}
+                onClick={async () => {
+                  const ids = await addManyToShoppingList(missing.map((i) => i.id))
+                  setMissingSearch('')
+                  toast({
+                    message: `${ids.length} añadidos a la lista`,
+                    actionLabel: 'Deshacer',
+                    onAction: () => void removeManyFromShoppingList(ids),
+                  })
+                }}
+              >
+                Añadir {missingSearch.trim() ? 'los' : 'todo'} ({missing.length})
+              </button>
+            )}
+          </div>
           {missingAll.length > 0 && <SearchInput value={missingSearch} onChange={setMissingSearch} className="" />}
         </div>
 
@@ -208,7 +234,7 @@ export default function ShoppingListPage() {
         )}
 
         {missingAll.length > 0 && missing.length === 0 && (
-          <p className="text-gray-500 dark:text-gray-400">Nada que coincida con "{missingSearch.trim()}".</p>
+          <p className="text-gray-500 dark:text-gray-400">Nada que coincida con «{missingSearch.trim()}».</p>
         )}
 
         {missing.length > 0 && (
@@ -230,10 +256,15 @@ export default function ShoppingListPage() {
                           <span className="text-gray-900 dark:text-gray-100">{ingredient.name}</span>
                           <button
                             type="button"
-                            onClick={() => {
-                              addToShoppingList(ingredient.id)
+                            onClick={async () => {
                               // tras añadir, la búsqueda se reinicia y vuelve a verse todo lo que falta
                               setMissingSearch('')
+                              const id = await addToShoppingList(ingredient.id)
+                              toast({
+                                message: `${ingredient.name} añadido a la lista`,
+                                actionLabel: 'Deshacer',
+                                onAction: () => void removeFromShoppingList(id),
+                              })
                             }}
                             aria-label={`Añadir ${ingredient.name} a la lista`}
                             title="Añadir a la lista"
