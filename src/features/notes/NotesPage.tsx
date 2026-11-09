@@ -8,6 +8,7 @@ import { BellIcon } from '../../components/icons'
 import { cancelButton, primaryButton } from '../../components/buttonStyles'
 import { usersCol, type Member, type Note } from '../../lib/collections'
 import { defaultRemindAt, formatRemind, joinDateTime, splitDateTime } from '../../lib/noteTime'
+import { scrollMainToTop } from '../../lib/scroll'
 import { memberName } from '../../lib/members'
 import { addNote, deleteNote, updateNote, useNotes, type NoteValues } from './data'
 
@@ -195,7 +196,10 @@ export default function NotesPage() {
   return (
     <div>
       <StickyHeader title="Notas">
-        <button type="button" onClick={() => setShowForm((v) => !v)} className={primaryButton}>
+        <button type="button" onClick={() => {
+            setShowForm((v) => !v)
+            scrollMainToTop()
+          }} className={primaryButton}>
           + Nota
         </button>
       </StickyHeader>

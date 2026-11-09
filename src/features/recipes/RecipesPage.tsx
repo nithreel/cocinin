@@ -2,6 +2,7 @@ import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useGroups, useIngredients } from '../pantry/data'
 import { addRecipe, deleteRecipe, updateRecipe, useRecipes } from './data'
 import RecipeForm from './RecipeForm'
+import { scrollMainToTop } from '../../lib/scroll'
 import StickyHeader from '../../components/StickyHeader'
 import ImportRecipes from './ImportRecipes'
 import DeleteButton from '../../components/DeleteButton'
@@ -165,10 +166,16 @@ export default function RecipesPage() {
   return (
     <div>
       <StickyHeader title="Recetario">
-        <button type="button" onClick={() => setShowImport((v) => !v)} className={outlineButton}>
+        <button type="button" onClick={() => {
+            setShowImport((v) => !v)
+            scrollMainToTop()
+          }} className={outlineButton}>
           Importar
         </button>
-        <button type="button" onClick={() => setShowForm((v) => !v)} className={primaryButton}>
+        <button type="button" onClick={() => {
+            setShowForm((v) => !v)
+            scrollMainToTop()
+          }} className={primaryButton}>
           + Receta
         </button>
       </StickyHeader>

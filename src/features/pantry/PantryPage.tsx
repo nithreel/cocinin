@@ -18,8 +18,10 @@ import type { ExpiryMode, Group, Ingredient } from '../../lib/collections'
 import { ConfirmDelete } from '../../components/DeleteButton'
 import { SnowflakeIcon } from '../../components/icons'
 import SearchInput from '../../components/SearchInput'
+import Switch from '../../components/Switch'
 import StickyHeader from '../../components/StickyHeader'
 import { cancelButton, dangerTextButton, outlineButton, primaryButton } from '../../components/buttonStyles'
+import { scrollMainToTop, smoothBehavior } from '../../lib/scroll'
 import { matchesSearch } from '../../lib/search'
 import KebabMenu from '../../components/KebabMenu'
 import { expiryBadgeClasses, getExpiryInfo, remainingLabel } from '../../lib/expiry'
@@ -100,7 +102,7 @@ function IngredientRow({
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
-    if (highlight) rowRef.current?.scrollIntoView({ block: 'center', behavior: 'smooth' })
+    if (highlight) rowRef.current?.scrollIntoView({ block: 'center', behavior: smoothBehavior() })
   }, [highlight])
 
   function closePanel() {
@@ -138,7 +140,7 @@ function IngredientRow({
 
   // al abrir el panel de una fila del final, se desplaza para que se vea entero (sin quedar bajo la barra)
   useEffect(() => {
-    if (panelOpen) rowRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+    if (panelOpen) rowRef.current?.scrollIntoView({ block: 'nearest', behavior: smoothBehavior() })
   }, [panelOpen, confirmingDelete])
 
   async function handleSaveDates(e: FormEvent) {
@@ -266,29 +268,17 @@ function IngredientRow({
       }
     >
       <div className="flex items-center gap-3 max-md:min-h-7">
-          <button
-            type="button"
-            role="switch"
-            aria-checked={ingredient.inPantry}
-            aria-label={
+          <Switch
+            checked={ingredient.inPantry}
+            onChange={toggle}
+            disabled={busy}
+            tone={ingredient.frozen ? 'frost' : 'emerald'}
+            label={
               ingredient.inPantry
                 ? `${ingredient.name}: ${ingredient.frozen ? 'congelado' : 'disponible'}, pulsa para marcar como agotado`
                 : `${ingredient.name}: agotado, pulsa para marcar como disponible`
             }
-            onClick={toggle}
-            disabled={busy}
-            className={
-              'relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors disabled:opacity-50 max-md:after:absolute max-md:after:-inset-2.5 max-md:after:content-[\'\'] ' +
-              (ingredient.inPantry ? (ingredient.frozen ? 'bg-frost-400' : 'bg-emerald-500') : 'bg-gray-300')
-            }
-          >
-            <span
-              className={
-                'inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ' +
-                (ingredient.inPantry ? 'translate-x-6' : 'translate-x-1')
-              }
-            />
-          </button>
+          />
           {(canFreeze || ingredient.frozen) && (
             <button
               type="button"
@@ -624,7 +614,12 @@ function GroupHeader({
       {section.deletable &&
         (confirmingDelete ? (
           <ConfirmDelete
-            question=""
+            question={
+              section.items.length > 0
+                ? `¿Eliminar «${section.name}»? Sus ${section.items.length} ingredientes pasan a Sin grupo.`
+                : `¿Eliminar «${section.name}»?`
+            }
+            questionClassName="w-full"
             busy={deleting}
             onConfirm={handleDelete}
             onCancel={() => setConfirmingDelete(false)}
@@ -733,7 +728,7 @@ export default function PantryPage() {
   // Los formularios se abren arriba del todo: si se pulsa con la página desplazada, se vuelve a la cima para verlos.
   function openForm(toggle: (fn: (v: boolean) => boolean) => void) {
     toggle((v) => !v)
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+    scrollMainToTop()
   }
 
   return (
