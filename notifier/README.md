@@ -11,6 +11,7 @@ Escucha Firestore con una cuenta de servicio y envía Web Push (VAPID) a los dis
 | Compra hecha | se confirma la compra | «12 productos añadidos a la despensa» |
 | Receta nueva | entra una receta (2 s; una importación en lote sale como un solo aviso) | título, o «3 recetas nuevas en el recetario» |
 | Usuario nuevo | el admin añade a alguien | «*correo* se ha unido» |
+| Nota | llega la hora de una nota con aviso (se revisa cada 30 s); solo a las personas elegidas en la nota, sin ventana horaria | el texto de la nota |
 | Caducidad | un ingrediente entra en «caduca en 3 días o menos»; revisión cada hora, solo de 8:00 a 22:00 | «Leche caduca mañana» / «6 ingredientes caducan pronto: Leche (hoy), …» |
 
 - No se avisa a quien provoca el cambio (los documentos llevan el campo `by` con su uid).

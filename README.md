@@ -5,7 +5,7 @@
 <h1 align="center">CocinIN</h1>
 
 <p align="center">
-  Despensa, lista de la compra y recetario compartidos para toda la casa.<br>
+  Despensa, lista de la compra, recetario y notas compartidos para toda la casa.<br>
   Se instala como app en el móvil y también funciona desde cualquier navegador.
 </p>
 
@@ -18,12 +18,13 @@
 CocinIN responde a tres preguntas del día a día: **¿qué tenemos en casa?**, **¿qué hay que comprar?** y **¿qué podemos cocinar?** Todo se sincroniza al instante entre las personas de la casa: si alguien tacha algo en el súper, los demás lo ven en su móvil.
 
 - 🥫 **Despensa**: ingredientes por grupos con un interruptor *disponible / agotado*, un copo de nieve para marcarlos como *congelados*, y fecha de compra o de caducidad (con avisos de «caduca en 2 días»).
-- 🛒 **Lista de la compra**: lo que te falta, con buscador. Al confirmar la compra, lo comprado vuelve a la despensa y se anota en el historial.
-- 📖 **Recetario**: recetas con ingredientes (obligatorios u opcionales) y preparación. Cada receta se marca según tengas o no lo necesario.
-- 👥 **Usuarios**: un administrador da de alta a los demás. Cada casa tiene su propia instalación y sus datos son privados.
+- 🛒 **Lista de la compra**: lo que te falta, con buscador y un «+» para añadirlo (con «Deshacer»). Al confirmar la compra, lo comprado vuelve a la despensa y se anota en el historial.
+- 📖 **Recetario**: recetas con ingredientes (obligatorios u opcionales) y preparación, con buscador y filtro «Puedo hacerla». Lo que te falta sale en rojo (y en ámbar si es opcional).
+- 📝 **Notas**: recordatorios con hora y fecha («Sacar pollo del congelador, mañana a las 17:30») que avisan por el móvil a las personas que elijas.
+- 👥 **Usuarios**: un administrador da de alta a los demás y puede ponerles un alias. Cada casa tiene su propia instalación y sus datos son privados.
 - 📥 **Importar recetas**: pega el JSON que te prepare cualquier IA con la receta y se añaden al recetario, con vista previa.
-- 🔔 **Avisos en el móvil** (opcional): algo se ha gastado, compra hecha, algo va a caducar…
-- 🌗 Modo claro y oscuro automático, y copia de seguridad en un clic.
+- 🔔 **Avisos en el móvil** (opcional): algo se ha agotado, compra hecha, algo va a caducar, una nota con hora…
+- 🌗 Modo claro y oscuro automático, copia de seguridad en un clic (icono de descarga de la barra superior) y aviso cuando hay una versión nueva de la app.
 
 Es una **PWA**: puedes usarla desde el navegador del ordenador o del móvil, o **instalarla como una app** con su icono en la pantalla de inicio, a pantalla completa y sin barra del navegador.
 
@@ -38,10 +39,11 @@ Es una **PWA**: puedes usarla desde el navegador del ordenador o del móvil, o *
 ## Capturas
 
 <p>
-  <img src="docs/screenshots/movil-login.png" alt="Inicio de sesión" width="24%">
-  <img src="docs/screenshots/movil-despensa.png" alt="Despensa" width="24%">
-  <img src="docs/screenshots/movil-lista.png" alt="Lista de la compra" width="24%">
-  <img src="docs/screenshots/movil-receta.png" alt="Receta" width="24%">
+  <img src="docs/screenshots/movil-login.png" alt="Inicio de sesión" width="19%">
+  <img src="docs/screenshots/movil-despensa.png" alt="Despensa" width="19%">
+  <img src="docs/screenshots/movil-lista.png" alt="Lista de la compra" width="19%">
+  <img src="docs/screenshots/movil-receta.png" alt="Receta" width="19%">
+  <img src="docs/screenshots/movil-notas.png" alt="Notas con aviso" width="19%">
 </p>
 
 *Los datos de las capturas son de ejemplo.*
@@ -97,12 +99,13 @@ Al terminar, abre tu URL: mientras no exista ningún usuario, el login muestra *
 | Acción | Cómo |
 | --- | --- |
 | Añadir ingrediente | Despensa → «+ Ingrediente». Nace disponible (ON). |
-| Agotado / disponible / congelado | Interruptor a la derecha del ingrediente; el copo de nieve lo marca como congelado (cuenta como disponible). |
+| Agotado / disponible / congelado | Interruptor a la izquierda del ingrediente (verde disponible, rojo agotado, azul congelado); el copo de nieve, a su lado, lo marca como congelado (cuenta como disponible). Al agotarlo, la app te ofrece «Añadir a la lista». |
 | Caducidad, cantidad, editar o eliminar | Toca el ingrediente: fechas, cantidad (texto libre, p. ej. «500 g») y botones **Editar** y **Eliminar**. |
 | Buscar | El buscador de la Despensa filtra por ingrediente **o por grupo**. |
-| Comprar | Lista → «Añadir a la lista» en lo que falta → marca lo comprado → «Confirmar compra». |
+| Comprar | Lista → «+» en lo que falta → marca lo comprado → «Confirmar compra». |
 | Receta nueva | Recetario → «+ Receta», o **Importar** para pegar un JSON con una o varias recetas (vista previa y «Deshacer importación»). |
-| Usuarios y copia de seguridad | **Usuarios** (solo administrador) da de alta y quita personas. **Descargar copia de seguridad** está al final de Despensa y Recetario, para cualquiera. |
+| Nota con aviso | Notas → «+ Nota» → activa «Avisar a una hora», elige hora y fecha y a quién avisar (por defecto, a todos). |
+| Usuarios y copia de seguridad | En la barra superior: **Usuarios** (solo administrador: alta, baja y alias) y el icono de **descargar copia de seguridad**, para cualquiera. |
 | Olvidé la contraseña | Login → «¿Has olvidado la contraseña?» |
 
 ---
@@ -120,12 +123,12 @@ Al terminar, abre tu URL: mientras no exista ningún usuario, el login muestra *
 
 La app funciona completa sin esto. Si quieres notificaciones (algo se ha gastado, compra hecha, algo va a caducar…), hace falta un servicio pequeño en una máquina tuya siempre encendida con Docker, por ejemplo una Raspberry Pi. Firebase gratis no puede enviarlas por sí solo.
 
-Avisa de: elemento gastado, varios añadidos a la lista, compra hecha, receta nueva, usuario nuevo y caducidad próxima. Cada persona elige cuáles quiere en la campana de la app, y nunca se avisa a quien provoca el cambio.
+Avisa de: ingrediente agotado, varios añadidos a la lista, compra hecha, receta nueva, usuario nuevo, caducidad próxima y notas con hora. Cada persona elige cuáles quiere en la campana de la barra superior, y nunca se avisa a quien provoca el cambio.
 
 **Instalación**
 1. Descarga la clave de tu proyecto: consola de Firebase → Configuración del proyecto → Cuentas de servicio → *Generar nueva clave privada*, y guárdala como `notifier/secrets/service-account.json` (no la subas ni la compartas).
 2. Ejecuta `cd notifier && ./instalar.sh` (en esa máquina) o `./instalar.sh usuario@host` (por ssh). El script hace el resto; si cambia `.env`, ejecuta después `npm run deploy`.
-3. En cada móvil: campana → **Activar**. En iPhone, antes añade la app a la pantalla de inicio.
+3. En cada móvil: campana de la barra superior → **Activar**. En iPhone, antes añade la app a la pantalla de inicio.
 
 Si la máquina está apagada, los avisos de ese rato se pierden. Más detalles en [`notifier/README.md`](notifier/README.md).
 
@@ -147,7 +150,7 @@ Tu `.env` y `.firebaserc` no se tocan, así que sigues con tu proyecto y tus dat
 - **Aviso de versión nueva**: el admin ve un aviso en la app cuando hay una release más reciente en GitHub que la instalada (una consulta al día a la API pública de GitHub). Para no consultar: `VITE_DISABLE_UPDATE_CHECK=true` en `.env`; para otro repositorio: `VITE_UPDATE_REPO=usuario/repo`.
 - Solo las reglas: `npm run deploy:rules`.
 - **Sin conexión**: la app guarda una copia local y sincroniza al volver la cobertura.
-- **Copia de seguridad**: descárgala de vez en cuando desde Despensa o Recetario.
+- **Copia de seguridad**: descárgala de vez en cuando con el icono de descarga de la barra superior.
 - **Dominio propio**: Firebase Console → Hosting → *Add custom domain*.
 - Límites del plan gratuito (Spark): 50 000 lecturas y 20 000 escrituras al día en Firestore; de sobra para una casa.
 
