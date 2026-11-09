@@ -4,12 +4,20 @@ export default function Switch({
   onChange,
   label,
   disabled,
+  tone = 'emerald',
+  offTone = 'gray',
 }: {
   checked: boolean
   onChange: (value: boolean) => void
   label: string
   disabled?: boolean
+  /** frost = congelado */
+  tone?: 'emerald' | 'frost'
+  /** color apagado: gris (preferencias) o rojo suave (agotado) */
+  offTone?: 'gray' | 'red'
 }) {
+  const on = tone === 'frost' ? 'bg-frost-400' : 'bg-emerald-500'
+  const off = offTone === 'red' ? 'bg-red-300 dark:bg-red-400/60' : 'bg-gray-400 dark:bg-moss-600'
   return (
     <button
       type="button"
@@ -19,13 +27,13 @@ export default function Switch({
       disabled={disabled}
       onClick={() => onChange(!checked)}
       className={
-        "relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors disabled:opacity-50 max-md:after:absolute max-md:after:-inset-2.5 max-md:after:content-[''] " +
-        (checked ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-moss-600')
+        "relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors motion-reduce:transition-none disabled:opacity-50 after:absolute after:-inset-2 after:content-[''] " +
+        (checked ? on : off)
       }
     >
       <span
         className={
-          'inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ' +
+          'inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform motion-reduce:transition-none ' +
           (checked ? 'translate-x-6' : 'translate-x-1')
         }
       />

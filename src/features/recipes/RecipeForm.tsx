@@ -168,7 +168,7 @@ export default function RecipeForm({
         </p>
       )}
       {search.trim() && sections.length === 0 && (
-        <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">Nada que coincida con "{search.trim()}".</p>
+        <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">Nada que coincida con «{search.trim()}».</p>
       )}
       <div className="mb-4 space-y-3">
         {sections.map((section) => (
@@ -233,7 +233,7 @@ export default function RecipeForm({
         value={instructions}
         onChange={(e) => setInstructions(e.target.value)}
         rows={6}
-        placeholder="Pasos a seguir..."
+        placeholder="Pasos a seguir…"
         className="mb-4 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-moss-700 dark:bg-moss-800 dark:text-gray-100"
       />
 

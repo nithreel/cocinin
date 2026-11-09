@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
+import { useToast } from './Toast'
 import { FirebaseError } from 'firebase/app'
 
 function describe(reason: unknown) {
@@ -18,31 +19,17 @@ function describe(reason: unknown) {
  * Así los errores de Firestore no pasan desapercibidos en ninguna pantalla.
  */
 export default function ErrorToast() {
-  const [message, setMessage] = useState<string | null>(null)
+  const show = useToast()
 
   useEffect(() => {
     function onRejection(e: PromiseRejectionEvent) {
       console.error(e.reason)
       e.preventDefault()
-      setMessage(describe(e.reason))
+      show({ message: describe(e.reason), kind: 'error' })
     }
     window.addEventListener('unhandledrejection', onRejection)
     return () => window.removeEventListener('unhandledrejection', onRejection)
-  }, [])
+  }, [show])
 
-  useEffect(() => {
-    if (!message) return
-    const t = window.setTimeout(() => setMessage(null), 7000)
-    return () => window.clearTimeout(t)
-  }, [message])
-
-  if (!message) return null
-  return (
-    <div
-      role="alert"
-      className="fixed inset-x-4 bottom-20 z-50 mx-auto max-w-md rounded-lg bg-red-600 px-4 py-3 text-sm text-white shadow-lg md:bottom-6"
-    >
-      {message}
-    </div>
-  )
+  return null
 }

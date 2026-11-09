@@ -35,7 +35,8 @@ function CreateMissing({ names, groups }: { names: string[]; groups: Group[] }) 
       // Sin existencias: son cosas que no tienes; así la receta no sale como «completa» por error.
       for (const n of names) await addIngredient(n, picked[n], { mode: 'none', date: null, quantity: '' }, false)
     } catch (e) {
-      setError(`No se pudieron crear: ${(e as Error).message}`)
+      console.error(e)
+      setError('No se pudieron crear. Inténtalo de nuevo.')
       setBusy(false)
     }
   }
@@ -152,7 +153,8 @@ export default function ImportRecipes({
       setDone({ batchId, count: toAdd.length })
     } catch (e) {
       setText(previousText)
-      setError(`No se pudo importar: ${(e as Error).message}`)
+      console.error(e)
+      setError('No se pudo importar. Inténtalo de nuevo.')
     } finally {
       setBusy(false)
     }
@@ -166,7 +168,8 @@ export default function ImportRecipes({
       await undoImport(done.batchId)
       setDone(null)
     } catch (e) {
-      setError(`No se pudo deshacer: ${(e as Error).message}`)
+      console.error(e)
+      setError('No se pudo deshacer. Inténtalo de nuevo.')
     } finally {
       setBusy(false)
     }

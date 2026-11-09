@@ -18,6 +18,12 @@ import type { ExpiryMode, Group, Ingredient } from '../../lib/collections'
 import { ConfirmDelete } from '../../components/DeleteButton'
 import { SnowflakeIcon } from '../../components/icons'
 import SearchInput from '../../components/SearchInput'
+import Switch from '../../components/Switch'
+import { useToast } from '../../components/Toast'
+import ListSkeleton from '../../components/ListSkeleton'
+import { addToShoppingList, useShoppingList } from '../shopping-list/data'
+import { scrollMainToTop } from '../../lib/scroll'
+import { useCollapsedSet } from '../../lib/useCollapsedSet'
 import StickyHeader from '../../components/StickyHeader'
 import { cancelButton, dangerTextButton, outlineButton, primaryButton } from '../../components/buttonStyles'
 import { matchesSearch } from '../../lib/search'
@@ -86,6 +92,8 @@ function IngredientRow({
   /** títulos de las recetas que usan este ingrediente (para avisar antes de borrarlo) */
   usedIn: string[]
 }) {
+  const toast = useToast()
+  const onList = useShoppingList().items.some((i) => i.ingredientId === ingredient.id)
   const [busy, setBusy] = useState(false)
   const [panelOpen, setPanelOpen] = useState(false)
   const rowRef = useRef<HTMLLIElement>(null)
@@ -165,7 +173,15 @@ function IngredientRow({
   async function toggle() {
     setBusy(true)
     try {
+      const wasAvailable = ingredient.inPantry
       await setIngredientInPantry(ingredient.id, !ingredient.inPantry)
+      if (wasAvailable && !onList) {
+        toast({
+          message: `${ingredient.name} agotado`,
+          actionLabel: 'Añadir a la lista',
+          onAction: () => void addToShoppingList(ingredient.id),
+        })
+      }
     } finally {
       setBusy(false)
     }
@@ -266,29 +282,18 @@ function IngredientRow({
       }
     >
       <div className="flex items-center gap-3 max-md:min-h-7">
-          <button
-            type="button"
-            role="switch"
-            aria-checked={ingredient.inPantry}
-            aria-label={
+          <Switch
+            checked={ingredient.inPantry}
+            onChange={toggle}
+            disabled={busy}
+            tone={ingredient.frozen ? 'frost' : 'emerald'}
+            offTone="red"
+            label={
               ingredient.inPantry
                 ? `${ingredient.name}: ${ingredient.frozen ? 'congelado' : 'disponible'}, pulsa para marcar como agotado`
                 : `${ingredient.name}: agotado, pulsa para marcar como disponible`
             }
-            onClick={toggle}
-            disabled={busy}
-            className={
-              'relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors disabled:opacity-50 max-md:after:absolute max-md:after:-inset-2.5 max-md:after:content-[\'\'] ' +
-              (ingredient.inPantry ? (ingredient.frozen ? 'bg-frost-400' : 'bg-emerald-500') : 'bg-gray-300')
-            }
-          >
-            <span
-              className={
-                'inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ' +
-                (ingredient.inPantry ? 'translate-x-6' : 'translate-x-1')
-              }
-            />
-          </button>
+          />
           {(canFreeze || ingredient.frozen) && (
             <button
               type="button"
@@ -606,7 +611,7 @@ function GroupHeader({
   }
 
   return (
-    <div className="mb-1 flex items-center justify-between gap-2">
+    <div className="sticky top-[var(--head-h)] z-10 mb-1 flex items-center justify-between gap-2 bg-white py-1 dark:bg-moss-950">
       <button
         type="button"
         onClick={onToggleCollapsed}
@@ -624,7 +629,12 @@ function GroupHeader({
       {section.deletable &&
         (confirmingDelete ? (
           <ConfirmDelete
-            question=""
+            question={
+              section.items.length > 0
+                ? `¿Eliminar «${section.name}»? Sus ${section.items.length} ingredientes pasan a Sin grupo.`
+                : `¿Eliminar «${section.name}»?`
+            }
+            questionClassName="w-full"
             busy={deleting}
             onConfirm={handleDelete}
             onCancel={() => setConfirmingDelete(false)}
@@ -654,22 +664,10 @@ export default function PantryPage() {
   const { recipes } = useRecipes()
   const [showAddGroup, setShowAddGroup] = useState(false)
   const [showAddIngredient, setShowAddIngredient] = useState(false)
-  const [collapsed, setCollapsed] = useState<Set<string>>(new Set())
+  const { collapsed, toggle: toggleCollapsed, expand } = useCollapsedSet('despensa')
   const [search, setSearch] = useState('')
   const [highlightId, setHighlightId] = useState<string | null>(null)
   const searchActive = search.trim().length > 0
-
-  function toggleCollapsed(id: string) {
-    setCollapsed((prev) => {
-      const next = new Set(prev)
-      if (next.has(id)) {
-        next.delete(id)
-      } else {
-        next.add(id)
-      }
-      return next
-    })
-  }
 
   const recipesByIngredient = useMemo(() => {
     const map = new Map<string, string[]>()
@@ -686,11 +684,7 @@ export default function PantryPage() {
     setHighlightId(id)
     window.setTimeout(() => setHighlightId((cur) => (cur === id ? null : cur)), 3000)
     // el grupo destino puede estar plegado: lo desplegamos para llegar al ingrediente
-    setCollapsed((prev) => {
-      const next = new Set(prev)
-      next.delete(groupId ?? NO_GROUP)
-      return next
-    })
+    expand(groupId ?? NO_GROUP)
   }
 
   const sections = useMemo(() => {
@@ -733,7 +727,7 @@ export default function PantryPage() {
   // Los formularios se abren arriba del todo: si se pulsa con la página desplazada, se vuelve a la cima para verlos.
   function openForm(toggle: (fn: (v: boolean) => boolean) => void) {
     toggle((v) => !v)
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+    scrollMainToTop()
   }
 
   return (
@@ -756,16 +750,16 @@ export default function PantryPage() {
         <AddIngredientForm groups={groups} onDone={handleIngredientAdded} />
       )}
 
-      {loading && <p className="text-gray-500 dark:text-gray-400">Cargando…</p>}
+      {loading && <ListSkeleton />}
 
       {!loading && ingredients.length === 0 && groups.length === 0 && (
         <p className="text-gray-500 dark:text-gray-400">
-          Aún no hay ingredientes. Añade el primero con "+ Ingrediente".
+          Aún no hay ingredientes. Añade el primero con «+ Ingrediente».
         </p>
       )}
 
       {!loading && searchActive && visibleSections.length === 0 && (
-        <p className="text-gray-500 dark:text-gray-400">No hay ingredientes que coincidan con "{search.trim()}".</p>
+        <p className="text-gray-500 dark:text-gray-400">No hay ingredientes que coincidan con «{search.trim()}».</p>
       )}
 
       <div className="space-y-6">

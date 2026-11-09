@@ -2,6 +2,11 @@ import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useGroups, useIngredients } from '../pantry/data'
 import { addRecipe, deleteRecipe, updateRecipe, useRecipes } from './data'
 import RecipeForm from './RecipeForm'
+import { ChevronIcon } from '../../components/icons'
+import SearchInput from '../../components/SearchInput'
+import ListSkeleton from '../../components/ListSkeleton'
+import { scrollMainToTop } from '../../lib/scroll'
+import { matchesSearch } from '../../lib/search'
 import StickyHeader from '../../components/StickyHeader'
 import ImportRecipes from './ImportRecipes'
 import DeleteButton from '../../components/DeleteButton'
@@ -20,6 +25,11 @@ function getRecipeStatus(recipe: Recipe, ingredientsById: Map<string, Ingredient
     }
   }
   return missingOptional ? 'partial' : 'full'
+}
+
+/** Cuántos ingredientes necesarios (no opcionales) faltan en la despensa. */
+function countMissingRequired(recipe: Recipe, ingredientsById: Map<string, Ingredient>) {
+  return recipe.ingredients.filter((ri) => !ri.optional && ingredientsById.get(ri.ingredientId)?.inPantry !== true).length
 }
 
 const statusBorderClasses: Record<RecipeStatus, string> = {
@@ -80,8 +90,8 @@ function RecipeCard({
         }
       >
         <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{recipe.title}</h3>
-        <span className="text-gray-500 dark:text-gray-400" aria-hidden="true">
-          {open ? '▲' : '▼'}
+        <span className="text-gray-500 dark:text-gray-400">
+          <ChevronIcon open={open} />
         </span>
       </button>
 
@@ -118,8 +128,8 @@ function RecipeCard({
                         have
                           ? ''
                           : missingOptional
-                            ? 'text-amber-600 dark:text-amber-400'
-                            : 'text-gray-500 dark:text-gray-400'
+                            ? 'text-amber-700 dark:text-amber-400'
+                            : 'font-medium text-red-700 dark:text-red-400'
                       }
                     >
                       {ing?.name ?? '(ingrediente eliminado: edita la receta para quitarlo)'}
@@ -161,14 +171,64 @@ export default function RecipesPage() {
   const [showImport, setShowImport] = useState(false)
 
   const ingredientsById = useMemo(() => new Map(ingredients.map((i) => [i.id, i])), [ingredients])
+  const [search, setSearch] = useState('')
+  const [onlyReady, setOnlyReady] = useState(false)
+
+  const visibleRecipes = useMemo(
+    () =>
+      recipes.filter(
+        (r) =>
+          (!search.trim() || matchesSearch(r.title, search)) &&
+          (!onlyReady || countMissingRequired(r, ingredientsById) === 0),
+      ),
+    [recipes, search, onlyReady, ingredientsById],
+  )
 
   return (
     <div>
-      <StickyHeader title="Recetario">
-        <button type="button" onClick={() => setShowImport((v) => !v)} className={outlineButton}>
+      <StickyHeader
+        title="Recetario"
+        below={
+          recipes.length > 0 && (
+            <div className="space-y-2">
+              <SearchInput value={search} onChange={setSearch} placeholder="Buscar receta…" className="" />
+              <div role="group" aria-label="Filtrar recetas" className="flex gap-2">
+                {(
+                  [
+                    [false, 'Todas'],
+                    [true, 'Puedo hacerla'],
+                  ] as const
+                ).map(([ready, label]) => (
+                  <button
+                    key={label}
+                    type="button"
+                    aria-pressed={onlyReady === ready}
+                    onClick={() => setOnlyReady(ready)}
+                    className={
+                      'rounded-full border px-3 py-1 text-sm ' +
+                      (onlyReady === ready
+                        ? 'border-emerald-700 bg-emerald-700 text-white'
+                        : 'border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-moss-700 dark:text-gray-300 dark:hover:bg-moss-800')
+                    }
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )
+        }
+      >
+        <button type="button" onClick={() => {
+            setShowImport((v) => !v)
+            scrollMainToTop()
+          }} className={outlineButton}>
           Importar
         </button>
-        <button type="button" onClick={() => setShowForm((v) => !v)} className={primaryButton}>
+        <button type="button" onClick={() => {
+            setShowForm((v) => !v)
+            scrollMainToTop()
+          }} className={primaryButton}>
           + Receta
         </button>
       </StickyHeader>
@@ -184,14 +244,18 @@ export default function RecipesPage() {
         />
       )}
 
-      {loading && <p className="text-gray-500 dark:text-gray-400">Cargando…</p>}
+      {loading && <ListSkeleton />}
 
       {!loading && recipes.length === 0 && (
-        <p className="text-gray-500 dark:text-gray-400">Aún no hay recetas. Crea la primera con "+ Receta".</p>
+        <p className="text-gray-500 dark:text-gray-400">Aún no hay recetas. Crea la primera con «+ Receta».</p>
+      )}
+
+      {recipes.length > 0 && visibleRecipes.length === 0 && (
+        <p className="text-gray-500 dark:text-gray-400">Ninguna receta coincide.</p>
       )}
 
       <div className="space-y-4">
-        {recipes.map((recipe) => (
+        {visibleRecipes.map((recipe) => (
           <RecipeCard
             key={recipe.id}
             recipe={recipe}

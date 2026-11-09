@@ -11,8 +11,10 @@ import { localDateString } from '../../lib/expiry'
 
 export { useShoppingList, usePurchaseHistory } from '../../lib/AppDataContext'
 
+/** Devuelve el id del elemento creado (para poder deshacer). */
 export async function addToShoppingList(ingredientId: string) {
-  await addDoc(shoppingListCol, { ingredientId, checked: false, addedAt: Date.now(), by: currentUid() })
+  const ref = await addDoc(shoppingListCol, { ingredientId, checked: false, addedAt: Date.now(), by: currentUid() })
+  return ref.id
 }
 
 export async function removeFromShoppingList(itemId: string) {

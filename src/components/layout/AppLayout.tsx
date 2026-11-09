@@ -1,7 +1,9 @@
 import { NavLink, Outlet } from 'react-router-dom'
-import { useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useAuth } from '../../auth/AuthContext'
+import { ToastProvider } from '../Toast'
 import ErrorToast from '../ErrorToast'
+import { ConfirmDelete } from '../DeleteButton'
 import { BellIcon, BookIcon, CartIcon, DownloadIcon, LogoutIcon, NoteIcon, PantryIcon, UsersIcon } from '../icons'
 import { downloadBackup } from '../../lib/backup'
 import { useDataError } from '../../lib/AppDataContext'
@@ -67,9 +69,64 @@ function BackupIcon({ withUsers }: { withUsers: boolean }) {
   )
 }
 
+/** Cerrar sesión pide confirmación en un pequeño panel junto al icono. */
+function LogoutButton({ up }: { up: boolean }) {
+  const { signOut } = useAuth()
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    function onDown(e: Event) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') setOpen(false)
+    }
+    document.addEventListener('pointerdown', onDown)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('pointerdown', onDown)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [open])
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-label="Cerrar sesión"
+        aria-expanded={open}
+        title="Cerrar sesión"
+        className={iconButton}
+      >
+        <LogoutIcon />
+      </button>
+      {open && (
+        <div
+          role="alertdialog"
+          aria-label="Confirmar cierre de sesión"
+          className={
+            'absolute right-0 z-50 w-56 rounded-lg border border-gray-200 bg-white p-3 shadow-lg dark:border-moss-700 dark:bg-moss-800 ' +
+            (up ? 'bottom-full mb-2' : 'top-full mt-2')
+          }
+        >
+          <ConfirmDelete
+            question="¿Cerrar sesión?"
+            confirmLabel="Sí, salir"
+            onConfirm={() => signOut()}
+            onCancel={() => setOpen(false)}
+          />
+        </div>
+      )}
+    </div>
+  )
+}
+
 /** Iconos de la barra: Usuarios (solo admin), copia, avisos y cerrar sesión. */
-function TopIcons() {
-  const { isAdmin, signOut } = useAuth()
+function TopIcons({ up = false }: { up?: boolean }) {
+  const { isAdmin } = useAuth()
   return (
     <>
       {isAdmin && (
@@ -81,9 +138,7 @@ function TopIcons() {
       <TopLink to="/avisos" label="Avisos">
         <BellIcon />
       </TopLink>
-      <button type="button" onClick={() => signOut()} aria-label="Cerrar sesión" title="Cerrar sesión" className={iconButton}>
-        <LogoutIcon />
-      </button>
+      <LogoutButton up={up} />
     </>
   )
 }
@@ -92,7 +147,7 @@ function Brand({ size }: { size: string }) {
   return (
     <div className="flex items-center gap-2">
       <img src="/icons/icon.svg" alt="" className={size + ' rounded-lg'} />
-      <span className="text-lg font-semibold text-gray-900 dark:text-gray-100">CocinIn</span>
+      <span className="text-lg font-semibold text-gray-900 dark:text-gray-100">CocinIN</span>
     </div>
   )
 }
@@ -102,6 +157,7 @@ export default function AppLayout() {
   const dataError = useDataError()
 
   return (
+    <ToastProvider>
     <div className="flex h-dvh flex-col md:flex-row">
       <nav className="hidden shrink-0 border-r border-gray-200 bg-white p-3 md:flex md:w-56 md:flex-col md:gap-1 dark:border-moss-800 dark:bg-moss-900">
         <div className="px-2 py-1">
@@ -120,7 +176,7 @@ export default function AppLayout() {
         <div className="mt-auto border-t border-gray-100 pt-3 dark:border-moss-800">
           <p className="mb-1 truncate px-2 text-xs text-gray-500 dark:text-gray-400">{user?.email}</p>
           <div className="flex items-center justify-between">
-            <TopIcons />
+            <TopIcons up />
           </div>
         </div>
       </nav>
@@ -158,5 +214,6 @@ export default function AppLayout() {
         ))}
       </nav>
     </div>
+    </ToastProvider>
   )
 }

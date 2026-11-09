@@ -27,6 +27,16 @@
   --head-h: 44px;
 }
 
+/* checkboxes con el verde de la app */
+input[type='checkbox'] {
+  accent-color: var(--color-emerald-700);
+}
+@media (prefers-color-scheme: dark) {
+  input[type='checkbox'] {
+    accent-color: var(--color-emerald-500);
+  }
+}
+
 html,
 body,
 #root {

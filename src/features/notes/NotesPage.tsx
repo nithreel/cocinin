@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { onSnapshot, orderBy, query } from 'firebase/firestore'
 import { useAuth } from '../../auth/AuthContext'
-import DeleteButton from '../../components/DeleteButton'
+import { ConfirmDelete } from '../../components/DeleteButton'
+import KebabMenu from '../../components/KebabMenu'
+import ListSkeleton from '../../components/ListSkeleton'
+import { scrollMainToTop } from '../../lib/scroll'
 import StickyHeader from '../../components/StickyHeader'
 import Switch from '../../components/Switch'
 import { BellIcon } from '../../components/icons'
@@ -95,8 +98,8 @@ function NoteForm({
       />
 
       <div className="mb-3 flex items-center gap-3">
-        <Switch checked={notify} onChange={setNotify} label="Notificación" />
-        <span className="text-sm text-gray-900 dark:text-gray-100">Notificación</span>
+        <Switch checked={notify} onChange={setNotify} label="Avisar a una hora" />
+        <span className="text-sm text-gray-900 dark:text-gray-100">Avisar a una hora</span>
       </div>
 
       {notify && (
@@ -110,12 +113,14 @@ function NoteForm({
           <p className="mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">Avisar a</p>
           <ul className="mb-4 divide-y divide-gray-100 rounded-md border border-gray-200 dark:divide-moss-800 dark:border-moss-700">
             {members.map((m) => (
-              <li key={m.id} className="flex items-center gap-3 px-3 py-2">
-                <Switch checked={recipients.has(m.id)} onChange={(on) => toggleRecipient(m.id, on)} label={`Avisar a ${memberName(m)}`} />
-                <span className="min-w-0 truncate text-sm text-gray-900 dark:text-gray-100">
-                  {memberName(m)}
-                  {m.id === user?.uid && <span className="ml-2 text-xs text-gray-400">(tú)</span>}
-                </span>
+              <li key={m.id} className="flex items-center px-3">
+                <label className="flex min-h-10 flex-1 cursor-pointer items-center gap-3 text-sm text-gray-900 dark:text-gray-100">
+                  <input type="checkbox" className="h-5 w-5" checked={recipients.has(m.id)} onChange={(e) => toggleRecipient(m.id, e.target.checked)} />
+                  <span className="min-w-0 truncate">
+                    {memberName(m)}
+                    {m.id === user?.uid && <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">(tú)</span>}
+                  </span>
+                </label>
               </li>
             ))}
           </ul>
@@ -137,6 +142,8 @@ function NoteForm({
 
 function NoteCard({ note, members }: { note: Note; members: Member[] }) {
   const [editing, setEditing] = useState(false)
+  const [confirmingDelete, setConfirmingDelete] = useState(false)
+  const [deleting, setDeleting] = useState(false)
   if (editing) {
     return (
       <NoteForm
@@ -154,7 +161,15 @@ function NoteCard({ note, members }: { note: Note; members: Member[] }) {
   })())
   return (
     <li className="rounded-lg border border-gray-200 bg-white p-4 dark:border-moss-800 dark:bg-moss-900">
-      <p className="whitespace-pre-wrap text-gray-900 dark:text-gray-100">{note.text}</p>
+      <div className="flex items-start justify-between gap-2">
+        <p className="whitespace-pre-wrap text-gray-900 dark:text-gray-100">{note.text}</p>
+        <KebabMenu
+          items={[
+            { label: 'Editar', onClick: () => setEditing(true) },
+            { label: 'Eliminar', onClick: () => setConfirmingDelete(true), danger: true },
+          ]}
+        />
+      </div>
       {note.notify && note.remindAt && (
         <p
           className={
@@ -171,12 +186,22 @@ function NoteCard({ note, members }: { note: Note; members: Member[] }) {
           </span>
         </p>
       )}
-      <div className="mt-2 flex items-center justify-end gap-1">
-        <button type="button" onClick={() => setEditing(true)} className={cancelButton}>
-          Editar
-        </button>
-        <DeleteButton onConfirm={() => deleteNote(note.id)} label="Eliminar" />
-      </div>
+      {confirmingDelete && (
+        <ConfirmDelete
+          className="mt-2"
+          question="¿Eliminar la nota?"
+          busy={deleting}
+          onConfirm={async () => {
+            setDeleting(true)
+            try {
+              await deleteNote(note.id)
+            } finally {
+              setDeleting(false)
+            }
+          }}
+          onCancel={() => setConfirmingDelete(false)}
+        />
+      )}
     </li>
   )
 }
@@ -195,7 +220,10 @@ export default function NotesPage() {
   return (
     <div>
       <StickyHeader title="Notas">
-        <button type="button" onClick={() => setShowForm((v) => !v)} className={primaryButton}>
+        <button type="button" onClick={() => {
+            setShowForm((v) => !v)
+            scrollMainToTop()
+          }} className={primaryButton}>
           + Nota
         </button>
       </StickyHeader>
@@ -204,9 +232,9 @@ export default function NotesPage() {
         <NoteForm members={members} submitLabel="Guardar nota" onSubmit={addNote} onDone={() => setShowForm(false)} />
       )}
 
-      {loading && <p className="text-gray-500 dark:text-gray-400">Cargando…</p>}
+      {loading && <ListSkeleton />}
       {!loading && notes.length === 0 && (
-        <p className="text-gray-500 dark:text-gray-400">Aún no hay notas. Crea la primera con "+ Nota".</p>
+        <p className="text-gray-500 dark:text-gray-400">Aún no hay notas. Crea la primera con «+ Nota».</p>
       )}
 
       <ul className="space-y-3">

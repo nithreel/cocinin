@@ -37,6 +37,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
   const [info, setInfo] = useState<string | null>(null)
 
   const setupMode = needsSetup === true
@@ -86,7 +87,8 @@ export default function LoginPage() {
         onSubmit={handleSubmit}
         className="w-full max-w-sm rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-moss-800 dark:bg-moss-900"
       >
-        <img src="/icons/icon.svg" alt="CocinIN" className="mb-3 h-16 w-16 rounded-2xl" />
+        <img src="/icons/icon.svg" alt="" className="mb-3 h-16 w-16 rounded-2xl" />
+        <h1 className="mb-1 text-xl font-semibold text-gray-900 dark:text-gray-100">CocinIN</h1>
         <p className="mb-6 text-sm text-gray-500 dark:text-gray-400">
           {setupMode ? 'Bienvenido. Crea el primer usuario para empezar.' : 'Inicia sesión para continuar'}
         </p>
@@ -107,19 +109,29 @@ export default function LoginPage() {
         <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300" htmlFor="password">
           Contraseña
         </label>
-        <input
-          id="password"
-          type="password"
-          required
-          autoComplete={setupMode ? 'new-password' : 'current-password'}
-          minLength={setupMode ? 6 : undefined}
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="mb-4 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-moss-700 dark:bg-moss-800 dark:text-gray-100"
-        />
+        <div className="relative mb-4">
+          <input
+            id="password"
+            type={showPassword ? 'text' : 'password'}
+            required
+            autoComplete={setupMode ? 'new-password' : 'current-password'}
+            minLength={setupMode ? 6 : undefined}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 pr-16 text-sm text-gray-900 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-moss-700 dark:bg-moss-800 dark:text-gray-100"
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword((v) => !v)}
+            aria-pressed={showPassword}
+            className="absolute inset-y-0 right-0 px-3 text-xs font-medium text-emerald-700 hover:text-emerald-800 dark:text-emerald-400"
+          >
+            {showPassword ? 'Ocultar' : 'Ver'}
+          </button>
+        </div>
 
-        {error && <p className="mb-4 text-sm text-red-600 dark:text-red-400">{error}</p>}
-        {info && <p className="mb-4 text-sm text-emerald-700 dark:text-emerald-400">{info}</p>}
+        {error && <p role="alert" className="mb-4 text-sm text-red-700 dark:text-red-400">{error}</p>}
+        {info && <p role="status" className="mb-4 text-sm text-emerald-700 dark:text-emerald-400">{info}</p>}
 
         <button
           type="submit"
