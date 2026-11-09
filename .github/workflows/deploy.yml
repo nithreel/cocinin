@@ -1,0 +1,75 @@
+name: Desplegar
+
+# Al publicar una release en GitHub, compila y despliega la app (hosting + reglas) en tu proyecto de Firebase.
+# Necesita dos secretos (Settings → Secrets and variables → Actions); sin ellos el flujo no hace nada.
+#   FIREBASE_SERVICE_ACCOUNT  JSON de una cuenta de servicio con permiso para desplegar
+#   DOTENV                    el contenido de tu fichero .env (configuración web de Firebase)
+# También se puede lanzar a mano desde la pestaña Actions («Run workflow»).
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: desplegar
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+      DOTENV: ${{ secrets.DOTENV }}
+    steps:
+      - name: Comprobar secretos
+        id: secrets
+        run: |
+          if [ -z "$FIREBASE_SERVICE_ACCOUNT" ] || [ -z "$DOTENV" ]; then
+            echo "::notice::Faltan los secretos FIREBASE_SERVICE_ACCOUNT y/o DOTENV: no se despliega (ver README)."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@v7
+        if: steps.secrets.outputs.ready == 'true'
+
+      - name: La versión de package.json debe coincidir con la release
+        if: steps.secrets.outputs.ready == 'true' && github.event_name == 'release'
+        run: |
+          VERSION="v$(node -p "require('./package.json').version")"
+          if [ "$VERSION" != "${{ github.event.release.tag_name }}" ]; then
+            echo "::error::package.json dice $VERSION y la release es ${{ github.event.release.tag_name }}. Sube la versión en package.json antes de publicar."
+            exit 1
+          fi
+
+      - uses: actions/setup-node@v7
+        if: steps.secrets.outputs.ready == 'true'
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Instalar y comprobar
+        if: steps.secrets.outputs.ready == 'true'
+        run: |
+          npm ci
+          npm run lint
+          npm test
+
+      - name: Compilar
+        if: steps.secrets.outputs.ready == 'true'
+        run: |
+          printf '%s\n' "$DOTENV" > .env
+          npm run build
+
+      - name: Desplegar en Firebase
+        if: steps.secrets.outputs.ready == 'true'
+        run: |
+          printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "$RUNNER_TEMP/firebase-sa.json"
+          export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/firebase-sa.json"
+          PROJECT=$(grep '^VITE_FIREBASE_PROJECT_ID=' .env | cut -d= -f2- | tr -d '\r"' | xargs)
+          npx firebase deploy --only firestore:rules,hosting --project "$PROJECT" --non-interactive
+          rm -f "$RUNNER_TEMP/firebase-sa.json" .env
