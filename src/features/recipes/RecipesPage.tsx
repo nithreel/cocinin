@@ -4,6 +4,8 @@ import { addRecipe, deleteRecipe, updateRecipe, useRecipes } from './data'
 import RecipeForm from './RecipeForm'
 import { scrollMainToTop } from '../../lib/scroll'
 import { ChevronIcon } from '../../components/icons'
+import SearchInput from '../../components/SearchInput'
+import { matchesSearch } from '../../lib/search'
 import StickyHeader from '../../components/StickyHeader'
 import ImportRecipes from './ImportRecipes'
 import DeleteButton from '../../components/DeleteButton'
@@ -22,6 +24,29 @@ function getRecipeStatus(recipe: Recipe, ingredientsById: Map<string, Ingredient
     }
   }
   return missingOptional ? 'partial' : 'full'
+}
+
+/** Qué falta de una receta: ingredientes necesarios y opcionales que no están en la despensa. */
+function getMissing(recipe: Recipe, ingredientsById: Map<string, Ingredient>) {
+  const required: string[] = []
+  const optional: string[] = []
+  for (const ri of recipe.ingredients) {
+    const ing = ingredientsById.get(ri.ingredientId)
+    if (ing?.inPantry === true) continue
+    ;(ri.optional ? optional : required).push(ing?.name ?? '(eliminado)')
+  }
+  return { required, optional }
+}
+
+function statusSubtitle(status: RecipeStatus, missing: { required: string[]; optional: string[] }) {
+  if (status === 'full') return { text: 'Tienes todo', className: 'text-emerald-700 dark:text-emerald-400' }
+  if (status === 'partial') {
+    const n = missing.optional.length
+    return { text: `Falta ${n} opcional${n === 1 ? '' : 'es'}`, className: 'text-amber-700 dark:text-amber-400' }
+  }
+  const n = missing.required.length
+  const names = missing.required.slice(0, 3).join(', ') + (n > 3 ? '…' : '')
+  return { text: `${n === 1 ? 'Falta' : 'Faltan'} ${n}: ${names}`, className: 'text-red-700 dark:text-red-400' }
 }
 
 const statusBorderClasses: Record<RecipeStatus, string> = {
@@ -47,6 +72,7 @@ function RecipeCard({
   groups: Group[]
   ingredientsById: Map<string, Ingredient>
 }) {
+  const subtitle = statusSubtitle(status, getMissing(recipe, ingredientsById))
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState(false)
   const articleRef = useRef<HTMLElement>(null)
@@ -81,7 +107,10 @@ function RecipeCard({
           (open ? ' sticky top-[var(--head-h)] z-20' : '')
         }
       >
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{recipe.title}</h3>
+        <span className="min-w-0">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{recipe.title}</h3>
+          <span className={'block text-xs ' + subtitle.className}>{subtitle.text}</span>
+        </span>
         <span className="text-gray-500 dark:text-gray-400">
           <ChevronIcon open={open} />
         </span>
@@ -108,7 +137,7 @@ function RecipeCard({
             <>
               <section>
               <h4 className={sectionHead}>Ingredientes</h4>
-              <ul className="mb-4 space-y-1 text-sm text-gray-600 dark:text-gray-300">
+              <ul className="mb-4 space-y-1 text-sm">
                 {recipe.ingredients.map((ri) => {
                   const ing = ingredientsById.get(ri.ingredientId)
                   const have = ing?.inPantry
@@ -118,15 +147,16 @@ function RecipeCard({
                       key={ri.ingredientId}
                       className={
                         have
-                          ? ''
+                          ? 'text-gray-900 dark:text-gray-100'
                           : missingOptional
-                            ? 'text-amber-600 dark:text-amber-400'
-                            : 'text-gray-500 dark:text-gray-400'
+                            ? 'text-amber-700 dark:text-amber-400'
+                            : 'font-medium text-red-700 dark:text-red-400'
                       }
                     >
                       {ing?.name ?? '(ingrediente eliminado: edita la receta para quitarlo)'}
                       {ri.quantity && ` — ${ri.quantity}${ri.unit ? ` ${ri.unit}` : ''}`}
                       {ri.optional && ' (opcional)'}
+                      {!have && ' · falta'}
                     </li>
                   )
                 })}
@@ -163,6 +193,19 @@ export default function RecipesPage() {
   const [showImport, setShowImport] = useState(false)
 
   const ingredientsById = useMemo(() => new Map(ingredients.map((i) => [i.id, i])), [ingredients])
+  const [search, setSearch] = useState('')
+  const [filter, setFilter] = useState<'all' | 'ready' | 'close'>('all')
+
+  const visibleRecipes = useMemo(
+    () =>
+      recipes.filter((r) => {
+        if (search.trim() && !matchesSearch(r.title, search)) return false
+        if (filter === 'all') return true
+        const missing = getMissing(r, ingredientsById).required.length
+        return filter === 'ready' ? missing === 0 : missing > 0 && missing <= 2
+      }),
+    [recipes, search, filter, ingredientsById],
+  )
 
   return (
     <div>
@@ -195,11 +238,45 @@ export default function RecipesPage() {
       {loading && <p className="text-gray-500 dark:text-gray-400">Cargando…</p>}
 
       {!loading && recipes.length === 0 && (
-        <p className="text-gray-500 dark:text-gray-400">Aún no hay recetas. Crea la primera con "+ Receta".</p>
+        <p className="text-gray-500 dark:text-gray-400">Aún no hay recetas. Crea la primera con «+ Receta».</p>
       )}
 
-      <div className="space-y-4">
-        {recipes.map((recipe) => (
+      {recipes.length > 0 && (
+        <div className="mb-4 space-y-2">
+          <SearchInput value={search} onChange={setSearch} placeholder="Buscar receta…" className="" />
+          <div role="group" aria-label="Filtrar recetas" className="flex flex-wrap gap-2">
+            {(
+              [
+                ['all', 'Todas'],
+                ['ready', 'Puedo hacerla'],
+                ['close', 'Falta poco'],
+              ] as const
+            ).map(([key, label]) => (
+              <button
+                key={key}
+                type="button"
+                aria-pressed={filter === key}
+                onClick={() => setFilter(key)}
+                className={
+                  'rounded-full border px-3 py-1 text-sm max-md:min-h-11 ' +
+                  (filter === key
+                    ? 'border-emerald-700 bg-emerald-700 text-white'
+                    : 'border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-moss-700 dark:text-gray-300 dark:hover:bg-moss-800')
+                }
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {recipes.length > 0 && visibleRecipes.length === 0 && (
+        <p className="text-gray-500 dark:text-gray-400">Ninguna receta coincide.</p>
+      )}
+
+      <div className="space-y-4 xl:grid xl:grid-cols-2 xl:items-start xl:gap-4 xl:space-y-0">
+        {visibleRecipes.map((recipe) => (
           <RecipeCard
             key={recipe.id}
             recipe={recipe}

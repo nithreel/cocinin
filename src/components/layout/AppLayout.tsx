@@ -1,4 +1,4 @@
-import { NavLink, Outlet } from 'react-router-dom'
+import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useState, type ReactNode } from 'react'
 import { useAuth } from '../../auth/AuthContext'
 import ErrorToast from '../ErrorToast'
@@ -100,6 +100,9 @@ function Brand({ size }: { size: string }) {
 
 export default function AppLayout() {
   const { user } = useAuth()
+  const { pathname } = useLocation()
+  // Despensa y Recetario aprovechan pantallas anchas (dos columnas)
+  const wide = pathname.startsWith('/despensa') || pathname.startsWith('/recetario')
   const dataError = useDataError()
 
   return (
@@ -136,12 +139,12 @@ export default function AppLayout() {
       <ErrorToast />
 
       <main className="flex-1 overflow-y-auto p-4 md:p-8">
-        {dataError && (
+        <div className={'mx-auto w-full ' + (wide ? 'max-w-3xl xl:max-w-6xl' : 'max-w-3xl')}>
+          {dataError && (
           <p className="mb-4 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950 dark:text-red-300">
             No se pueden cargar los datos: {dataError}
           </p>
         )}
-        <div className="mx-auto w-full max-w-3xl">
           <Outlet />
         </div>
       </main>

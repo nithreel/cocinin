@@ -751,11 +751,11 @@ export default function PantryPage() {
         <p className="text-gray-500 dark:text-gray-400">No hay ingredientes que coincidan con "{search.trim()}".</p>
       )}
 
-      <div className="space-y-6">
+      <div className="xl:columns-2 xl:gap-8">
         {visibleSections.map((section) => {
           const isCollapsed = !searchActive && collapsed.has(section.id)
           return (
-            <section key={section.id}>
+            <section key={section.id} className="mb-6 break-inside-avoid">
               <GroupHeader
                 section={section}
                 isCollapsed={isCollapsed}
