@@ -256,7 +256,12 @@ export default function RecipesPage() {
                     setShowTags((v) => !v)
                     scrollMainToTop()
                   }}
-                  className="ml-auto rounded-full border border-gray-300 px-3 py-1 text-sm text-gray-700 hover:bg-gray-50 dark:border-moss-700 dark:text-gray-300 dark:hover:bg-moss-800"
+                  className={
+                    'ml-auto rounded-full border px-3 py-1 text-sm ' +
+                    (showTags
+                      ? 'border-emerald-700 bg-emerald-700 text-white'
+                      : 'border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-moss-700 dark:text-gray-300 dark:hover:bg-moss-800')
+                  }
                 >
                   Etiquetas
                 </button>
