@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useState, type FormEvent, type HTMLAttributes, type PointerEvent, type KeyboardEvent, useRef } from 'react'
 import { cancelButton, outlineButton, primaryButton } from '../../components/buttonStyles'
 import { ConfirmDelete } from '../../components/DeleteButton'
 import { XIcon } from '../../components/icons'
@@ -13,16 +13,16 @@ function TagRow({
   tag,
   tags,
   uses,
-  first,
-  last,
-  onMove,
+  dragging,
+  rowRef,
+  handle,
 }: {
   tag: Tag
   tags: Tag[]
   uses: number
-  first: boolean
-  last: boolean
-  onMove: (delta: -1 | 1) => void
+  dragging: boolean
+  rowRef: (el: HTMLLIElement | null) => void
+  handle: HTMLAttributes<HTMLButtonElement>
 }) {
   const [editing, setEditing] = useState(false)
   const [name, setName] = useState(tag.name)
@@ -90,8 +90,21 @@ function TagRow({
   }
 
   return (
-    <li className="py-2">
+    <li
+      ref={rowRef}
+      className={'py-2 ' + (dragging ? 'relative z-10 rounded-md bg-emerald-50 shadow-md dark:bg-moss-800' : '')}
+    >
       <div className="flex items-center gap-2">
+        <button
+          type="button"
+          aria-label={`Mover «${tag.name}» (arrastra, o usa ↑ ↓)`}
+          {...handle}
+          className="flex h-8 w-6 shrink-0 cursor-grab touch-none items-center justify-center rounded text-gray-400 hover:text-gray-600 active:cursor-grabbing dark:text-gray-500 dark:hover:text-gray-300"
+        >
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" aria-hidden="true">
+            <path d="M2 3.5h10M2 7h10M2 10.5h10" />
+          </svg>
+        </button>
         <span className="min-w-0 flex-1 truncate text-sm text-gray-900 dark:text-gray-100">
           {tag.name}
           <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">
@@ -100,24 +113,6 @@ function TagRow({
         </span>
         {!confirming && (
           <>
-            <button
-              type="button"
-              disabled={first}
-              onClick={() => onMove(-1)}
-              aria-label={`Subir «${tag.name}»`}
-              className={cancelButton + ' disabled:opacity-30'}
-            >
-              ↑
-            </button>
-            <button
-              type="button"
-              disabled={last}
-              onClick={() => onMove(1)}
-              aria-label={`Bajar «${tag.name}»`}
-              className={cancelButton + ' disabled:opacity-30'}
-            >
-              ↓
-            </button>
             <button type="button" onClick={() => setEditing(true)} className={cancelButton}>
               Renombrar
             </button>
@@ -186,15 +181,67 @@ export default function TagsManager({
   }
 
   const sorted = sortTags(tags)
+  // durante el arrastre se muestra el orden provisional; al soltar se guarda
+  const [dragId, setDragId] = useState<string | null>(null)
+  const [draft, setDraft] = useState<string[] | null>(null)
+  const rows = useRef(new Map<string, HTMLLIElement>())
 
-  async function move(id: string, delta: -1 | 1) {
+  async function save(ids: string[]) {
     try {
-      await reorderTags(moveId(sorted.map((t) => t.id), id, delta))
+      await reorderTags(ids)
     } catch (err) {
       console.error(err)
       setError('No se pudo cambiar el orden.')
     }
   }
+
+  function handleFor(id: string): HTMLAttributes<HTMLButtonElement> {
+    return {
+      onPointerDown: (e: PointerEvent<HTMLButtonElement>) => {
+        e.currentTarget.setPointerCapture(e.pointerId)
+        setDragId(id)
+        setDraft(sorted.map((t) => t.id))
+      },
+      onPointerMove: (e: PointerEvent<HTMLButtonElement>) => {
+        if (dragId !== id || !draft) return
+        // la fila de destino es la primera cuya mitad queda por debajo del puntero
+        let target = draft.length - 1
+        for (let i = 0; i < draft.length; i++) {
+          const el = rows.current.get(draft[i])
+          if (el) {
+            const rect = el.getBoundingClientRect()
+            if (e.clientY < rect.top + rect.height / 2) {
+              target = i
+              break
+            }
+          }
+        }
+        const from = draft.indexOf(id)
+        if (target === from) return
+        const next = draft.filter((x) => x !== id)
+        next.splice(target, 0, id)
+        setDraft(next)
+      },
+      onPointerUp: () => {
+        if (dragId === id && draft && draft.join() !== sorted.map((t) => t.id).join()) void save(draft)
+        setDragId(null)
+        setDraft(null)
+      },
+      onPointerCancel: () => {
+        setDragId(null)
+        setDraft(null)
+      },
+      // teclado: con el asa enfocada, ↑ y ↓ mueven la etiqueta
+      onKeyDown: (e: KeyboardEvent<HTMLButtonElement>) => {
+        if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return
+        e.preventDefault()
+        void save(moveId(sorted.map((t) => t.id), id, e.key === 'ArrowUp' ? -1 : 1))
+      },
+    }
+  }
+
+  const byId = new Map(tags.map((t) => [t.id, t]))
+  const shown = draft ? draft.map((id) => byId.get(id)).filter((t): t is Tag => !!t) : sorted
 
   const usesOf = (id: string) => recipes.filter((r) => r.tagIds?.includes(id)).length
 
@@ -223,15 +270,18 @@ export default function TagsManager({
         <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">Aún no hay etiquetas.</p>
       ) : (
         <ul className="mt-3 divide-y divide-gray-100 dark:divide-moss-800">
-          {sorted.map((t, i) => (
+          {shown.map((t) => (
             <TagRow
               key={t.id}
               tag={t}
               tags={tags}
               uses={usesOf(t.id)}
-              first={i === 0}
-              last={i === sorted.length - 1}
-              onMove={(d) => move(t.id, d)}
+              dragging={dragId === t.id}
+              rowRef={(el) => {
+                if (el) rows.current.set(t.id, el)
+                else rows.current.delete(t.id)
+              }}
+              handle={handleFor(t.id)}
             />
           ))}
         </ul>
