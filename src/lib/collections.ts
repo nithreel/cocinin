@@ -47,11 +47,20 @@ export interface Recipe {
   title: string
   instructions: string
   ingredients: RecipeIngredient[]
-  /** etiquetas libres (p. ej. «Postre», «Fría»); se crean desde el formulario de la receta */
+  /** ids de las etiquetas (colección `tags`) */
+  tagIds?: string[]
+  /** formato antiguo (texto); solo se lee una vez para migrarlo a `tagIds` */
   tags?: string[]
   createdAt: number
   /** id del lote si vino del importador (permite deshacer la importación) */
   importada?: string
+}
+
+/** Etiqueta del recetario (Postre, Fría…): se crean y gestionan aparte, como los grupos. */
+export interface Tag {
+  id: string
+  name: string
+  createdAt: number
 }
 
 export interface PurchaseHistoryEntry {
@@ -110,6 +119,7 @@ export const groupsCol = collection(db, 'groups')
 export const ingredientsCol = collection(db, 'ingredients')
 export const shoppingListCol = collection(db, 'shoppingList')
 export const recipesCol = collection(db, 'recipes')
+export const tagsCol = collection(db, 'tags')
 export const purchaseHistoryCol = collection(db, 'purchaseHistory')
 export const pushSubscriptionsCol = collection(db, 'pushSubscriptions')
 export const notesCol = collection(db, 'notes')

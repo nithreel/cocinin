@@ -6,6 +6,7 @@ import {
   purchaseHistoryCol,
   recipesCol,
   shoppingListCol,
+  tagsCol,
   usersCol,
 } from './collections'
 
@@ -14,6 +15,7 @@ const COLLECTIONS = {
   ingredients: ingredientsCol,
   shoppingList: shoppingListCol,
   recipes: recipesCol,
+  tags: tagsCol,
   purchaseHistory: purchaseHistoryCol,
   notes: notesCol,
   users: usersCol,

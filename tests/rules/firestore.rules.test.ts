@@ -50,6 +50,15 @@ describe('instalación hecha', () => {
     await assertFails(getDocs(collection(db, 'users')))
   })
 
+  it('las etiquetas las gestionan los miembros, no los desconocidos', async () => {
+    const miembro = env.authenticatedContext('member').firestore()
+    await assertSucceeds(setDoc(doc(miembro, 'tags/t1'), { name: 'Postre', createdAt: 1 }))
+    await assertSucceeds(deleteDoc(doc(miembro, 'tags/t1')))
+    const intruso = env.authenticatedContext('intruso').firestore()
+    await assertFails(setDoc(doc(intruso, 'tags/t2'), { name: 'X', createdAt: 1 }))
+    await assertFails(getDoc(doc(intruso, 'tags/t2')))
+  })
+
   it('nadie puede hacerse admin ni miembro por su cuenta', async () => {
     const db = env.authenticatedContext('intruso').firestore()
     await assertFails(setDoc(doc(db, 'users/intruso'), { email: 'i@x.es', role: 'admin', createdAt: 3 }))

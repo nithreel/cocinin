@@ -1,6 +1,8 @@
-import { useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useGroups, useIngredients } from '../pantry/data'
-import { addRecipe, deleteRecipe, updateRecipe, useRecipes } from './data'
+import { addRecipe, deleteRecipe, migrateLegacyTags, updateRecipe, useRecipes, useTags } from './data'
+import TagsManager from './TagsManager'
+import { planLegacyMigration, sortTags } from '../../lib/tags'
 import RecipeForm from './RecipeForm'
 import { ChevronIcon } from '../../components/icons'
 import SearchInput from '../../components/SearchInput'
@@ -11,7 +13,7 @@ import StickyHeader from '../../components/StickyHeader'
 import ImportRecipes from './ImportRecipes'
 import DeleteButton from '../../components/DeleteButton'
 import { cancelButton, outlineButton, primaryButton } from '../../components/buttonStyles'
-import type { Group, Ingredient, Recipe } from '../../lib/collections'
+import type { Group, Ingredient, Recipe, Tag } from '../../lib/collections'
 
 type RecipeStatus = 'full' | 'partial' | 'missing'
 
@@ -48,19 +50,23 @@ function RecipeCard({
   ingredients,
   groups,
   ingredientsById,
-  allTags,
+  tags,
 }: {
   recipe: Recipe
   status: RecipeStatus
   ingredients: Ingredient[]
   groups: Group[]
   ingredientsById: Map<string, Ingredient>
-  allTags: string[]
+  tags: Tag[]
 }) {
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState(false)
   const articleRef = useRef<HTMLElement>(null)
   const titleRef = useRef<HTMLButtonElement>(null)
+  const recipeTags = useMemo(
+    () => sortTags(tags.filter((t) => recipe.tagIds?.includes(t.id))),
+    [tags, recipe.tagIds],
+  )
 
   // alto real del nombre fijo (puede ocupar 2 líneas): las cabeceras de sección se pegan justo debajo
   useLayoutEffect(() => {
@@ -93,8 +99,8 @@ function RecipeCard({
       >
         <div className="min-w-0">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{recipe.title}</h3>
-          {recipe.tags && recipe.tags.length > 0 && (
-            <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{[...recipe.tags].sort((a, b) => a.localeCompare(b, 'es')).join(' · ')}</p>
+          {recipeTags.length > 0 && (
+            <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{recipeTags.map((t) => t.name).join(' · ')}</p>
           )}
         </div>
         <span className="text-gray-500 dark:text-gray-400">
@@ -108,16 +114,16 @@ function RecipeCard({
             <RecipeForm
               ingredients={ingredients}
               groups={groups}
-              allTags={allTags}
+              tags={tags}
               initial={{
                 title: recipe.title,
                 instructions: recipe.instructions,
                 ingredients: recipe.ingredients,
-                tags: recipe.tags ?? [],
+                tagIds: recipe.tagIds ?? [],
               }}
               submitLabel="Guardar cambios"
               onSubmit={(values) =>
-                updateRecipe(recipe.id, values.title, values.instructions, values.ingredients, values.tags)
+                updateRecipe(recipe.id, values.title, values.instructions, values.ingredients, values.tagIds)
               }
               onDone={() => setEditing(false)}
             />
@@ -182,16 +188,25 @@ export default function RecipesPage() {
   const ingredientsById = useMemo(() => new Map(ingredients.map((i) => [i.id, i])), [ingredients])
   const [search, setSearch] = useState('')
   const [onlyReady, setOnlyReady] = useState(false)
+  const { tags: rawTags, loading: tagsLoading } = useTags()
+  const tags = useMemo(() => sortTags(rawTags), [rawTags])
+  const [showTags, setShowTags] = useState(false)
   const [activeTags, setActiveTags] = useState<string[]>([])
+  // si una etiqueta se borra, su filtro se ignora
+  const effectiveTags = useMemo(() => activeTags.filter((id) => tags.some((t) => t.id === id)), [activeTags, tags])
 
-  // todas las etiquetas en uso (sin distinguir mayúsculas), ordenadas
-  const allTags = useMemo(() => {
-    const seen = new Map<string, string>()
-    for (const r of recipes) for (const t of r.tags ?? []) if (!seen.has(t.toLowerCase())) seen.set(t.toLowerCase(), t)
-    return [...seen.values()].sort((a, b) => a.localeCompare(b, 'es'))
-  }, [recipes])
-  // si una etiqueta deja de existir, su filtro se ignora
-  const effectiveTags = useMemo(() => activeTags.filter((t) => allTags.includes(t)), [activeTags, allTags])
+  // Migración única: las etiquetas antiguas (texto en la receta) pasan a la colección `tags`
+  const migrating = useRef(false)
+  useEffect(() => {
+    if (loading || tagsLoading || migrating.current) return
+    const plan = planLegacyMigration(recipes, rawTags)
+    if (plan.updates.length === 0) return
+    migrating.current = true
+    migrateLegacyTags(plan).catch((e) => {
+      console.error(e)
+      migrating.current = false
+    })
+  }, [loading, tagsLoading, recipes, rawTags])
 
   const visibleRecipes = useMemo(
     () =>
@@ -199,7 +214,7 @@ export default function RecipesPage() {
         (r) =>
           (!search.trim() || matchesSearch(r.title, search)) &&
           (!onlyReady || countMissingRequired(r, ingredientsById) === 0) &&
-          effectiveTags.every((t) => (r.tags ?? []).some((x) => x.toLowerCase() === t.toLowerCase())),
+          effectiveTags.every((id) => r.tagIds?.includes(id)),
       ),
     [recipes, search, onlyReady, ingredientsById, effectiveTags],
   )
@@ -212,7 +227,7 @@ export default function RecipesPage() {
           recipes.length > 0 && (
             <div className="space-y-2">
               <SearchInput value={search} onChange={setSearch} placeholder="Buscar receta…" className="" />
-              <div role="group" aria-label="Filtrar recetas" className="flex flex-wrap gap-2">
+              <div role="group" aria-label="Filtrar recetas" className="flex gap-2">
                 {(
                   [
                     [false, 'Todas'],
@@ -234,35 +249,47 @@ export default function RecipesPage() {
                     {label}
                   </button>
                 ))}
-                {allTags.length > 0 && (
-                  <span className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-                    <span aria-hidden="true">|</span> Tags:
-                  </span>
-                )}
-                {allTags.map((tag) => {
-                  const on = effectiveTags.includes(tag)
-                  return (
-                    <button
-                      key={tag}
-                      type="button"
-                      aria-pressed={on}
-                      onClick={() => setActiveTags((prev) => (on ? prev.filter((t) => t !== tag) : [...prev, tag]))}
-                      className={
-                        'rounded-full border px-3 py-1 text-sm ' +
-                        (on
-                          ? 'border-emerald-700 bg-emerald-700 text-white'
-                          : 'border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-moss-700 dark:text-gray-300 dark:hover:bg-moss-800')
-                      }
-                    >
-                      {tag}
-                    </button>
-                  )
-                })}
               </div>
+              {tags.length > 0 && (
+                <div
+                  role="group"
+                  aria-label="Filtrar por etiqueta"
+                  className="-mx-4 flex items-center gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                >
+                  <span className="shrink-0 text-sm text-gray-500 dark:text-gray-400">Tags:</span>
+                  {tags.map((tag) => {
+                    const on = effectiveTags.includes(tag.id)
+                    return (
+                      <button
+                        key={tag.id}
+                        type="button"
+                        aria-pressed={on}
+                        onClick={() =>
+                          setActiveTags((prev) => (on ? prev.filter((t) => t !== tag.id) : [...prev, tag.id]))
+                        }
+                        className={
+                          'shrink-0 whitespace-nowrap rounded-full border px-3 py-1 text-sm ' +
+                          (on
+                            ? 'border-emerald-700 bg-emerald-700 text-white'
+                            : 'border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-moss-700 dark:text-gray-300 dark:hover:bg-moss-800')
+                        }
+                      >
+                        {tag.name}
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
             </div>
           )
         }
       >
+        <button type="button" onClick={() => {
+            setShowTags((v) => !v)
+            scrollMainToTop()
+          }} className={outlineButton}>
+          Etiquetas
+        </button>
         <button type="button" onClick={() => {
             setShowImport((v) => !v)
             scrollMainToTop()
@@ -277,14 +304,16 @@ export default function RecipesPage() {
         </button>
       </StickyHeader>
 
-      {showImport && <ImportRecipes ingredients={ingredients} groups={groups} recipes={recipes} onClose={() => setShowImport(false)} />}
+      {showTags && <TagsManager tags={tags} recipes={recipes} onClose={() => setShowTags(false)} />}
+
+      {showImport && <ImportRecipes ingredients={ingredients} groups={groups} recipes={recipes} tags={tags} onClose={() => setShowImport(false)} />}
 
       {showForm && (
         <RecipeForm
           ingredients={ingredients}
           groups={groups}
-          allTags={allTags}
-          onSubmit={(values) => addRecipe(values.title, values.instructions, values.ingredients, values.tags)}
+          tags={tags}
+          onSubmit={(values) => addRecipe(values.title, values.instructions, values.ingredients, values.tagIds)}
           onDone={() => setShowForm(false)}
         />
       )}
@@ -308,7 +337,7 @@ export default function RecipesPage() {
             ingredients={ingredients}
             groups={groups}
             ingredientsById={ingredientsById}
-            allTags={allTags}
+            tags={tags}
           />
         ))}
       </div>

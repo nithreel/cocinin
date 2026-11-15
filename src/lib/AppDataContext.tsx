@@ -7,12 +7,14 @@ import {
   purchaseHistoryCol,
   recipesCol,
   shoppingListCol,
+  tagsCol,
   type Group,
   type Ingredient,
   type Note,
   type PurchaseHistoryEntry,
   type Recipe,
   type ShoppingItem,
+  type Tag,
 } from './collections'
 
 interface AppDataValue {
@@ -24,6 +26,8 @@ interface AppDataValue {
   shoppingItemsLoading: boolean
   recipes: Recipe[]
   recipesLoading: boolean
+  tags: Tag[]
+  tagsLoading: boolean
   purchaseHistory: PurchaseHistoryEntry[]
   purchaseHistoryLoading: boolean
   notes: Note[]
@@ -43,6 +47,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const [shoppingItemsLoading, setShoppingItemsLoading] = useState(true)
   const [recipes, setRecipes] = useState<Recipe[]>([])
   const [recipesLoading, setRecipesLoading] = useState(true)
+  const [tags, setTags] = useState<Tag[]>([])
+  const [tagsLoading, setTagsLoading] = useState(true)
   const [purchaseHistory, setPurchaseHistory] = useState<PurchaseHistoryEntry[]>([])
   const [purchaseHistoryLoading, setPurchaseHistoryLoading] = useState(true)
   const [notes, setNotes] = useState<Note[]>([])
@@ -90,6 +96,14 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   }, [])
 
   useEffect(() => {
+    const q = query(tagsCol, orderBy('name'))
+    return onSnapshot(q, (snap) => {
+      setTags(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Tag))
+      setTagsLoading(false)
+    }, handleError(() => setTagsLoading(false)))
+  }, [])
+
+  useEffect(() => {
     const q = query(purchaseHistoryCol, orderBy('purchasedAt', 'desc'), limit(50))
     return onSnapshot(q, (snap) => {
       setPurchaseHistory(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as PurchaseHistoryEntry))
@@ -116,6 +130,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         shoppingItemsLoading,
         recipes,
         recipesLoading,
+        tags,
+        tagsLoading,
         purchaseHistory,
         purchaseHistoryLoading,
         notes,
@@ -152,6 +168,11 @@ export function useShoppingList() {
 export function useRecipes() {
   const { recipes, recipesLoading } = useAppData()
   return { recipes, loading: recipesLoading }
+}
+
+export function useTags() {
+  const { tags, tagsLoading } = useAppData()
+  return { tags, loading: tagsLoading }
 }
 
 export function usePurchaseHistory() {

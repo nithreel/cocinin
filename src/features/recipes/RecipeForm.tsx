@@ -1,9 +1,10 @@
 import { useMemo, useState, type FormEvent } from 'react'
-import type { Group, Ingredient, RecipeIngredient } from '../../lib/collections'
+import type { Group, Ingredient, RecipeIngredient, Tag } from '../../lib/collections'
 import { groupByPantryGroup } from '../../lib/groupByPantryGroup'
-import { cancelButton, outlineButton, primaryButton } from '../../components/buttonStyles'
+import { cancelButton, primaryButton } from '../../components/buttonStyles'
 import SearchInput from '../../components/SearchInput'
 import { matchesSearch } from '../../lib/search'
+import { sortTags } from '../../lib/tags'
 
 interface SelectedIngredient {
   quantity: string
@@ -15,13 +16,13 @@ export interface RecipeFormValues {
   title: string
   instructions: string
   ingredients: RecipeIngredient[]
-  tags: string[]
+  tagIds: string[]
 }
 
 export default function RecipeForm({
   ingredients,
   groups,
-  allTags = [],
+  tags: allTags = [],
   initial,
   submitLabel = 'Guardar receta',
   onSubmit,
@@ -29,8 +30,8 @@ export default function RecipeForm({
 }: {
   ingredients: Ingredient[]
   groups: Group[]
-  /** etiquetas que ya existen en el recetario (para reutilizarlas) */
-  allTags?: string[]
+  /** etiquetas que existen (se crean desde «Etiquetas» en el Recetario) */
+  tags?: Tag[]
   initial?: RecipeFormValues
   submitLabel?: string
   onSubmit: (values: RecipeFormValues) => Promise<void>
@@ -49,35 +50,16 @@ export default function RecipeForm({
     }
     return initialSelected
   })
-  const [tags, setTags] = useState<string[]>(initial?.tags ?? [])
-  const [newTag, setNewTag] = useState('')
+  const [tagIds, setTagIds] = useState<string[]>(initial?.tagIds ?? [])
   const [submitting, setSubmitting] = useState(false)
   const [search, setSearch] = useState('')
   // al editar una receta con ingredientes solo se ven los suyos (cantidades y unidades a mano); «Todos» permite añadir más
   const [view, setView] = useState<'recipe' | 'all'>(Object.keys(selected).length > 0 ? 'recipe' : 'all')
 
-  // etiquetas ofrecidas: las existentes más las recién creadas en este formulario
-  const tagOptions = useMemo(() => {
-    const out = [...allTags]
-    for (const t of tags) if (!out.some((o) => o.toLowerCase() === t.toLowerCase())) out.push(t)
-    return out.sort((a, b) => a.localeCompare(b, 'es'))
-  }, [allTags, tags])
+  const tagOptions = useMemo(() => sortTags(allTags), [allTags])
 
-  function toggleTag(tag: string) {
-    setTags((prev) =>
-      prev.some((t) => t.toLowerCase() === tag.toLowerCase())
-        ? prev.filter((t) => t.toLowerCase() !== tag.toLowerCase())
-        : [...prev, tag],
-    )
-  }
-
-  function createTag() {
-    const t = newTag.trim()
-    setNewTag('')
-    if (!t) return
-    // si ya existe (sin distinguir mayúsculas) se reutiliza su grafía
-    const existing = tagOptions.find((o) => o.toLowerCase() === t.toLowerCase()) ?? t
-    setTags((prev) => (prev.some((x) => x.toLowerCase() === existing.toLowerCase()) ? prev : [...prev, existing]))
+  function toggleTag(id: string) {
+    setTagIds((prev) => (prev.includes(id) ? prev.filter((t) => t !== id) : [...prev, id]))
   }
 
   function toggleIngredient(id: string) {
@@ -139,7 +121,7 @@ export default function RecipeForm({
           optional,
         }),
       )
-      await onSubmit({ title: title.trim(), instructions: instructions.trim(), ingredients: recipeIngredients, tags })
+      await onSubmit({ title: title.trim(), instructions: instructions.trim(), ingredients: recipeIngredients, tagIds })
       onDone()
     } finally {
       setSubmitting(false)
@@ -161,49 +143,33 @@ export default function RecipeForm({
       />
 
       <p className="mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">Etiquetas</p>
-      <div className="mb-4">
-        {tagOptions.length > 0 && (
-          <div role="group" aria-label="Etiquetas de la receta" className="mb-2 flex flex-wrap gap-2">
-            {tagOptions.map((tag) => {
-              const on = tags.some((t) => t.toLowerCase() === tag.toLowerCase())
-              return (
-                <button
-                  key={tag}
-                  type="button"
-                  aria-pressed={on}
-                  onClick={() => toggleTag(tag)}
-                  className={
-                    'rounded-full border px-3 py-1 text-sm max-md:min-h-10 ' +
-                    (on
-                      ? 'border-emerald-700 bg-emerald-700 text-white'
-                      : 'border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-moss-700 dark:text-gray-300 dark:hover:bg-moss-800')
-                  }
-                >
-                  {tag}
-                </button>
-              )
-            })}
-          </div>
-        )}
-        <div className="flex gap-2">
-          <input
-            value={newTag}
-            onChange={(e) => setNewTag(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault()
-                createTag()
-              }
-            }}
-            maxLength={30}
-            placeholder="Nueva etiqueta (Postre, Fría…)"
-            className="min-w-0 flex-1 rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-moss-700 dark:bg-moss-800 dark:text-gray-100"
-          />
-          <button type="button" onClick={createTag} className={outlineButton}>
-            Crear
-          </button>
+      {tagOptions.length === 0 ? (
+        <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
+          Aún no hay etiquetas. Créalas con el botón «Etiquetas» del Recetario.
+        </p>
+      ) : (
+        <div role="group" aria-label="Etiquetas de la receta" className="mb-4 flex flex-wrap gap-2">
+          {tagOptions.map((tag) => {
+            const on = tagIds.includes(tag.id)
+            return (
+              <button
+                key={tag.id}
+                type="button"
+                aria-pressed={on}
+                onClick={() => toggleTag(tag.id)}
+                className={
+                  'rounded-full border px-3 py-1 text-sm max-md:min-h-10 ' +
+                  (on
+                    ? 'border-emerald-700 bg-emerald-700 text-white'
+                    : 'border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-moss-700 dark:text-gray-300 dark:hover:bg-moss-800')
+                }
+              >
+                {tag.name}
+              </button>
+            )
+          })}
         </div>
-      </div>
+      )}
 
       <p className="mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">Ingredientes</p>
       {availableIngredients.length > 0 && (

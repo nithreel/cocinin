@@ -4,9 +4,11 @@ import { addImportedRecipes, undoImport } from './data'
 import { cancelButton, primaryButton } from '../../components/buttonStyles'
 import BackupButton from '../../components/BackupButton'
 import { XIcon } from '../../components/icons'
-import { normalizeText } from '../../lib/search'
+import { doc } from 'firebase/firestore'
 import { parseImport, resolveRecipes } from '../../lib/importRecipes'
-import type { Group, Ingredient, Recipe } from '../../lib/collections'
+import { planImportTags, tagKey } from '../../lib/tags'
+import { tagsCol } from '../../lib/collections'
+import type { Group, Ingredient, Recipe, Tag } from '../../lib/collections'
 
 /** Texto que se pega en Claude web junto con la copia de seguridad y la receta. */
 const CLAUDE_PROMPT = `Te paso la copia de seguridad de mi cocina (JSON) y una receta. Devuélveme SOLO un JSON, sin explicaciones, con esta forma:
@@ -19,7 +21,7 @@ Reglas:
 - Si un ingrediente se usa varias veces, suma las cantidades en una sola entrada. "optional": true solo si la receta lo marca como opcional.
 - "instructions": cabecera solo con lo que diga la receta (raciones, horno…; no inventes), línea en blanco, pasos numerados "1. Título corto: texto en infinitivo.", y al final, si hay alternativas reales, una línea "Sustituciones: …". Sin comentarios de relleno, bromas ni primera persona.
 - El agua no es ingrediente.
-- "tags": 1 a 3 etiquetas que clasifiquen la receta (p. ej. caliente o fría, postre, plato principal…). Mira las que ya existen en "recipes[].tags" de la copia y reutiliza EXACTAMENTE su texto; crea una nueva solo si ninguna encaja. Si la copia aún no tiene etiquetas, propón las tuyas, cortas y en castellano.`
+- "tags": 1 a 3 etiquetas que clasifiquen la receta (p. ej. caliente o fría, postre, plato principal…). USA COMO FILTRO las etiquetas que ya existen en "tags" de la copia: elige solo entre ellas y copia su "name" EXACTAMENTE, emoji incluido. Crea una etiqueta nueva únicamente si ninguna de las existentes encaja, y nunca una parecida a otra que ya exista (no «Postres» si existe «Postre», ni «Postre» si existe «🍰 Postre»). Si la copia aún no tiene etiquetas, propón las tuyas, cortas y en castellano.`
 
 /** Crea los ingredientes que faltan, cada uno en el grupo que elija nith (no se crea nada sin elegirlo). */
 function CreateMissing({ names, groups }: { names: string[]; groups: Group[] }) {
@@ -103,11 +105,13 @@ export default function ImportRecipes({
   ingredients,
   groups,
   recipes,
+  tags,
   onClose,
 }: {
   ingredients: Ingredient[]
   groups: Group[]
   recipes: Recipe[]
+  tags: Tag[]
   onClose: () => void
 }) {
   const [text, setText] = useState('')
@@ -117,7 +121,6 @@ export default function ImportRecipes({
   const [error, setError] = useState<string | null>(null)
   const [done, setDone] = useState<{ batchId: string; count: number } | null>(null)
 
-  const existingTags = useMemo(() => [...new Set(recipes.flatMap((r) => r.tags ?? []))], [recipes])
   const parsed = useMemo(() => (text.trim() ? parseImport(text) : null), [text])
   const resolved = useMemo(
     () => (parsed?.ok ? resolveRecipes(parsed.recipes, ingredients, recipes) : []),
@@ -141,12 +144,17 @@ export default function ImportRecipes({
   async function handleImport() {
     setBusy(true)
     setError(null)
+    // etiquetas: se casan con las existentes y las que no existen se crean (se avisa en la vista previa)
+    const plan = planImportTags(
+      selected.flatMap(({ r }) => r.recipe.tags),
+      tags,
+      () => doc(tagsCol).id,
+    )
     const toAdd = selected.map(({ r }) => ({
       title: r.recipe.title,
       instructions: r.recipe.instructions,
       ingredients: r.ingredients,
-      // se reutiliza la grafía de las etiquetas que ya existen (sin distinguir mayúsculas ni tildes)
-      tags: r.recipe.tags.map((t) => existingTags.find((e) => normalizeText(e) === normalizeText(t)) ?? t),
+      tagIds: [...new Set(r.recipe.tags.map((t) => plan.idByKey.get(tagKey(t))!).filter(Boolean))],
     }))
     const previousText = text
     // Se vacía antes de escribir: Firestore avisa de la receta nueva al instante (antes de confirmar),
@@ -154,7 +162,7 @@ export default function ImportRecipes({
     setText('')
     setChecked({})
     try {
-      const batchId = await addImportedRecipes(toAdd)
+      const batchId = await addImportedRecipes(toAdd, plan.newTags)
       setDone({ batchId, count: toAdd.length })
     } catch (e) {
       setText(previousText)
@@ -250,6 +258,21 @@ export default function ImportRecipes({
                   />
                   <span className="font-medium">{r.recipe.title}</span>
                 </label>
+                {r.recipe.tags.length > 0 && (
+                  <p className="pl-6 text-gray-600 dark:text-gray-400">
+                    Etiquetas:{' '}
+                    {r.recipe.tags.map((t, k) => {
+                      const isNew = !tags.some((x) => tagKey(x.name) === tagKey(t))
+                      return (
+                        <span key={k}>
+                          {k > 0 && ', '}
+                          {t}
+                          {isNew && <span className="text-amber-600 dark:text-amber-400"> (nueva)</span>}
+                        </span>
+                      )
+                    })}
+                  </p>
+                )}
                 {r.duplicateTitle && (
                   <p className="pl-6 text-amber-600 dark:text-amber-400">Ya hay una receta con este título.</p>
                 )}
@@ -263,7 +286,6 @@ export default function ImportRecipes({
                   <summary className="cursor-pointer list-none text-gray-600 marker:hidden dark:text-gray-400">
                     {r.ingredients.length}/{r.lines.length} ingredientes
                     {r.recipe.instructions ? ' · con preparación' : ' · sin preparación'}
-                    {r.recipe.tags.length > 0 && ` · ${r.recipe.tags.join(', ')}`}
                     <span className="ml-1 text-emerald-700 group-open:hidden dark:text-emerald-400">Ver</span>
                     <span className="ml-1 hidden text-emerald-700 group-open:inline dark:text-emerald-400">Ocultar</span>
                   </summary>

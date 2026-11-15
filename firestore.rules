@@ -49,6 +49,7 @@ service cloud.firestore {
     match /ingredients/{id} { allow read, write: if isMember(); }
     match /shoppingList/{id} { allow read, write: if isMember(); }
     match /recipes/{id} { allow read, write: if isMember(); }
+    match /tags/{id} { allow read, write: if isMember(); }
     match /purchaseHistory/{id} { allow read, write: if isMember(); }
     match /notes/{id} { allow read, write: if isMember(); }
 
