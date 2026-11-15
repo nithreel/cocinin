@@ -9,8 +9,22 @@ function sortKey(name: string) {
   return name.replace(/^[^\p{L}\p{N}]+/u, '') || name
 }
 
-export function sortTags<T extends { name: string }>(tags: T[]): T[] {
-  return [...tags].sort((a, b) => sortKey(a.name).localeCompare(sortKey(b.name), 'es'))
+/** Primero las ordenadas a mano (`order`), luego el resto alfabéticamente (ignorando emojis iniciales). */
+export function sortTags<T extends { name: string; order?: number }>(tags: T[]): T[] {
+  return [...tags].sort(
+    (a, b) =>
+      (a.order ?? Infinity) - (b.order ?? Infinity) || sortKey(a.name).localeCompare(sortKey(b.name), 'es'),
+  )
+}
+
+/** Ids en el nuevo orden tras mover una etiqueta una posición (-1 arriba, +1 abajo). */
+export function moveId(ids: string[], id: string, delta: -1 | 1): string[] {
+  const i = ids.indexOf(id)
+  const j = i + delta
+  if (i < 0 || j < 0 || j >= ids.length) return ids
+  const out = [...ids]
+  ;[out[i], out[j]] = [out[j], out[i]]
+  return out
 }
 
 export function findTag(tags: Tag[], name: string): Tag | undefined {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { findTag, legacyTagId, planImportTags, planLegacyMigration, sortTags } from '../../src/lib/tags'
+import { findTag, legacyTagId, moveId, planImportTags, planLegacyMigration, sortTags } from '../../src/lib/tags'
 import type { Recipe, Tag } from '../../src/lib/collections'
 
 const tag = (id: string, name: string): Tag => ({ id, name, createdAt: 0 })
@@ -8,6 +8,15 @@ const rec = (id: string, extra: Partial<Recipe>): Recipe => ({ id, title: id, in
 describe('tags', () => {
   it('ordena ignorando el emoji inicial', () => {
     expect(sortTags([tag('1', 'Postre'), tag('2', '🍰 Dulce'), tag('3', 'Fría')]).map((t) => t.name)).toEqual(['🍰 Dulce', 'Fría', 'Postre'])
+  })
+  it('respeta el orden manual y deja el resto al final', () => {
+    const t = (id: string, name: string, order?: number) => ({ ...tag(id, name), order })
+    expect(sortTags([t('1', 'A'), t('2', 'B', 1), t('3', 'C', 0), t('4', 'Z')]).map((x) => x.id)).toEqual(['3', '2', '1', '4'])
+  })
+  it('mueve un id arriba o abajo sin salirse', () => {
+    expect(moveId(['a', 'b', 'c'], 'b', -1)).toEqual(['b', 'a', 'c'])
+    expect(moveId(['a', 'b', 'c'], 'a', -1)).toEqual(['a', 'b', 'c'])
+    expect(moveId(['a', 'b', 'c'], 'c', 1)).toEqual(['a', 'b', 'c'])
   })
   it('encuentra sin tildes ni mayúsculas', () => {
     expect(findTag([tag('1', 'Fría')], 'FRIA')?.id).toBe('1')

@@ -61,6 +61,8 @@ export interface Tag {
   id: string
   name: string
   createdAt: number
+  /** posición elegida a mano; las que no la tienen van al final por orden alfabético */
+  order?: number
 }
 
 export interface PurchaseHistoryEntry {

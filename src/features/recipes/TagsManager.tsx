@@ -3,13 +3,27 @@ import { cancelButton, outlineButton, primaryButton } from '../../components/but
 import { ConfirmDelete } from '../../components/DeleteButton'
 import { XIcon } from '../../components/icons'
 import type { Recipe, Tag } from '../../lib/collections'
-import { findTag, sortTags } from '../../lib/tags'
-import { addTag, deleteTag, renameTag } from './data'
+import { findTag, moveId, sortTags } from '../../lib/tags'
+import { addTag, deleteTag, renameTag, reorderTags } from './data'
 
 const inputClass =
   'min-w-0 flex-1 rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-moss-700 dark:bg-moss-800 dark:text-gray-100'
 
-function TagRow({ tag, tags, uses }: { tag: Tag; tags: Tag[]; uses: number }) {
+function TagRow({
+  tag,
+  tags,
+  uses,
+  first,
+  last,
+  onMove,
+}: {
+  tag: Tag
+  tags: Tag[]
+  uses: number
+  first: boolean
+  last: boolean
+  onMove: (delta: -1 | 1) => void
+}) {
   const [editing, setEditing] = useState(false)
   const [name, setName] = useState(tag.name)
   const [confirming, setConfirming] = useState(false)
@@ -86,6 +100,24 @@ function TagRow({ tag, tags, uses }: { tag: Tag; tags: Tag[]; uses: number }) {
         </span>
         {!confirming && (
           <>
+            <button
+              type="button"
+              disabled={first}
+              onClick={() => onMove(-1)}
+              aria-label={`Subir «${tag.name}»`}
+              className={cancelButton + ' disabled:opacity-30'}
+            >
+              ↑
+            </button>
+            <button
+              type="button"
+              disabled={last}
+              onClick={() => onMove(1)}
+              aria-label={`Bajar «${tag.name}»`}
+              className={cancelButton + ' disabled:opacity-30'}
+            >
+              ↓
+            </button>
             <button type="button" onClick={() => setEditing(true)} className={cancelButton}>
               Renombrar
             </button>
@@ -142,7 +174,7 @@ export default function TagsManager({
     }
     setBusy(true)
     try {
-      await addTag(n)
+      await addTag(n, tags.some((t) => t.order !== undefined) ? Math.max(...tags.map((t) => t.order ?? -1)) + 1 : undefined)
       setName('')
       setError(null)
     } catch (err) {
@@ -150,6 +182,17 @@ export default function TagsManager({
       setError('No se pudo crear la etiqueta.')
     } finally {
       setBusy(false)
+    }
+  }
+
+  const sorted = sortTags(tags)
+
+  async function move(id: string, delta: -1 | 1) {
+    try {
+      await reorderTags(moveId(sorted.map((t) => t.id), id, delta))
+    } catch (err) {
+      console.error(err)
+      setError('No se pudo cambiar el orden.')
     }
   }
 
@@ -180,8 +223,16 @@ export default function TagsManager({
         <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">Aún no hay etiquetas.</p>
       ) : (
         <ul className="mt-3 divide-y divide-gray-100 dark:divide-moss-800">
-          {sortTags(tags).map((t) => (
-            <TagRow key={t.id} tag={t} tags={tags} uses={usesOf(t.id)} />
+          {sorted.map((t, i) => (
+            <TagRow
+              key={t.id}
+              tag={t}
+              tags={tags}
+              uses={usesOf(t.id)}
+              first={i === 0}
+              last={i === sorted.length - 1}
+              onMove={(d) => move(t.id, d)}
+            />
           ))}
         </ul>
       )}

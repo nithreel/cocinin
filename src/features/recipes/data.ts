@@ -51,8 +51,16 @@ export async function undoImport(batchId: string) {
   await batch.commit()
 }
 
-export async function addTag(name: string) {
-  await addDoc(tagsCol, { name, createdAt: Date.now(), by: currentUid() })
+/** `order` = posición al final de las ya ordenadas a mano (si no hay ninguna, sin orden y va alfabética). */
+export async function addTag(name: string, order?: number) {
+  await addDoc(tagsCol, { name, createdAt: Date.now(), by: currentUid(), ...(order === undefined ? {} : { order }) })
+}
+
+/** Guarda el orden elegido: la posición de cada id en la lista pasa a ser su `order`. */
+export async function reorderTags(ids: string[]) {
+  const batch = writeBatch(db)
+  ids.forEach((id, i) => batch.update(doc(tagsCol, id), { order: i }))
+  await batch.commit()
 }
 
 export async function renameTag(id: string, name: string) {
