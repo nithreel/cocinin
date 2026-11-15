@@ -267,12 +267,13 @@ export default function RecipesPage() {
                 </button>
               </div>
               {tags.length > 0 && (
-                <div
-                  role="group"
-                  aria-label="Filtrar por etiqueta"
-                  className="-mx-4 flex items-center gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-                >
+                <div className="flex items-center gap-2">
                   <span className="shrink-0 text-sm text-gray-500 dark:text-gray-400">Tags:</span>
+                  <div
+                    role="group"
+                    aria-label="Filtrar por etiqueta"
+                    className="flex min-w-0 flex-1 items-center gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                  >
                   {tags.map((tag) => {
                     const on = effectiveTags.includes(tag.id)
                     return (
@@ -294,6 +295,7 @@ export default function RecipesPage() {
                       </button>
                     )
                   })}
+                  </div>
                 </div>
               )}
             </div>
