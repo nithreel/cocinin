@@ -249,6 +249,17 @@ export default function RecipesPage() {
                     {label}
                   </button>
                 ))}
+                <button
+                  type="button"
+                  aria-pressed={showTags}
+                  onClick={() => {
+                    setShowTags((v) => !v)
+                    scrollMainToTop()
+                  }}
+                  className="ml-auto rounded-full border border-gray-300 px-3 py-1 text-sm text-gray-700 hover:bg-gray-50 dark:border-moss-700 dark:text-gray-300 dark:hover:bg-moss-800"
+                >
+                  Etiquetas
+                </button>
               </div>
               {tags.length > 0 && (
                 <div
@@ -284,12 +295,6 @@ export default function RecipesPage() {
           )
         }
       >
-        <button type="button" onClick={() => {
-            setShowTags((v) => !v)
-            scrollMainToTop()
-          }} className={outlineButton}>
-          Etiquetas
-        </button>
         <button type="button" onClick={() => {
             setShowImport((v) => !v)
             scrollMainToTop()
