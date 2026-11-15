@@ -24,6 +24,13 @@ describe('parseImport', () => {
     expect(parseImport(JSON.stringify([{ ...valid, ingredients: [{ name: 'Sal', optional: 'sí' }] }])).ok).toBe(false)
     expect(parseImport(JSON.stringify([{ ...valid, instructions: 5 }])).ok).toBe(false)
   })
+  it('lee las etiquetas (opcionales, sin duplicados) y rechaza tipos erróneos', () => {
+    const r = parseImport(JSON.stringify([{ ...valid, tags: ['Postre', 'postre', ' Fría '] }]))
+    expect(r.ok && r.recipes[0].tags).toEqual(['Postre', 'Fría'])
+    const sin = parseImport(JSON.stringify([valid]))
+    expect(sin.ok && sin.recipes[0].tags).toEqual([])
+    expect(parseImport(JSON.stringify([{ ...valid, tags: 'Postre' }])).ok).toBe(false)
+  })
   it('limita el número de recetas', () => {
     expect(parseImport(JSON.stringify(Array(21).fill(valid))).ok).toBe(false)
   })

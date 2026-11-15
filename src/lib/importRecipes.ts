@@ -5,6 +5,7 @@ export const MAX_IMPORT_RECIPES = 20
 const MAX_TITLE = 200
 const MAX_INSTRUCTIONS = 20_000
 const MAX_INGREDIENTS = 100
+const MAX_TAGS = 10
 
 export interface ImportedRecipeIngredient {
   name: string
@@ -17,6 +18,7 @@ export interface ImportedRecipe {
   title: string
   instructions: string
   ingredients: ImportedRecipeIngredient[]
+  tags: string[]
 }
 
 export type ParseResult = { ok: true; recipes: ImportedRecipe[] } | { ok: false; error: string }
@@ -50,6 +52,17 @@ function parseIngredient(raw: unknown, where: string): ImportedRecipeIngredient 
   }
 }
 
+function parseTags(raw: unknown): string[] {
+  if (raw === undefined || raw === null) return []
+  if (!Array.isArray(raw)) throw new Error('«tags» debe ser una lista de textos')
+  const out: string[] = []
+  for (const t of raw.slice(0, MAX_TAGS)) {
+    const tag = str(t, 'tags', 30)
+    if (tag && !out.some((o) => normalizeText(o) === normalizeText(tag))) out.push(tag)
+  }
+  return out
+}
+
 function parseRecipe(raw: unknown, index: number): ImportedRecipe {
   const where = `receta ${index + 1}`
   if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) throw new Error(`${where}: no es un objeto`)
@@ -60,7 +73,7 @@ function parseRecipe(raw: unknown, index: number): ImportedRecipe {
     if (!Array.isArray(r.ingredients) || r.ingredients.length === 0) throw new Error('«ingredients» debe ser una lista con algo dentro')
     if (r.ingredients.length > MAX_INGREDIENTS) throw new Error('demasiados ingredientes')
     const ingredients = r.ingredients.map((ing, i) => parseIngredient(ing, `«${title}», ingrediente ${i + 1}`))
-    return { title, instructions, ingredients }
+    return { title, instructions, ingredients, tags: parseTags(r.tags) }
   } catch (e) {
     throw new Error(`${where}: ${(e as Error).message}`)
   }

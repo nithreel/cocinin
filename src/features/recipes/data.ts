@@ -4,8 +4,13 @@ import { recipesCol, type RecipeIngredient } from '../../lib/collections'
 
 export { useRecipes } from '../../lib/AppDataContext'
 
-export async function addRecipe(title: string, instructions: string, ingredients: RecipeIngredient[]) {
-  await addDoc(recipesCol, { title, instructions, ingredients, createdAt: Date.now(), by: currentUid() })
+export async function addRecipe(
+  title: string,
+  instructions: string,
+  ingredients: RecipeIngredient[],
+  tags: string[] = [],
+) {
+  await addDoc(recipesCol, { title, instructions, ingredients, tags, createdAt: Date.now(), by: currentUid() })
 }
 
 export async function updateRecipe(
@@ -13,8 +18,9 @@ export async function updateRecipe(
   title: string,
   instructions: string,
   ingredients: RecipeIngredient[],
+  tags: string[] = [],
 ) {
-  await updateDoc(doc(recipesCol, id), { title, instructions, ingredients })
+  await updateDoc(doc(recipesCol, id), { title, instructions, ingredients, tags })
 }
 
 export async function deleteRecipe(id: string) {
@@ -23,7 +29,7 @@ export async function deleteRecipe(id: string) {
 
 /** Añade recetas importadas (siempre documentos nuevos) marcadas con un id de lote. Devuelve ese id. */
 export async function addImportedRecipes(
-  recipes: { title: string; instructions: string; ingredients: RecipeIngredient[] }[],
+  recipes: { title: string; instructions: string; ingredients: RecipeIngredient[]; tags?: string[] }[],
 ): Promise<string> {
   const batchId = String(Date.now())
   const batch = writeBatch(db)

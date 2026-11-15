@@ -48,12 +48,14 @@ function RecipeCard({
   ingredients,
   groups,
   ingredientsById,
+  allTags,
 }: {
   recipe: Recipe
   status: RecipeStatus
   ingredients: Ingredient[]
   groups: Group[]
   ingredientsById: Map<string, Ingredient>
+  allTags: string[]
 }) {
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState(false)
@@ -89,7 +91,12 @@ function RecipeCard({
           (open ? ' sticky top-[var(--head-h)] z-20' : '')
         }
       >
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{recipe.title}</h3>
+        <div className="min-w-0">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{recipe.title}</h3>
+          {recipe.tags && recipe.tags.length > 0 && (
+            <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{[...recipe.tags].sort((a, b) => a.localeCompare(b, 'es')).join(' · ')}</p>
+          )}
+        </div>
         <span className="text-gray-500 dark:text-gray-400">
           <ChevronIcon open={open} />
         </span>
@@ -101,14 +108,16 @@ function RecipeCard({
             <RecipeForm
               ingredients={ingredients}
               groups={groups}
+              allTags={allTags}
               initial={{
                 title: recipe.title,
                 instructions: recipe.instructions,
                 ingredients: recipe.ingredients,
+                tags: recipe.tags ?? [],
               }}
               submitLabel="Guardar cambios"
               onSubmit={(values) =>
-                updateRecipe(recipe.id, values.title, values.instructions, values.ingredients)
+                updateRecipe(recipe.id, values.title, values.instructions, values.ingredients, values.tags)
               }
               onDone={() => setEditing(false)}
             />
@@ -173,15 +182,26 @@ export default function RecipesPage() {
   const ingredientsById = useMemo(() => new Map(ingredients.map((i) => [i.id, i])), [ingredients])
   const [search, setSearch] = useState('')
   const [onlyReady, setOnlyReady] = useState(false)
+  const [activeTags, setActiveTags] = useState<string[]>([])
+
+  // todas las etiquetas en uso (sin distinguir mayúsculas), ordenadas
+  const allTags = useMemo(() => {
+    const seen = new Map<string, string>()
+    for (const r of recipes) for (const t of r.tags ?? []) if (!seen.has(t.toLowerCase())) seen.set(t.toLowerCase(), t)
+    return [...seen.values()].sort((a, b) => a.localeCompare(b, 'es'))
+  }, [recipes])
+  // si una etiqueta deja de existir, su filtro se ignora
+  const effectiveTags = useMemo(() => activeTags.filter((t) => allTags.includes(t)), [activeTags, allTags])
 
   const visibleRecipes = useMemo(
     () =>
       recipes.filter(
         (r) =>
           (!search.trim() || matchesSearch(r.title, search)) &&
-          (!onlyReady || countMissingRequired(r, ingredientsById) === 0),
+          (!onlyReady || countMissingRequired(r, ingredientsById) === 0) &&
+          effectiveTags.every((t) => (r.tags ?? []).some((x) => x.toLowerCase() === t.toLowerCase())),
       ),
-    [recipes, search, onlyReady, ingredientsById],
+    [recipes, search, onlyReady, ingredientsById, effectiveTags],
   )
 
   return (
@@ -192,7 +212,7 @@ export default function RecipesPage() {
           recipes.length > 0 && (
             <div className="space-y-2">
               <SearchInput value={search} onChange={setSearch} placeholder="Buscar receta…" className="" />
-              <div role="group" aria-label="Filtrar recetas" className="flex gap-2">
+              <div role="group" aria-label="Filtrar recetas" className="flex flex-wrap gap-2">
                 {(
                   [
                     [false, 'Todas'],
@@ -214,6 +234,30 @@ export default function RecipesPage() {
                     {label}
                   </button>
                 ))}
+                {allTags.length > 0 && (
+                  <span className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                    <span aria-hidden="true">|</span> Tags:
+                  </span>
+                )}
+                {allTags.map((tag) => {
+                  const on = effectiveTags.includes(tag)
+                  return (
+                    <button
+                      key={tag}
+                      type="button"
+                      aria-pressed={on}
+                      onClick={() => setActiveTags((prev) => (on ? prev.filter((t) => t !== tag) : [...prev, tag]))}
+                      className={
+                        'rounded-full border px-3 py-1 text-sm ' +
+                        (on
+                          ? 'border-emerald-700 bg-emerald-700 text-white'
+                          : 'border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-moss-700 dark:text-gray-300 dark:hover:bg-moss-800')
+                      }
+                    >
+                      {tag}
+                    </button>
+                  )
+                })}
               </div>
             </div>
           )
@@ -239,7 +283,8 @@ export default function RecipesPage() {
         <RecipeForm
           ingredients={ingredients}
           groups={groups}
-          onSubmit={(values) => addRecipe(values.title, values.instructions, values.ingredients)}
+          allTags={allTags}
+          onSubmit={(values) => addRecipe(values.title, values.instructions, values.ingredients, values.tags)}
           onDone={() => setShowForm(false)}
         />
       )}
@@ -263,6 +308,7 @@ export default function RecipesPage() {
             ingredients={ingredients}
             groups={groups}
             ingredientsById={ingredientsById}
+            allTags={allTags}
           />
         ))}
       </div>

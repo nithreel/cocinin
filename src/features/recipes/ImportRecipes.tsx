@@ -4,20 +4,22 @@ import { addImportedRecipes, undoImport } from './data'
 import { cancelButton, primaryButton } from '../../components/buttonStyles'
 import BackupButton from '../../components/BackupButton'
 import { XIcon } from '../../components/icons'
+import { normalizeText } from '../../lib/search'
 import { parseImport, resolveRecipes } from '../../lib/importRecipes'
 import type { Group, Ingredient, Recipe } from '../../lib/collections'
 
 /** Texto que se pega en Claude web junto con la copia de seguridad y la receta. */
 const CLAUDE_PROMPT = `Te paso la copia de seguridad de mi cocina (JSON) y una receta. Devuélveme SOLO un JSON, sin explicaciones, con esta forma:
 
-{"recipes":[{"title":"…","instructions":"…","ingredients":[{"name":"…","quantity":"…","unit":"…","optional":false}]}]}
+{"recipes":[{"title":"…","instructions":"…","ingredients":[{"name":"…","quantity":"…","unit":"…","optional":false}],"tags":["…"]}]}
 
 Reglas:
 - "name" debe ser EXACTAMENTE el nombre de un ingrediente de "ingredients" de la copia (aunque esté mal escrito). No inventes ingredientes: si falta alguno, ponlo igualmente con su nombre y yo decido si lo creo.
 - "quantity": número, fracción o rango con guion ("1", "1/2", "700-800"); vacío si es «al gusto». "unit" en castellano y minúscula (gramos, ml, cucharada, diente, lata, Ud…); vacío si no hay cantidad.
 - Si un ingrediente se usa varias veces, suma las cantidades en una sola entrada. "optional": true solo si la receta lo marca como opcional.
 - "instructions": cabecera solo con lo que diga la receta (raciones, horno…; no inventes), línea en blanco, pasos numerados "1. Título corto: texto en infinitivo.", y al final, si hay alternativas reales, una línea "Sustituciones: …". Sin comentarios de relleno, bromas ni primera persona.
-- El agua no es ingrediente.`
+- El agua no es ingrediente.
+- "tags": 1 a 3 etiquetas que clasifiquen la receta (p. ej. caliente o fría, postre, plato principal…). Mira las que ya existen en "recipes[].tags" de la copia y reutiliza EXACTAMENTE su texto; crea una nueva solo si ninguna encaja. Si la copia aún no tiene etiquetas, propón las tuyas, cortas y en castellano.`
 
 /** Crea los ingredientes que faltan, cada uno en el grupo que elija nith (no se crea nada sin elegirlo). */
 function CreateMissing({ names, groups }: { names: string[]; groups: Group[] }) {
@@ -115,6 +117,7 @@ export default function ImportRecipes({
   const [error, setError] = useState<string | null>(null)
   const [done, setDone] = useState<{ batchId: string; count: number } | null>(null)
 
+  const existingTags = useMemo(() => [...new Set(recipes.flatMap((r) => r.tags ?? []))], [recipes])
   const parsed = useMemo(() => (text.trim() ? parseImport(text) : null), [text])
   const resolved = useMemo(
     () => (parsed?.ok ? resolveRecipes(parsed.recipes, ingredients, recipes) : []),
@@ -142,6 +145,8 @@ export default function ImportRecipes({
       title: r.recipe.title,
       instructions: r.recipe.instructions,
       ingredients: r.ingredients,
+      // se reutiliza la grafía de las etiquetas que ya existen (sin distinguir mayúsculas ni tildes)
+      tags: r.recipe.tags.map((t) => existingTags.find((e) => normalizeText(e) === normalizeText(t)) ?? t),
     }))
     const previousText = text
     // Se vacía antes de escribir: Firestore avisa de la receta nueva al instante (antes de confirmar),
@@ -258,6 +263,7 @@ export default function ImportRecipes({
                   <summary className="cursor-pointer list-none text-gray-600 marker:hidden dark:text-gray-400">
                     {r.ingredients.length}/{r.lines.length} ingredientes
                     {r.recipe.instructions ? ' · con preparación' : ' · sin preparación'}
+                    {r.recipe.tags.length > 0 && ` · ${r.recipe.tags.join(', ')}`}
                     <span className="ml-1 text-emerald-700 group-open:hidden dark:text-emerald-400">Ver</span>
                     <span className="ml-1 hidden text-emerald-700 group-open:inline dark:text-emerald-400">Ocultar</span>
                   </summary>

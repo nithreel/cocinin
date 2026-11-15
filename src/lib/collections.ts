@@ -47,6 +47,8 @@ export interface Recipe {
   title: string
   instructions: string
   ingredients: RecipeIngredient[]
+  /** etiquetas libres (p. ej. «Postre», «Fría»); se crean desde el formulario de la receta */
+  tags?: string[]
   createdAt: number
   /** id del lote si vino del importador (permite deshacer la importación) */
   importada?: string
