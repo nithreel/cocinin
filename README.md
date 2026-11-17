@@ -17,13 +17,13 @@
 
 CocinIN responde a tres preguntas del día a día: **¿qué tenemos en casa?**, **¿qué hay que comprar?** y **¿qué podemos cocinar?** Todo se sincroniza al instante entre las personas de la casa: si alguien tacha algo en el súper, los demás lo ven en su móvil.
 
-- 🥫 **Despensa**: ingredientes por grupos con un interruptor *disponible / agotado*, un copo de nieve para marcarlos como *congelados*, y fecha de compra o de caducidad (con avisos de «caduca en 2 días»).
+- 🥫 **Despensa**: ingredientes por grupos con un interruptor de color que resume el estado (verde disponible, rojo agotado, azul congelado, ámbar con aviso). Con fecha de compra o de caducidad, o sin fecha. Puedes marcar lo que quieras **congelado** y, al sacarlo, empieza la **cuenta de descongelado** en la nevera (azul las primeras 24 h, ámbar a partir de ahí y rojo a las 48 h, con «Descongelado hace 1 día y 6 h»), y un botón de alerta para marcar lo que quieres **gastar pronto** («Marcado hace 2 días»). Las cabeceras de grupo muestran cuántos ingredientes tienen aviso, aunque estén plegadas. «Comprado hace X días» solo lo anota la lista de la compra.
 - 🛒 **Lista de la compra**: lo que te falta, con buscador y un «+» para añadirlo (con «Deshacer»). Al confirmar la compra, lo comprado vuelve a la despensa y se anota en el historial.
-- 📖 **Recetario**: recetas con ingredientes (obligatorios u opcionales) y preparación, con buscador y filtro «Puedo hacerla». Lo que te falta sale en rojo (y en ámbar si es opcional).
+- 📖 **Recetario**: recetas con ingredientes (obligatorios u opcionales) y preparación, con buscador, filtro «Puedo hacerla» y **etiquetas** propias (con emoji, ordenables arrastrando) para filtrar. Lo que te falta sale en rojo (y en ámbar si es opcional).
 - 📝 **Notas**: recordatorios con hora y fecha («Sacar pollo del congelador, mañana a las 17:30») que avisan por el móvil a las personas que elijas.
 - 👥 **Usuarios**: un administrador da de alta a los demás y puede ponerles un alias. Cada casa tiene su propia instalación y sus datos son privados.
 - 📥 **Importar recetas**: pega el JSON que te prepare cualquier IA con la receta y se añaden al recetario, con vista previa.
-- 🔔 **Avisos en el móvil** (opcional): algo se ha agotado, compra hecha, algo va a caducar, una nota con hora…
+- 🔔 **Avisos en el móvil** (opcional): algo se ha agotado, compra hecha, algo va a caducar, algo lleva 24 h o 48 h descongelado, una nota con hora…
 - 🌗 Modo claro y oscuro automático, copia de seguridad en un clic (icono de descarga de la barra superior) y aviso cuando hay una versión nueva de la app.
 
 Es una **PWA**: puedes usarla desde el navegador del ordenador o del móvil, o **instalarla como una app** con su icono en la pantalla de inicio, a pantalla completa y sin barra del navegador.
@@ -39,11 +39,12 @@ Es una **PWA**: puedes usarla desde el navegador del ordenador o del móvil, o *
 ## Capturas
 
 <p>
-  <img src="docs/screenshots/movil-login.png" alt="Inicio de sesión" width="19%">
-  <img src="docs/screenshots/movil-despensa.png" alt="Despensa" width="19%">
-  <img src="docs/screenshots/movil-lista.png" alt="Lista de la compra" width="19%">
-  <img src="docs/screenshots/movil-receta.png" alt="Receta" width="19%">
-  <img src="docs/screenshots/movil-notas.png" alt="Notas con aviso" width="19%">
+  <img src="docs/screenshots/movil-login.png" alt="Inicio de sesión" width="16%">
+  <img src="docs/screenshots/movil-despensa.png" alt="Despensa con ingredientes congelados, descongelando y con aviso" width="16%">
+  <img src="docs/screenshots/movil-ingrediente.png" alt="Panel de un ingrediente: fecha, cantidad, alerta y congelar" width="16%">
+  <img src="docs/screenshots/movil-lista.png" alt="Lista de la compra" width="16%">
+  <img src="docs/screenshots/movil-receta.png" alt="Receta con etiquetas" width="16%">
+  <img src="docs/screenshots/movil-notas.png" alt="Notas con aviso" width="16%">
 </p>
 
 *Los datos de las capturas son de ejemplo.*
@@ -123,8 +124,10 @@ Tanto con la opción A como con la B, la instalación ha terminado cuando tu URL
 | Acción | Cómo |
 | --- | --- |
 | Añadir ingrediente | Despensa → «+ Ingrediente». Nace disponible (ON). |
-| Agotado / disponible / congelado | Interruptor a la izquierda del ingrediente (verde disponible, rojo agotado, azul congelado); el copo de nieve, a su lado, lo marca como congelado (cuenta como disponible). Al agotarlo, la app te ofrece «Añadir a la lista». |
-| Caducidad, cantidad, editar o eliminar | Toca el ingrediente: fechas, cantidad (texto libre, p. ej. «500 g») y botones **Editar** y **Eliminar**. |
+| Agotado / disponible | Interruptor a la izquierda del ingrediente (verde disponible, rojo agotado, ámbar si tiene un aviso, azul si está congelado). Al agotarlo, la app te ofrece «Añadir a la lista». Al volver a ponerlo disponible a mano nace **sin fecha**. |
+| Congelar y descongelar | Toca el ingrediente y usa el copo de nieve, abajo a la derecha de la cantidad. Al pulsarlo de nuevo se **descongela** (en la nevera) y empieza la cuenta en horas: aviso a las 24 h y a las 48 h («mejor no lo uses»). |
+| Gastar pronto | En el mismo panel, el triángulo de alerta marca el ingrediente (toggle ámbar y «⚠ Marcado hace X días»). Se quita al agotarlo. |
+| Fecha, cantidad, editar o eliminar | Toca el ingrediente: tipo de fecha (**Sin fecha**, de compra o de caducidad) y la fecha, cantidad (texto libre, p. ej. «500 g») y botones **Editar** y **Eliminar**. Mientras algo se descongela, la fecha de descongelado manda sobre las demás. |
 | Buscar | El buscador de la Despensa filtra por ingrediente **o por grupo**. |
 | Comprar | Lista → «+» en lo que falta → marca lo comprado → «Confirmar compra». |
 | Receta nueva | Recetario → «+ Receta», o **Importar** para pegar un JSON con una o varias recetas (vista previa y «Deshacer importación»). |
@@ -147,7 +150,7 @@ Tanto con la opción A como con la B, la instalación ha terminado cuando tu URL
 
 La app funciona completa sin esto. Si quieres notificaciones (algo se ha gastado, compra hecha, algo va a caducar…), hace falta un servicio pequeño en una máquina tuya siempre encendida con Docker, por ejemplo una Raspberry Pi. Firebase gratis no puede enviarlas por sí solo.
 
-Avisa de: ingrediente agotado, varios añadidos a la lista, compra hecha, receta nueva, usuario nuevo, caducidad próxima y notas con hora. Cada persona elige cuáles quiere en la campana de la barra superior, y nunca se avisa a quien provoca el cambio.
+Avisa de: ingrediente agotado, varios añadidos a la lista, compra hecha, receta nueva, usuario nuevo, caducidad próxima, descongelado (a las 24 h y a las 48 h, a cualquier hora) y notas con hora (cada nota llega como una notificación propia, sin pisarse). Cada persona elige cuáles quiere en la campana de la barra superior, y nunca se avisa a quien provoca el cambio.
 
 **Instalación**
 1. Descarga la clave de tu proyecto: consola de Firebase → Configuración del proyecto → Cuentas de servicio → *Generar nueva clave privada*, y guárdala como `notifier/secrets/service-account.json` (no la subas ni la compartas).
