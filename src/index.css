@@ -24,7 +24,7 @@
 /* Offset sticky bajo la cabecera de pantalla. Se mide desde el área de contenido de <main> (inset por su padding),
    no desde el borde: cabecera (pt + h-8 + pb) menos ese padding = 60-16 = 76-32 = 44 px en móvil y escritorio. */
 :root {
-  --head-h: 44px;
+  --head-h: 43px; /* 44 menos 1 px de solape bajo la cabecera (ver StickyHeader) */
 }
 
 /* checkboxes con el verde de la app */

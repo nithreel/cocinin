@@ -14,7 +14,10 @@ export default function StickyHeader({ title, children, below }: { title: string
     if (!el || !main) return
     const apply = () => {
       const pad = parseFloat(getComputedStyle(main).paddingTop) || 0
-      document.documentElement.style.setProperty('--head-h', `${el.offsetHeight - pad}px`)
+      // alto fractional (offsetHeight redondea y deja una rendija de ~1 px) menos 1 px de solape: las
+      // subcabeceras se meten 1 px por detrás de esta (z-30, opaca), sin rendija a ningún zoom ni densidad
+      const h = el.getBoundingClientRect().height - pad - 1
+      document.documentElement.style.setProperty('--head-h', `${h}px`)
     }
     apply()
     const ro = new ResizeObserver(apply)

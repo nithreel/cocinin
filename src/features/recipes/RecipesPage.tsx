@@ -73,7 +73,7 @@ function RecipeCard({
     const art = articleRef.current
     const title = titleRef.current
     if (!art || !title) return
-    const apply = () => art.style.setProperty('--card-h', `${title.offsetHeight}px`)
+    const apply = () => art.style.setProperty('--card-h', `${title.getBoundingClientRect().height - 1}px`)
     apply()
     const ro = new ResizeObserver(apply)
     ro.observe(title)
@@ -131,7 +131,8 @@ function RecipeCard({
             <>
               <section>
               <h4 className={sectionHead}>Ingredientes</h4>
-              <ul className="mb-4 space-y-1 text-sm text-gray-600 dark:text-gray-300">
+              {/* pb-8 (≥ alto del título fijo): al acabar la sección el título queda sobre espacio vacío y no a medias sobre la última fila */}
+              <ul className="space-y-1 pb-8 text-sm text-gray-600 dark:text-gray-300">
                 {recipe.ingredients.map((ri) => {
                   const ing = ingredientsById.get(ri.ingredientId)
                   const have = ing?.inPantry
@@ -159,7 +160,7 @@ function RecipeCard({
               {recipe.instructions && (
                 <section className="border-t-2 border-gray-200 dark:border-moss-700">
                   <h4 className={sectionHead + ' pt-3'}>Preparación</h4>
-                  <p className="whitespace-pre-wrap text-sm text-gray-700 dark:text-gray-300">{recipe.instructions}</p>
+                  <p className="whitespace-pre-wrap pb-8 text-sm text-gray-700 dark:text-gray-300">{recipe.instructions}</p>
                 </section>
               )}
 
