@@ -138,3 +138,10 @@ describe('notas', () => {
     expect(noteRecipients(subs, note()).map((s) => s.id)).toEqual(['s1'])
   })
 })
+
+describe('etiqueta de notas', () => {
+  it('cada nota lleva su propia etiqueta para que no se pisen', async () => {
+    const { noteTag } = await import('../../notifier/lib.mjs')
+    expect(noteTag({ id: 'a' })).not.toBe(noteTag({ id: 'b' }))
+  })
+})

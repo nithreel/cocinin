@@ -12,6 +12,7 @@ import {
   inSendWindow,
   newlyExpiring,
   noteMessage,
+  noteTag,
   noteRecipients,
   purchaseMessage,
   recipeMessage,
@@ -29,9 +30,9 @@ const log = (...a) => console.log(new Date().toISOString(), ...a)
 let subscriptions = [] // { id, uid, endpoint, keys, prefs }
 const ingredients = new Map() // id -> datos
 
-async function send(kind, message, url, exceptUid, targetsOverride) {
+async function send(kind, message, url, exceptUid, targetsOverride, tag = kind) {
   const targets = targetsOverride ?? recipients(subscriptions, kind, exceptUid)
-  const payload = JSON.stringify({ ...message, url, tag: kind })
+  const payload = JSON.stringify({ ...message, url, tag })
   log(`aviso «${kind}»: ${message.body} → ${targets.length} dispositivo(s)`)
   for (const s of targets) {
     try {
@@ -128,7 +129,7 @@ async function checkNotes() {
       log('no se pudo marcar la nota', note.id, e.message)
       continue
     }
-    await send('nota', noteMessage(note), '/notas', null, noteRecipients(subscriptions, note))
+    await send('nota', noteMessage(note), '/notas', null, noteRecipients(subscriptions, note), noteTag(note))
   }
 }
 setTimeout(() => {

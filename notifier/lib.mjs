@@ -126,6 +126,9 @@ export function dueNotes(notes, now = Date.now()) {
   return out.sort((a, b) => a.remindAt - b.remindAt)
 }
 
+/** Etiqueta propia por nota: con la misma etiqueta el sistema sustituye la notificación anterior. */
+export const noteTag = (note) => `nota-${note.id}`
+
 export function noteMessage(note) {
   return { title: 'Nota', body: note.text }
 }
