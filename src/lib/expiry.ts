@@ -78,7 +78,7 @@ export function getExpiryInfo(ingredient: Ingredient): ExpiryInfo | null {
 }
 
 /** «Marcado hoy» / «Marcado hace 3 días» (días naturales); sin fecha guardada, solo «Marcado». */
-export function useSoonLabel(ingredient: Ingredient, now: Date = new Date()) {
+export function soonMarkLabel(ingredient: Ingredient, now: Date = new Date()) {
   if (typeof ingredient.useSoonAt !== 'number') return 'Marcado'
   const start = new Date(ingredient.useSoonAt)
   start.setHours(0, 0, 0, 0)

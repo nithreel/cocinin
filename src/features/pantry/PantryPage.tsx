@@ -29,7 +29,7 @@ import StickyHeader from '../../components/StickyHeader'
 import { cancelButton, dangerTextButton, outlineButton, primaryButton } from '../../components/buttonStyles'
 import { matchesSearch } from '../../lib/search'
 import KebabMenu from '../../components/KebabMenu'
-import { expiryBadgeClasses, getExpiryInfo, hasWarning, remainingLabel, useSoonLabel } from '../../lib/expiry'
+import { expiryBadgeClasses, getExpiryInfo, hasWarning, remainingLabel, soonMarkLabel } from '../../lib/expiry'
 import { NO_GROUP } from '../../lib/groupByPantryGroup'
 
 function ExpiryFields({
@@ -405,7 +405,7 @@ function IngredientRow({
               {expiryInfo && ingredient.quantity && <span className="text-gray-400"> · </span>}
               {expiryInfo && <span className={expiryBadgeClasses(expiryInfo.status)}>{expiryInfo.label}</span>}
               {soonFlag && (ingredient.quantity || expiryInfo) && <span className="text-gray-400"> · </span>}
-              {soonFlag && <span className="whitespace-nowrap font-medium text-amber-600 dark:text-amber-400">⚠ {useSoonLabel(ingredient)}</span>}
+              {soonFlag && <span className="whitespace-nowrap font-medium text-amber-600 dark:text-amber-400">⚠ {soonMarkLabel(ingredient)}</span>}
             </span>
           )}
         </div>

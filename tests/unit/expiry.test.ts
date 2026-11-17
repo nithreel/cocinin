@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { thawAgo, useSoonLabel, getExpiryInfo, localDateString, remainingLabel } from '../../src/lib/expiry'
+import { thawAgo, soonMarkLabel, getExpiryInfo, localDateString, remainingLabel } from '../../src/lib/expiry'
 import type { Ingredient } from '../../src/lib/collections'
 
 function ingredient(over: Partial<Ingredient>): Ingredient {
@@ -85,12 +85,12 @@ describe('descongelado', () => {
   })
 })
 
-describe('useSoonLabel', () => {
+describe('soonMarkLabel', () => {
   it('cuenta días naturales desde la marca', () => {
     const now = new Date(2026, 10, 17, 12)
-    expect(useSoonLabel(ingredient({ useSoonAt: new Date(2026, 10, 17, 9).getTime() }), now)).toBe('Marcado hoy')
-    expect(useSoonLabel(ingredient({ useSoonAt: new Date(2026, 10, 16, 23).getTime() }), now)).toBe('Marcado hace 1 día')
-    expect(useSoonLabel(ingredient({ useSoonAt: new Date(2026, 10, 12, 8).getTime() }), now)).toBe('Marcado hace 5 días')
-    expect(useSoonLabel(ingredient({ useSoon: true }), now)).toBe('Marcado')
+    expect(soonMarkLabel(ingredient({ useSoonAt: new Date(2026, 10, 17, 9).getTime() }), now)).toBe('Marcado hoy')
+    expect(soonMarkLabel(ingredient({ useSoonAt: new Date(2026, 10, 16, 23).getTime() }), now)).toBe('Marcado hace 1 día')
+    expect(soonMarkLabel(ingredient({ useSoonAt: new Date(2026, 10, 12, 8).getTime() }), now)).toBe('Marcado hace 5 días')
+    expect(soonMarkLabel(ingredient({ useSoon: true }), now)).toBe('Marcado')
   })
 })
