@@ -268,7 +268,6 @@ export default function RecipesPage() {
               </div>
               {tags.length > 0 && (
                 <div className="flex items-center gap-2">
-                  <span className="shrink-0 text-sm text-gray-500 dark:text-gray-400">Tags:</span>
                   <div
                     role="group"
                     aria-label="Filtrar por etiqueta"
