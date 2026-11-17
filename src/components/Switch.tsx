@@ -11,12 +11,12 @@ export default function Switch({
   onChange: (value: boolean) => void
   label: string
   disabled?: boolean
-  /** frost = congelado */
-  tone?: 'emerald' | 'frost'
+  /** frost = congelado; amber = con aviso (caducidad o descongelado) */
+  tone?: 'emerald' | 'frost' | 'amber'
   /** color apagado: gris (preferencias) o rojo suave (agotado) */
   offTone?: 'gray' | 'red'
 }) {
-  const on = tone === 'frost' ? 'bg-frost-400' : 'bg-emerald-500'
+  const on = tone === 'frost' ? 'bg-frost-400' : tone === 'amber' ? 'bg-amber-500' : 'bg-emerald-500'
   const off = offTone === 'red' ? 'bg-red-300 dark:bg-red-400/60' : 'bg-gray-400 dark:bg-moss-600'
   return (
     <button

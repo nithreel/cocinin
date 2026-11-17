@@ -4,7 +4,7 @@ export const SOON_DAYS = 3
 
 /** Días hasta la caducidad de un ingrediente con fecha, o null si no avisa (misma regla que src/lib/expiry.ts). */
 export function daysToExpiry(ingredient, now = new Date()) {
-  if (!ingredient.inPantry || ingredient.frozen) return null
+  if (!ingredient.inPantry || ingredient.frozen || typeof ingredient.thawedAt === 'number') return null
   if (ingredient.expiryMode !== 'date' || !ingredient.expiryDate) return null
   const today = new Date(now)
   today.setHours(0, 0, 0, 0)
@@ -25,6 +25,45 @@ export function newlyExpiring(ingredients, notified, now = new Date()) {
     out.push({ id, name: ing.name, days, key: expiryKey(id, ing) })
   }
   return out.sort((a, b) => a.days - b.days)
+}
+
+export const THAW_SOON_HOURS = 24
+export const THAW_BAD_HOURS = 48
+
+/**
+ * Avisos de descongelado (en nevera): fase 1 a las 24 h, fase 2 a las 48 h (no consumir). Una vez cada uno.
+ * Si ya van 48 h sin haber avisado, solo sale el de fase 2 (la fase 1 se marca como enviada).
+ * Devuelve [{ id, name, hours, stage, key, keys }]; `keys` = claves a marcar como avisadas.
+ */
+export function newlyThawed(ingredients, notified, now = Date.now()) {
+  const out = []
+  for (const [id, ing] of ingredients) {
+    if (!ing.inPantry || ing.frozen || typeof ing.thawedAt !== 'number') continue
+    const hours = Math.floor((now - ing.thawedAt) / 3600000)
+    const k1 = `thaw1|${id}|${ing.thawedAt}`
+    const k2 = `thaw2|${id}|${ing.thawedAt}`
+    if (hours >= THAW_BAD_HOURS && !notified.has(k2)) out.push({ id, name: ing.name, hours, stage: 2, keys: [k1, k2] })
+    else if (hours >= THAW_SOON_HOURS && hours < THAW_BAD_HOURS && !notified.has(k1)) out.push({ id, name: ing.name, hours, stage: 1, keys: [k1] })
+  }
+  return out.sort((a, b) => b.hours - a.hours)
+}
+
+/** `items` de una misma fase. */
+export function thawMessage(items) {
+  const stage = items[0].stage
+  if (stage === 2) {
+    if (items.length === 1) return { title: 'Descongelado', body: `${items[0].name}: mejor no lo uses` }
+    const shown = items.slice(0, 4).map((i) => i.name).join(', ')
+    const rest = items.length > 4 ? ` y ${items.length - 4} más` : ''
+    return { title: 'Descongelados', body: `${shown}${rest}: mejor no los uses` }
+  }
+  if (items.length === 1) {
+    const { name, hours } = items[0]
+    return { title: 'Descongelado', body: `${name} lleva ${hours} h descongelado en la nevera: úsalo hoy` }
+  }
+  const shown = items.slice(0, 4).map((i) => `${i.name} (${i.hours} h)`).join(', ')
+  const rest = items.length > 4 ? ` y ${items.length - 4} más` : ''
+  return { title: 'Descongelados', body: `${items.length} ingredientes llevan más de 24 h descongelados: ${shown}${rest}. Úsalos hoy` }
 }
 
 export function inSendWindow(now = new Date(), from = 8, to = 22) {

@@ -11,6 +11,8 @@ import {
   expiryMessage,
   inSendWindow,
   newlyExpiring,
+  newlyThawed,
+  thawMessage,
   noteMessage,
   noteTag,
   noteRecipients,
@@ -150,7 +152,10 @@ async function checkExpiry() {
   if (ingredients.size === 0) return
   const now = new Date()
   if (notifiedExpiry === null) {
-    notifiedExpiry = new Set(newlyExpiring(ingredients, new Set(), now).map((i) => i.key))
+    notifiedExpiry = new Set([
+      ...newlyExpiring(ingredients, new Set(), now).map((i) => i.key),
+      ...newlyThawed(ingredients, new Set(), now.getTime()).flatMap((i) => i.keys),
+    ])
     writeFileSync(STATE_FILE, JSON.stringify([...notifiedExpiry]))
     log('estado de caducidad inicial:', notifiedExpiry.size, 'ya en aviso (sin enviar)')
     return
@@ -162,6 +167,21 @@ async function checkExpiry() {
   writeFileSync(STATE_FILE, JSON.stringify([...notifiedExpiry]))
   await send('caducidad', expiryMessage(fresh), '/despensa', null)
 }
+
+// Descongelado: revisión cada 10 min y SIN ventana horaria (24 h y 48 h exactas, de día o de noche).
+async function checkThaw() {
+  if (ingredients.size === 0 || notifiedExpiry === null) return
+  const thawed = newlyThawed(ingredients, notifiedExpiry, Date.now())
+  if (thawed.length === 0) return
+  thawed.forEach((t) => t.keys.forEach((k) => notifiedExpiry.add(k)))
+  writeFileSync(STATE_FILE, JSON.stringify([...notifiedExpiry]))
+  for (const stage of [1, 2]) {
+    const items = thawed.filter((t) => t.stage === stage)
+    if (items.length) await send('descongelado', thawMessage(items), '/despensa', null)
+  }
+}
+setTimeout(() => void checkThaw(), 20_000)
+setInterval(() => void checkThaw(), 10 * 60 * 1000)
 setTimeout(() => void checkExpiry(), 15_000)
 setInterval(() => void checkExpiry(), 60 * 60 * 1000)
 

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { getExpiryInfo, localDateString, remainingLabel } from '../../src/lib/expiry'
+import { thawAgo, useSoonLabel, getExpiryInfo, localDateString, remainingLabel } from '../../src/lib/expiry'
 import type { Ingredient } from '../../src/lib/collections'
 
 function ingredient(over: Partial<Ingredient>): Ingredient {
@@ -60,5 +60,37 @@ describe('remainingLabel', () => {
   })
   it('plural en el resto', () => {
     for (const q of ['2 botes', '500 g', '1,5 l', '1-2 latas', '10']) expect(remainingLabel(q)).toBe('Quedan')
+  })
+})
+
+describe('descongelado', () => {
+  const H = 3600000
+  const thawed = (hoursAgo: number, extra = {}) =>
+    ingredient({ thawedAt: Date.now() - hoursAgo * H - 1000, expiryMode: 'sinceStocked', stockedDate: '2026-10-01', ...extra })
+  it('pisa «Comprado hace» y cuenta en horas', () => {
+    expect(getExpiryInfo(thawed(5))).toEqual({ label: 'Descongelado hace 5 h', status: 'thawing' })
+  })
+  it('a las 24 h ámbar y a las 48 h rojo', () => {
+    expect(getExpiryInfo(thawed(24))).toEqual({ label: 'Descongelado hace 1 día', status: 'soon' })
+    expect(getExpiryInfo(thawed(30))?.label).toBe('Descongelado hace 1 día y 6 h')
+    expect(getExpiryInfo(thawed(47))?.status).toBe('soon')
+    expect(getExpiryInfo(thawed(51))).toEqual({ label: 'Descongelado hace 2 días y 3 h', status: 'expired' })
+  })
+  it('prima sobre la fecha de caducidad', () => {
+    expect(getExpiryInfo(thawed(5, { expiryMode: 'date', expiryDate: '2026-10-12' }))?.label).toBe('Descongelado hace 5 h')
+    expect(thawAgo(0)).toBe('ahora')
+  })
+  it('congelado de nuevo no cuenta', () => {
+    expect(getExpiryInfo(thawed(49, { frozen: true }))?.label).toBe('Congelado')
+  })
+})
+
+describe('useSoonLabel', () => {
+  it('cuenta días naturales desde la marca', () => {
+    const now = new Date(2026, 10, 17, 12)
+    expect(useSoonLabel(ingredient({ useSoonAt: new Date(2026, 10, 17, 9).getTime() }), now)).toBe('Marcado hoy')
+    expect(useSoonLabel(ingredient({ useSoonAt: new Date(2026, 10, 16, 23).getTime() }), now)).toBe('Marcado hace 1 día')
+    expect(useSoonLabel(ingredient({ useSoonAt: new Date(2026, 10, 12, 8).getTime() }), now)).toBe('Marcado hace 5 días')
+    expect(useSoonLabel(ingredient({ useSoon: true }), now)).toBe('Marcado')
   })
 })

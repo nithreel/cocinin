@@ -5,6 +5,7 @@ import {
   deleteGroup,
   deleteIngredient,
   setIngredientFrozen,
+  setIngredientUseSoon,
   setIngredientInPantry,
   updateGroup,
   updateIngredient,
@@ -16,7 +17,7 @@ import {
 } from './data'
 import type { ExpiryMode, Group, Ingredient } from '../../lib/collections'
 import { ConfirmDelete } from '../../components/DeleteButton'
-import { SnowflakeIcon } from '../../components/icons'
+import { AlertIcon, SnowflakeIcon } from '../../components/icons'
 import SearchInput from '../../components/SearchInput'
 import Switch from '../../components/Switch'
 import { useToast } from '../../components/Toast'
@@ -28,7 +29,7 @@ import StickyHeader from '../../components/StickyHeader'
 import { cancelButton, dangerTextButton, outlineButton, primaryButton } from '../../components/buttonStyles'
 import { matchesSearch } from '../../lib/search'
 import KebabMenu from '../../components/KebabMenu'
-import { expiryBadgeClasses, getExpiryInfo, remainingLabel } from '../../lib/expiry'
+import { expiryBadgeClasses, getExpiryInfo, hasWarning, remainingLabel, useSoonLabel } from '../../lib/expiry'
 import { NO_GROUP } from '../../lib/groupByPantryGroup'
 
 function ExpiryFields({
@@ -38,6 +39,7 @@ function ExpiryFields({
   onModeChange,
   onDateChange,
   onQuantityChange,
+  trailing,
 }: {
   mode: ExpiryMode
   date: string
@@ -45,34 +47,59 @@ function ExpiryFields({
   onModeChange: (mode: ExpiryMode) => void
   onDateChange: (date: string) => void
   onQuantityChange: (quantity: string) => void
+  /** panel del ingrediente: en dos filas (tipo de fecha | fecha; cantidad | alarmas) con esto a la derecha de la cantidad */
+  trailing?: React.ReactNode
 }) {
+  const dateInput =
+    mode === 'date' || mode === 'sinceStocked' ? (
+      <input
+        type="date"
+        value={date}
+        onChange={(e) => onDateChange(e.target.value)}
+        className="min-w-0 shrink rounded-md border border-gray-300 px-2 py-1 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-moss-700 dark:bg-moss-800 dark:text-gray-100"
+      />
+    ) : null
+  const select = (
+    <select
+      value={mode}
+      onChange={(e) => onModeChange(e.target.value as ExpiryMode)}
+      className="min-w-0 shrink rounded-md border border-gray-300 px-2 py-1 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-moss-700 dark:bg-moss-800 dark:text-gray-100"
+    >
+      <option value="none">Sin fecha</option>
+      <option value="date">Fecha de caducidad</option>
+      <option value="sinceStocked">Fecha de compra</option>
+    </select>
+  )
+  const quantityInput = (
+    <input
+      value={quantity}
+      onChange={(e) => onQuantityChange(e.target.value)}
+      placeholder="Cantidad (ej. 500 g)"
+      maxLength={40}
+      aria-label="Cantidad que tienes"
+      className="w-40 rounded-md border border-gray-300 px-2 py-1 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-moss-700 dark:bg-moss-800 dark:text-gray-100"
+    />
+  )
+  // con `trailing` (panel del ingrediente): fila 1 = tipo de fecha | fecha; fila 2 = cantidad | alarmas
+  if (trailing) {
+    return (
+      <>
+        <div className="flex w-full items-center justify-between gap-2">
+          {select}
+          {dateInput}
+        </div>
+        <div className="flex w-full items-center justify-between gap-2">
+          {quantityInput}
+          <div className="flex items-center gap-1">{trailing}</div>
+        </div>
+      </>
+    )
+  }
   return (
     <>
-      <select
-        value={mode}
-        onChange={(e) => onModeChange(e.target.value as ExpiryMode)}
-        className="rounded-md border border-gray-300 px-2 py-1 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-moss-700 dark:bg-moss-800 dark:text-gray-100"
-      >
-        <option value="none">Sin caducidad</option>
-        <option value="date">Fecha de caducidad</option>
-        <option value="sinceStocked">Fecha de compra</option>
-      </select>
-      {(mode === 'date' || mode === 'sinceStocked') && (
-        <input
-          type="date"
-          value={date}
-          onChange={(e) => onDateChange(e.target.value)}
-          className="rounded-md border border-gray-300 px-2 py-1 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-moss-700 dark:bg-moss-800 dark:text-gray-100"
-        />
-      )}
-      <input
-        value={quantity}
-        onChange={(e) => onQuantityChange(e.target.value)}
-        placeholder="Cantidad (ej. 500 g)"
-        maxLength={40}
-        aria-label="Cantidad que tienes"
-        className="w-40 rounded-md border border-gray-300 px-2 py-1 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-moss-700 dark:bg-moss-800 dark:text-gray-100"
-      />
+      {select}
+      {dateInput}
+      {quantityInput}
     </>
   )
 }
@@ -161,10 +188,19 @@ function IngredientRow({
     }
   }
 
+  async function toggleUseSoon() {
+    setBusy(true)
+    try {
+      await setIngredientUseSoon(ingredient.id, !ingredient.useSoon)
+    } finally {
+      setBusy(false)
+    }
+  }
+
   async function toggleFrozen() {
     setBusy(true)
     try {
-      await setIngredientFrozen(ingredient.id, !ingredient.frozen, ingredient.inPantry)
+      await setIngredientFrozen(ingredient.id, !ingredient.frozen, ingredient.inPantry, !!ingredient.frozen)
     } finally {
       setBusy(false)
     }
@@ -272,6 +308,51 @@ function IngredientRow({
   }
 
   const expiryInfo = getExpiryInfo(ingredient)
+  const soonFlag = !!ingredient.useSoon && ingredient.inPantry && !ingredient.frozen
+  const actionButtons = (
+    <>
+      {ingredient.inPantry && (
+              <button
+                type="button"
+                aria-pressed={!!ingredient.useSoon}
+                aria-label={`${ingredient.name}: ${ingredient.useSoon ? 'marcado para gastar pronto, pulsa para quitarlo' : 'pulsa para marcarlo como «gastar pronto»'}`}
+                title={ingredient.useSoon ? 'Gastar pronto (pulsa para quitar)' : 'Marcar como «gastar pronto»'}
+                onClick={toggleUseSoon}
+                disabled={busy}
+                className={
+                  'relative flex h-8 w-8 items-center justify-center rounded-full transition-colors disabled:opacity-50 max-md:h-10 max-md:w-10 ' +
+                  (ingredient.useSoon
+                    ? 'bg-amber-100 text-amber-600 dark:bg-amber-950 dark:text-amber-400'
+                    : 'text-gray-400 hover:bg-gray-100 hover:text-amber-600 dark:text-gray-500 dark:hover:bg-moss-800 dark:hover:text-amber-400')
+                }
+              >
+                <AlertIcon />
+              </button>
+            )}
+      {(canFreeze || ingredient.frozen) && (
+        <button
+          type="button"
+          aria-pressed={!!ingredient.frozen}
+          aria-label={
+            ingredient.frozen
+              ? `${ingredient.name}: en el congelador, pulsa para descongelar (en nevera)`
+              : `${ingredient.name}: pulsa para marcarlo como congelado`
+          }
+          title={ingredient.frozen ? 'En el congelador: pulsa para descongelar' : 'Marcar como congelado'}
+          onClick={toggleFrozen}
+          disabled={busy}
+          className={
+            'relative flex h-8 w-8 items-center justify-center rounded-full transition-colors disabled:opacity-50 max-md:h-10 max-md:w-10 ' +
+            (ingredient.frozen
+              ? 'bg-frost-100 text-frost-700 dark:bg-frost-950 dark:text-frost-400'
+              : 'text-gray-400 hover:bg-gray-100 hover:text-frost-700 dark:text-gray-500 dark:hover:bg-moss-800 dark:hover:text-frost-400')
+          }
+        >
+          <SnowflakeIcon />
+        </button>
+      )}
+          </>
+  )
 
   return (
     <li
@@ -286,7 +367,13 @@ function IngredientRow({
             checked={ingredient.inPantry}
             onChange={toggle}
             disabled={busy}
-            tone={ingredient.frozen ? 'frost' : 'emerald'}
+            tone={
+              ingredient.frozen
+                ? 'frost'
+                : hasWarning(ingredient)
+                  ? 'amber'
+                  : 'emerald'
+            }
             offTone="red"
             label={
               ingredient.inPantry
@@ -294,28 +381,6 @@ function IngredientRow({
                 : `${ingredient.name}: agotado, pulsa para marcar como disponible`
             }
           />
-          {(canFreeze || ingredient.frozen) && (
-            <button
-              type="button"
-              aria-pressed={!!ingredient.frozen}
-              aria-label={
-                ingredient.frozen
-                  ? `${ingredient.name}: en el congelador, pulsa para sacarlo`
-                  : `${ingredient.name}: pulsa para marcarlo como congelado`
-              }
-              title={ingredient.frozen ? 'En el congelador' : 'Marcar como congelado'}
-              onClick={toggleFrozen}
-              disabled={busy}
-              className={
-                'relative flex h-7 w-7 items-center justify-center rounded-full transition-colors disabled:opacity-50 max-md:after:absolute max-md:after:-inset-2 max-md:after:content-[\'\'] ' +
-                (ingredient.frozen
-                  ? 'bg-frost-100 text-frost-700 dark:bg-frost-950 dark:text-frost-400'
-                  : 'text-gray-400 hover:bg-gray-100 hover:text-frost-700 dark:text-gray-500 dark:hover:bg-moss-800 dark:hover:text-frost-400')
-              }
-            >
-              <SnowflakeIcon />
-            </button>
-          )}
         <div
           role="button"
           tabIndex={0}
@@ -332,13 +397,15 @@ function IngredientRow({
           <span className={ingredient.inPantry ? 'text-gray-900 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400'}>
             {ingredient.name}
           </span>
-          {(expiryInfo || ingredient.quantity) && (
+          {(expiryInfo || ingredient.quantity || soonFlag) && (
             <span className="text-xs">
               {ingredient.quantity && (
                 <span className="text-gray-500 dark:text-gray-400">{remainingLabel(ingredient.quantity)} {ingredient.quantity}</span>
               )}
               {expiryInfo && ingredient.quantity && <span className="text-gray-400"> · </span>}
               {expiryInfo && <span className={expiryBadgeClasses(expiryInfo.status)}>{expiryInfo.label}</span>}
+              {soonFlag && (ingredient.quantity || expiryInfo) && <span className="text-gray-400"> · </span>}
+              {soonFlag && <span className="whitespace-nowrap font-medium text-amber-600 dark:text-amber-400">⚠ {useSoonLabel(ingredient)}</span>}
             </span>
           )}
         </div>
@@ -349,9 +416,21 @@ function IngredientRow({
           onSubmit={handleSaveDates}
           className="mt-2 flex flex-col gap-2 border-t border-gray-100 pt-2 dark:border-moss-800"
         >
-          {ingredient.inPantry && !confirmingDelete && (
+          {!confirmingDelete && (
             <div className="flex flex-wrap items-center gap-2">
-              <ExpiryFields mode={expiryMode} date={expiryDate} onModeChange={setExpiryMode} onDateChange={setExpiryDate} quantity={quantity} onQuantityChange={setQuantity} />
+              {ingredient.inPantry ? (
+                <ExpiryFields
+                  mode={expiryMode}
+                  date={expiryDate}
+                  onModeChange={setExpiryMode}
+                  onDateChange={setExpiryDate}
+                  quantity={quantity}
+                  onQuantityChange={setQuantity}
+                  trailing={actionButtons}
+                />
+              ) : (
+                <div className="ml-auto flex items-center gap-1">{actionButtons}</div>
+              )}
             </div>
           )}
 
@@ -552,6 +631,11 @@ function GroupHeader({
   isCollapsed: boolean
   onToggleCollapsed: () => void
 }) {
+  const warnCount = section.items.filter(hasWarning).length
+  // descongelando todavía sin aviso (<24 h): los que ya pasaron de 24 h cuentan en el ámbar
+  const thawCount = section.items.filter(
+    (i) => i.inPantry && !i.frozen && typeof i.thawedAt === 'number' && !hasWarning(i),
+  ).length
   const [editing, setEditing] = useState(false)
   const [confirmingDelete, setConfirmingDelete] = useState(false)
   const [deleting, setDeleting] = useState(false)
@@ -625,6 +709,24 @@ function GroupHeader({
         <span className="shrink-0 font-normal normal-case text-gray-500 dark:text-gray-400">
           ({section.items.length})
         </span>
+        {thawCount > 0 && (
+          <span
+            title={`${thawCount} descongelando`}
+            aria-label={`${thawCount} ingrediente${thawCount === 1 ? '' : 's'} descongelando`}
+            className="flex shrink-0 items-center gap-1 rounded-full bg-frost-100 px-2 text-xs font-semibold normal-case text-frost-700 dark:bg-frost-950 dark:text-frost-400"
+          >
+            <SnowflakeIcon className="h-3 w-3" /> {thawCount}
+          </span>
+        )}
+        {warnCount > 0 && (
+          <span
+            title={`${warnCount} con aviso`}
+            aria-label={`${warnCount} ingrediente${warnCount === 1 ? '' : 's'} con aviso`}
+            className="shrink-0 rounded-full bg-amber-100 px-2 text-xs font-semibold normal-case text-amber-700 dark:bg-amber-950 dark:text-amber-400"
+          >
+            ⚠ {warnCount}
+          </span>
+        )}
       </button>
       {section.deletable &&
         (confirmingDelete ? (

@@ -1,6 +1,5 @@
 import { addDoc, doc, getDocs, query, updateDoc, where, writeBatch } from 'firebase/firestore'
 import { currentUid, db } from '../../firebase'
-import { localDateString } from '../../lib/expiry'
 import { groupsCol, ingredientsCol, shoppingListCol, type ExpiryMode } from '../../lib/collections'
 
 export { useGroups, useIngredients, useRecipes } from '../../lib/AppDataContext'
@@ -29,7 +28,7 @@ export async function addIngredient(name: string, groupId: string | null, expiry
     createdAt: Date.now(),
     expiryMode: expiry.mode,
     expiryDate: expiry.mode === 'date' ? expiry.date : null,
-    stockedDate: expiry.mode === 'sinceStocked' && expiry.date ? expiry.date : localDateString(),
+    stockedDate: expiry.mode === 'sinceStocked' && expiry.date ? expiry.date : null,
     quantity: expiry.quantity.trim() || null,
   })
   return ref.id
@@ -60,22 +59,35 @@ export async function updateIngredient(
   })
 }
 
+/** Al reponer o congelar algo agotado a mano nace sin fecha: «Comprado hace…» solo lo pone la lista de la compra. */
+const NO_DATES = { expiryMode: 'none', expiryDate: null, stockedDate: null, thawedAt: null, useSoon: false, useSoonAt: null } as const
+
 export async function setIngredientInPantry(id: string, inPantry: boolean) {
   await updateDoc(
     doc(ingredientsCol, id),
     // al agotarse deja de estar congelado
     inPantry
-      ? { inPantry, stockedDate: localDateString() }
-      : { inPantry, frozen: false, quantity: null, by: currentUid() },
+      ? { inPantry, ...NO_DATES }
+      : { inPantry, frozen: false, thawedAt: null, useSoon: false, useSoonAt: null, quantity: null, by: currentUid() },
   )
 }
 
-/** Marca o desmarca un ingrediente como congelado. Congelar implica que lo tienes (ON). */
-export async function setIngredientFrozen(id: string, frozen: boolean, wasInPantry: boolean) {
+/**
+ * Marca o desmarca un ingrediente como congelado. Congelar implica que lo tienes (ON).
+ * Sacarlo del congelador (`wasFrozen`) arranca la cuenta de descongelado (en nevera); volver a congelar la borra.
+ */
+export async function setIngredientFrozen(id: string, frozen: boolean, wasInPantry: boolean, wasFrozen = false) {
   await updateDoc(
     doc(ingredientsCol, id),
-    frozen && !wasInPantry ? { frozen, inPantry: true, stockedDate: localDateString() } : { frozen },
+    frozen
+      ? { frozen, thawedAt: null, ...(wasInPantry ? {} : { inPantry: true, ...NO_DATES }) }
+      : { frozen, thawedAt: wasFrozen ? Date.now() : null },
   )
+}
+
+/** «Gastar pronto»: marca manual que pinta el interruptor en ámbar. */
+export async function setIngredientUseSoon(id: string, useSoon: boolean) {
+  await updateDoc(doc(ingredientsCol, id), { useSoon, useSoonAt: useSoon ? Date.now() : null })
 }
 
 export async function deleteIngredient(id: string) {

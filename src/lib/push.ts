@@ -10,6 +10,7 @@ export const DEFAULT_PREFS: PushPrefs = {
   receta: true,
   usuario: true,
   caducidad: true,
+  descongelado: true,
   nota: true,
 }
 

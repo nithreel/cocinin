@@ -18,6 +18,12 @@ export interface Ingredient {
   inPantry: boolean
   /** en el congelador: implica que está disponible (inPantry) */
   frozen?: boolean
+  /** momento (ms) en que se sacó del congelador para descongelar en la nevera; null/ausente = no está descongelando */
+  thawedAt?: number | null
+  /** marcado a mano «gastar pronto» (abierto, a punto de pasarse…) */
+  useSoon?: boolean
+  /** cuándo (ms) se marcó «gastar pronto»; ausente en las marcas anteriores a este campo */
+  useSoonAt?: number | null
   createdAt: number
   expiryMode?: ExpiryMode
   expiryDate?: string | null
@@ -79,6 +85,7 @@ export interface PushPrefs {
   receta: boolean
   usuario: boolean
   caducidad: boolean
+  descongelado: boolean
   nota: boolean
 }
 
