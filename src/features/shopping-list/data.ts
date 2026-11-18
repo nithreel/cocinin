@@ -1,15 +1,44 @@
-import { deleteDoc, doc, getDocs, setDoc, updateDoc, writeBatch } from 'firebase/firestore'
+import { useEffect, useState } from 'react'
+import { deleteDoc, doc, getDocs, limit as fsLimit, onSnapshot, orderBy, query, setDoc, updateDoc, writeBatch } from 'firebase/firestore'
 import { currentUid, db } from '../../firebase'
 import { localDateString } from '../../lib/expiry'
 import {
   ingredientsCol,
   purchaseHistoryCol,
+  type PurchaseHistoryEntry,
   shoppingListCol,
   type Ingredient,
   type ShoppingItem,
 } from '../../lib/collections'
 
-export { useShoppingList, usePurchaseHistory } from '../../lib/AppDataContext'
+export { useShoppingList } from '../../lib/AppDataContext'
+
+/** Si se llegó al límite, la compra más antigua puede venir incompleta: se descarta entera. */
+function wholePurchases(entries: PurchaseHistoryEntry[], limit: number) {
+  if (entries.length < limit) return entries
+  const oldest = entries[entries.length - 1].purchasedAt
+  return entries.filter((e) => e.purchasedAt !== oldest)
+}
+
+/**
+ * Historial de compras: solo se descarga (y se escucha) cuando `enabled` (la sección está desplegada), de `limit` en
+ * `limit` entradas. Escucharlo siempre costaba cientos de lecturas de Firestore cada vez que se abría la app.
+ * `mayHaveMore`: se llegó al límite, así que puede haber compras más antiguas.
+ */
+export function usePurchaseHistory(enabled: boolean, limit: number) {
+  const [state, setState] = useState<{ entries: PurchaseHistoryEntry[]; mayHaveMore: boolean } | null>(null)
+
+  useEffect(() => {
+    if (!enabled) return
+    const q = query(purchaseHistoryCol, orderBy('purchasedAt', 'desc'), fsLimit(limit))
+    return onSnapshot(q, (snap) => {
+      const all = snap.docs.map((d) => ({ id: d.id, ...d.data() }) as PurchaseHistoryEntry)
+      setState({ entries: wholePurchases(all, limit), mayHaveMore: all.length >= limit })
+    })
+  }, [enabled, limit])
+
+  return { entries: state?.entries ?? [], loading: enabled && state === null, mayHaveMore: state?.mayHaveMore ?? false }
+}
 
 /*
  * Las escrituras no esperan la confirmación del servidor: Firestore ya las aplica en la caché local y las sube

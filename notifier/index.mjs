@@ -84,7 +84,7 @@ db.doc('meta/restoring').onSnapshot(
   (snap) => {
     const d = snap.data()
     if (!d) restoring = { active: false, until: 0 }
-    else if (d.endedAt) restoring = { active: false, until: Date.now() + 45_000 }
+    else if (d.endedAt) restoring = { active: false, until: d.endedAt + 45_000 }
     // una marca sin fin con más de 15 min es de una restauración que se cortó: se ignora
     else restoring = { active: Date.now() - (d.startedAt ?? 0) < 15 * 60_000, until: 0 }
     if (quiet()) log('restauración de copia: avisos en pausa')

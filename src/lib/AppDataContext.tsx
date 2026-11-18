@@ -1,17 +1,15 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
-import { limit, onSnapshot, orderBy, query } from 'firebase/firestore'
+import { onSnapshot, orderBy, query } from 'firebase/firestore'
 import {
   groupsCol,
   ingredientsCol,
   notesCol,
-  purchaseHistoryCol,
   recipesCol,
   shoppingListCol,
   tagsCol,
   type Group,
   type Ingredient,
   type Note,
-  type PurchaseHistoryEntry,
   type Recipe,
   type ShoppingItem,
   type Tag,
@@ -29,8 +27,6 @@ interface AppDataValue {
   recipesLoading: boolean
   tags: Tag[]
   tagsLoading: boolean
-  purchaseHistory: PurchaseHistoryEntry[]
-  purchaseHistoryLoading: boolean
   notes: Note[]
   notesLoading: boolean
   /** mensaje si algún listener falla (p. ej. permission-denied); null si todo va bien */
@@ -38,16 +34,6 @@ interface AppDataValue {
 }
 
 const AppDataContext = createContext<AppDataValue | null>(null)
-
-/** Entradas del historial que se cargan (no compras): una compra grande no debe salir cortada. */
-const HISTORY_LIMIT = 300
-
-/** Si se llegó al límite, la compra más antigua puede venir incompleta: se descarta entera. */
-function wholePurchases(entries: PurchaseHistoryEntry[], limit: number) {
-  if (entries.length < limit) return entries
-  const oldest = entries[entries.length - 1].purchasedAt
-  return entries.filter((e) => e.purchasedAt !== oldest)
-}
 
 /** Primero los ordenados a mano (`order`), luego el resto alfabéticamente. */
 function sortGroups(groups: Group[]) {
@@ -65,8 +51,6 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const [recipesLoading, setRecipesLoading] = useState(true)
   const [tags, setTags] = useState<Tag[]>([])
   const [tagsLoading, setTagsLoading] = useState(true)
-  const [purchaseHistory, setPurchaseHistory] = useState<PurchaseHistoryEntry[]>([])
-  const [purchaseHistoryLoading, setPurchaseHistoryLoading] = useState(true)
   const [notes, setNotes] = useState<Note[]>([])
   const [notesLoading, setNotesLoading] = useState(true)
   const [dataError, setDataError] = useState<string | null>(null)
@@ -122,14 +106,6 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   }, [])
 
   useEffect(() => {
-    const q = query(purchaseHistoryCol, orderBy('purchasedAt', 'desc'), limit(HISTORY_LIMIT))
-    return onSnapshot(q, (snap) => {
-      setPurchaseHistory(wholePurchases(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as PurchaseHistoryEntry), HISTORY_LIMIT))
-      setPurchaseHistoryLoading(false)
-    }, handleError(() => setPurchaseHistoryLoading(false)))
-  }, [])
-
-  useEffect(() => {
     const q = query(notesCol, orderBy('createdAt', 'desc'))
     return onSnapshot(q, (snap) => {
       setNotes(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Note))
@@ -159,8 +135,6 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         recipesLoading,
         tags,
         tagsLoading,
-        purchaseHistory,
-        purchaseHistoryLoading,
         notes,
         notesLoading,
         dataError,
@@ -200,11 +174,6 @@ export function useRecipes() {
 export function useTags() {
   const { tags, tagsLoading } = useAppData()
   return { tags, loading: tagsLoading }
-}
-
-export function usePurchaseHistory() {
-  const { purchaseHistory, purchaseHistoryLoading } = useAppData()
-  return { entries: purchaseHistory, loading: purchaseHistoryLoading }
 }
 
 export function useNotes() {

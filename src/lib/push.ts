@@ -98,7 +98,7 @@ export async function disablePush() {
   if (!sub) return
   const ref = doc(pushSubscriptionsCol, await subscriptionId(sub.endpoint))
   await withTimeout(deleteDoc(ref).catch(() => undefined), 3000)
-  await sub.unsubscribe()
+  await withTimeout(sub.unsubscribe(), 3000)
 }
 
 export async function savePrefs(prefs: PushPrefs) {

@@ -93,8 +93,18 @@ export function parseBackup(text: string): ParsedBackup {
  */
 export async function restoreBackup(backup: ParsedBackup, mode: 'merge' | 'replace') {
   // marca para el servicio de avisos: durante la restauración no avisa de cada receta, compra o ingrediente
+  if (!navigator.onLine) throw new Error('sin conexión')
   const marker = doc(db, 'meta', 'restoring')
-  await setDoc(marker, { startedAt: Date.now(), endedAt: null })
+  const started = await Promise.race([
+    setDoc(marker, { startedAt: Date.now(), endedAt: null }).then(() => true),
+    new Promise<boolean>((resolve) => setTimeout(() => resolve(false), 8000)),
+  ])
+  if (!started) {
+    // sin respuesta del servidor: se encola también el cierre de la marca, para que si llega más tarde no deje
+    // los avisos en pausa sin que se haya restaurado nada
+    void setDoc(marker, { startedAt: Date.now(), endedAt: Date.now() }).catch(() => undefined)
+    throw new Error('el servidor no responde')
+  }
   try {
     return await writeRestore(backup, mode)
   } finally {

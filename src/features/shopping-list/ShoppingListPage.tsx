@@ -14,7 +14,7 @@ import { groupByPantryGroup } from '../../lib/groupByPantryGroup'
 import DeleteButton from '../../components/DeleteButton'
 import SearchInput from '../../components/SearchInput'
 import StickyHeader from '../../components/StickyHeader'
-import { primaryButton, rowAddButton, rowIconButton } from '../../components/buttonStyles'
+import { outlineButton, primaryButton, rowAddButton, rowIconButton } from '../../components/buttonStyles'
 import { PlusIcon, XIcon } from '../../components/icons'
 import { useCollapsedSet } from '../../lib/useCollapsedSet'
 import ListSkeleton from '../../components/ListSkeleton'
@@ -29,6 +29,8 @@ function stockBorderClass(i: Ingredient) {
   if (i.frozen) return 'border-l-frost-400'
   return hasWarning(i) ? 'border-l-amber-500' : 'border-l-emerald-500'
 }
+
+const HISTORY_PAGE = 100
 
 function formatRelativeDate(timestamp: number) {
   const diffDays = Math.floor((Date.now() - timestamp) / 86400000)
@@ -64,7 +66,7 @@ function SectionHeader({
   onToggle,
 }: {
   name: string
-  count: number
+  count?: number
   isCollapsed: boolean
   onToggle: () => void
 }) {
@@ -79,7 +81,7 @@ function SectionHeader({
         {isCollapsed ? '▶' : '▼'}
       </span>
       {name}
-      <span className="font-normal normal-case text-gray-500 dark:text-gray-400">({count})</span>
+      {count !== undefined && <span className="font-normal normal-case text-gray-500 dark:text-gray-400">({count})</span>}
     </button>
   )
 }
@@ -88,10 +90,12 @@ export default function ShoppingListPage() {
   const { groups } = useGroups()
   const { ingredients, loading: loadingIngredients } = useIngredients()
   const { items, loading: loadingItems } = useShoppingList()
-  const { entries: historyEntries, loading: loadingHistory } = usePurchaseHistory()
   const toast = useToast()
   const [confirming, setConfirming] = useState(false)
+  // el historial solo se descarga al desplegarlo, de HISTORY_PAGE en HISTORY_PAGE entradas
   const [historyCollapsed, setHistoryCollapsed] = useState(true)
+  const [historyLimit, setHistoryLimit] = useState(HISTORY_PAGE)
+  const { entries: historyEntries, loading: loadingHistory, mayHaveMore } = usePurchaseHistory(!historyCollapsed, historyLimit)
   const cartCollapse = useCollapsedSet('lista-compra')
   const missingCollapse = useCollapsedSet('lista-falta')
   const batchCollapse = useCollapsedSet('lista-lotes')
@@ -320,11 +324,11 @@ export default function ShoppingListPage() {
         <div className="sticky top-[var(--head-h)] z-20 flex items-center justify-between gap-2 bg-white pb-1 pt-1 dark:bg-moss-950">
           <SectionHeader
             name="Historial de compras"
-            count={purchaseBatches.length}
+            count={historyCollapsed ? undefined : purchaseBatches.length}
             isCollapsed={historyCollapsed}
             onToggle={() => setHistoryCollapsed((v) => !v)}
           />
-          {historyEntries.length > 0 && (
+          {!historyCollapsed && historyEntries.length > 0 && (
             <DeleteButton onConfirm={clearPurchaseHistory} label="Borrar historial" confirmLabel="Sí, borrar" />
           )}
         </div>
@@ -332,6 +336,7 @@ export default function ShoppingListPage() {
           (!loadingHistory && purchaseBatches.length === 0 ? (
             <p className="text-gray-500 dark:text-gray-400">Aún no hay compras confirmadas.</p>
           ) : (
+            <>
             <div className="space-y-3">
               {purchaseBatches.map((batch) => {
                 const batchKey = String(batch.key)
@@ -370,6 +375,12 @@ export default function ShoppingListPage() {
                 )
               })}
             </div>
+            {mayHaveMore && (
+              <button type="button" onClick={() => setHistoryLimit((n) => n + HISTORY_PAGE)} className={outlineButton + ' mt-3'}>
+                Cargar compras anteriores
+              </button>
+            )}
+            </>
           ))}
       </div>
     </div>

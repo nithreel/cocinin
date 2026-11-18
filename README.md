@@ -173,6 +173,8 @@ npm run actualizar
 
 (equivale a `git pull`, `npm install` y `npm run deploy`).
 
+**Si usas los avisos en el móvil, reinstala también el servicio de avisos** (`npm run actualizar` no lo toca): `cd notifier && ./instalar.sh [usuario@host]`. Sin ese paso, la app nueva convive con el servicio viejo: el aviso de prueba dirá que no responde, restaurar una copia avisará de cada cosa y los usuarios sin acceso seguirán recibiendo avisos.
+
 Tu `.env` y `.firebaserc` no se tocan, así que sigues con tu proyecto y tus datos. La app instalada puede enseñar la versión anterior hasta que la cierres y abras una o dos veces (en el navegador, `Ctrl+Shift+R`). Si `git pull` se queja de cambios locales, guárdalos con `git stash`, haz el `pull` y recupéralos con `git stash pop`.
 
 - **Aviso de versión nueva**: el admin ve un aviso en la app cuando hay una release más reciente en GitHub que la instalada (una consulta al día a la API pública de GitHub). Para no consultar: `VITE_DISABLE_UPDATE_CHECK=true` en `.env`; para otro repositorio: `VITE_UPDATE_REPO=usuario/repo`.
