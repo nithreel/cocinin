@@ -1,7 +1,10 @@
-import { deleteDoc, doc, getDoc, setDoc, updateDoc } from 'firebase/firestore'
-import { pushSubscriptionsCol, type PushPrefs } from './collections'
+import { deleteDoc, doc, getDoc, onSnapshot, setDoc, updateDoc } from 'firebase/firestore'
+import { pushSubscriptionsCol, pushTestsCol, type PushPrefs } from './collections'
 
 const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY as string | undefined
+
+/** ¿Esta instalación tiene clave VAPID (servicio de avisos configurado)? Sin ella los avisos nunca llegarían. */
+export const isPushConfigured = !!VAPID_PUBLIC_KEY
 
 export const DEFAULT_PREFS: PushPrefs = {
   gastado: true,
@@ -90,6 +93,35 @@ export async function savePrefs(prefs: PushPrefs) {
   const sub = await currentSubscription()
   if (!sub) return
   await updateDoc(doc(pushSubscriptionsCol, await subscriptionId(sub.endpoint)), { prefs })
+}
+
+/**
+ * Aviso de prueba REAL: pide al servicio de avisos (la Raspberry) que envíe una notificación a este dispositivo,
+ * así se comprueba toda la cadena. 'ok' = el servidor la envió; 'no-device' = no encontró este dispositivo;
+ * 'timeout' = el servicio no responde (apagado o sin red).
+ */
+export async function requestServerTest(uid: string): Promise<'ok' | 'no-device' | 'timeout'> {
+  const sub = await currentSubscription()
+  if (!sub) return 'no-device'
+  const ref = doc(pushTestsCol)
+  return new Promise((resolve) => {
+    const finish = (result: 'ok' | 'no-device' | 'timeout') => {
+      clearTimeout(timer)
+      unsubscribe()
+      void deleteDoc(ref).catch(() => undefined)
+      resolve(result)
+    }
+    const timer = setTimeout(() => finish('timeout'), 15_000)
+    const unsubscribe = onSnapshot(
+      ref,
+      (snap) => {
+        const status = snap.data()?.status
+        if (status) finish(status === 'sent' ? 'ok' : 'no-device')
+      },
+      () => finish('timeout'),
+    )
+    setDoc(ref, { uid, endpoint: sub.endpoint, createdAt: Date.now() }).catch(() => finish('timeout'))
+  })
 }
 
 /** Aviso local, sin pasar por el servidor: solo comprueba permisos y service worker de este dispositivo. */

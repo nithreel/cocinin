@@ -84,11 +84,34 @@ describe('instalación hecha', () => {
     await assertFails(deleteDoc(doc(db, 'users/admin')))
   })
 
-  it('el admin pone alias a cualquiera, pero no cambia roles', async () => {
+  it('el admin pone alias a cualquiera, pero no mezcla alias y rol', async () => {
     const db = env.authenticatedContext('admin').firestore()
     await assertSucceeds(updateDoc(doc(db, 'users/member'), { alias: 'Ángela' }))
     await assertSucceeds(updateDoc(doc(db, 'users/admin'), { alias: 'Dani' }))
     await assertFails(updateDoc(doc(db, 'users/member'), { alias: 'X', role: 'admin' }))
+  })
+
+  it('el admin puede nombrar admin a un miembro (relevo), pero un miembro no', async () => {
+    const member = env.authenticatedContext('member').firestore()
+    await assertFails(updateDoc(doc(member, 'users/member'), { role: 'admin' }))
+    const admin = env.authenticatedContext('admin').firestore()
+    await assertSucceeds(updateDoc(doc(admin, 'users/member'), { role: 'admin' }))
+  })
+
+  it('nadie baja de rango a un admin', async () => {
+    const admin = env.authenticatedContext('admin').firestore()
+    await assertFails(updateDoc(doc(admin, 'users/admin'), { role: 'member' }))
+  })
+
+  it('pushTests: cada miembro pide y ve solo los suyos', async () => {
+    const member = env.authenticatedContext('member').firestore()
+    await assertSucceeds(setDoc(doc(member, 'pushTests/t1'), { uid: 'member', endpoint: 'e', createdAt: 1 }))
+    await assertFails(setDoc(doc(member, 'pushTests/t2'), { uid: 'admin', endpoint: 'e', createdAt: 1 }))
+    await assertSucceeds(getDoc(doc(member, 'pushTests/t1')))
+    // escuchar un documento que aún no existe (así lo hace la app justo antes de crearlo)
+    await assertSucceeds(getDoc(doc(member, 'pushTests/aun-no-existe')))
+    const admin = env.authenticatedContext('admin').firestore()
+    await assertFails(getDoc(doc(admin, 'pushTests/t1')))
   })
 
   it('el admin crea miembros, pero no otro admin', async () => {

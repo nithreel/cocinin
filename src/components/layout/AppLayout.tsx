@@ -126,16 +126,14 @@ function LogoutButton({ up }: { up: boolean }) {
   )
 }
 
-/** Iconos de la barra: Usuarios (solo admin), copia, avisos y cerrar sesión. */
+/** Iconos de la barra: Usuarios (el admin los gestiona; el resto solo cambia su contraseña), copia, avisos y cerrar sesión. */
 function TopIcons({ up = false }: { up?: boolean }) {
   const { isAdmin } = useAuth()
   return (
     <>
-      {isAdmin && (
-        <TopLink to="/usuarios" label="Usuarios">
-          <UsersIcon />
-        </TopLink>
-      )}
+      <TopLink to="/usuarios" label="Usuarios">
+        <UsersIcon />
+      </TopLink>
       <BackupIcon withUsers={isAdmin} />
       <TopLink to="/avisos" label="Avisos">
         <BellIcon />
@@ -158,9 +156,30 @@ export default function AppLayout() {
   const { user } = useAuth()
   const dataError = useDataError()
 
+  // Con el teclado del móvil abierto, la app mide solo lo que se ve (no lo que tapa el teclado):
+  // así la lista se encoge y los resultados quedan por encima del teclado, en tiempo real.
+  useEffect(() => {
+    const vv = window.visualViewport
+    if (!vv) return
+    const root = document.documentElement
+    const apply = () => {
+      root.style.setProperty('--app-h', `${vv.height}px`)
+      // iOS desplaza la página al abrir el teclado; la app ocupa justo la parte visible
+      if (vv.offsetTop > 0) window.scrollTo(0, 0)
+    }
+    apply()
+    vv.addEventListener('resize', apply)
+    vv.addEventListener('scroll', apply)
+    return () => {
+      vv.removeEventListener('resize', apply)
+      vv.removeEventListener('scroll', apply)
+      root.style.removeProperty('--app-h')
+    }
+  }, [])
+
   return (
     <ToastProvider>
-    <div className="flex h-dvh flex-col md:flex-row">
+    <div className="flex h-[var(--app-h,100dvh)] flex-col md:flex-row">
       <nav className="hidden shrink-0 border-r border-gray-200 bg-white p-3 md:flex md:w-56 md:flex-col md:gap-1 dark:border-moss-800 dark:bg-moss-900">
         <div className="px-2 py-1">
           <Brand size="h-10 w-10" />
@@ -191,7 +210,6 @@ export default function AppLayout() {
       </header>
 
       <ErrorToast />
-      <UpdatePrompt />
 
       <main className="flex-1 overflow-y-auto p-4 md:p-8">
         {dataError && (
@@ -200,6 +218,7 @@ export default function AppLayout() {
           </p>
         )}
         <div className="mx-auto w-full max-w-3xl">
+          <UpdatePrompt />
           <ReleaseNotice />
           <Outlet />
         </div>

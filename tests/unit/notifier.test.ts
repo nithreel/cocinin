@@ -9,6 +9,7 @@ import {
   newlyExpiring,
   purchaseMessage,
   recipients,
+  onlyMembers,
   spentMessage,
 } from '../../notifier/lib.mjs'
 
@@ -161,5 +162,23 @@ describe('etiqueta de notas', () => {
   it('cada nota lleva su propia etiqueta para que no se pisen', async () => {
     const { noteTag } = await import('../../notifier/lib.mjs')
     expect(noteTag({ id: 'a' })).not.toBe(noteTag({ id: 'b' }))
+  })
+})
+
+describe('onlyMembers', () => {
+  it('descarta suscripciones de quien ya no tiene acceso', () => {
+    const subs = [{ uid: 'a' }, { uid: 'b' }, { uid: 'c' }]
+    expect(onlyMembers(subs, new Set(['a', 'c']))).toEqual([{ uid: 'a' }, { uid: 'c' }])
+  })
+})
+
+describe('dueNotes: notas hechas', () => {
+  it('no avisa de una nota marcada como hecha', async () => {
+    const { dueNotes } = await import('../../notifier/lib.mjs')
+    const notes = new Map([
+      ['a', { notify: true, sent: false, remindAt: 1, done: true }],
+      ['b', { notify: true, sent: false, remindAt: 1 }],
+    ])
+    expect(dueNotes(notes, 10).map((n: { id: string }) => n.id)).toEqual(['b'])
   })
 })

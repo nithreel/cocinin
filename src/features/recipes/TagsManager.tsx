@@ -1,23 +1,15 @@
-import { useRef, useState, type CSSProperties, type FormEvent, type HTMLAttributes, type KeyboardEvent, type PointerEvent } from 'react'
+import { useState, type CSSProperties, type FormEvent, type HTMLAttributes } from 'react'
 import { cancelButton, outlineButton, primaryButton } from '../../components/buttonStyles'
 import { ConfirmDelete } from '../../components/DeleteButton'
 import { XIcon } from '../../components/icons'
 import type { Recipe, Tag } from '../../lib/collections'
-import { findTag, moveId, sortTags } from '../../lib/tags'
+import { findTag, sortTags } from '../../lib/tags'
+import { useDragReorder } from '../../lib/useDragReorder'
+import DragHandle from '../../components/DragHandle'
 import { addTag, deleteTag, renameTag, reorderTags } from './data'
 
 const inputClass =
   'min-w-0 flex-1 rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-moss-700 dark:bg-moss-800 dark:text-gray-100'
-
-interface DragState {
-  id: string
-  dy: number
-  target: number
-  ids: string[]
-  tops: number[]
-  heights: number[]
-  startY: number
-}
 
 function TagRow({
   tag,
@@ -108,16 +100,7 @@ function TagRow({
       className={'py-2 ' + (dragging ? 'relative z-10 rounded-md bg-emerald-50 shadow-md dark:bg-moss-800' : '')}
     >
       <div className="flex items-center gap-2">
-        <button
-          type="button"
-          aria-label={`Mover «${tag.name}» (arrastra, o usa ↑ ↓)`}
-          {...handle}
-          className="flex h-8 w-6 shrink-0 cursor-grab touch-none items-center justify-center rounded text-gray-400 hover:text-gray-600 active:cursor-grabbing dark:text-gray-500 dark:hover:text-gray-300"
-        >
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" aria-hidden="true">
-            <path d="M2 3.5h10M2 7h10M2 10.5h10" />
-          </svg>
-        </button>
+        <DragHandle label={`Mover «${tag.name}» (arrastra, o usa ↑ ↓)`} handle={handle} />
         <span className="min-w-0 flex-1 truncate text-sm text-gray-900 dark:text-gray-100">
           {tag.name}
           <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">
@@ -193,99 +176,12 @@ export default function TagsManager({
     }
   }
 
-  const sorted = sortTags(tags)
-  // Arrastre: la fila sigue al puntero y las demás se apartan con una transición; al soltar se guarda el orden.
-  const [drag, setDrag] = useState<DragState | null>(null)
-  // orden recién soltado: se mantiene un momento hasta que llega el cambio de Firestore (evita un salto)
-  const [settled, setSettled] = useState<string[] | null>(null)
-  const rows = useRef(new Map<string, HTMLLIElement>())
-
-  async function save(ids: string[]) {
-    try {
-      await reorderTags(ids)
-    } catch (err) {
+  const { shown, draggingId, rowStyle, handleFor, rowRef } = useDragReorder(sortTags(tags), (ids) => {
+    reorderTags(ids).catch((err) => {
       console.error(err)
       setError('No se pudo cambiar el orden.')
-    }
-  }
-
-  function targetFor(sn: DragState, dy: number) {
-    const id = sn.id
-    const from = sn.ids.indexOf(id)
-    const center = sn.tops[from] + sn.heights[from] / 2 + dy
-    let target = from
-    sn.ids.forEach((_, j) => {
-      if (j === from) return
-      const c = sn.tops[j] + sn.heights[j] / 2
-      if (j < from && center < c) target = Math.min(target, j)
-      if (j > from && center > c) target = Math.max(target, j)
     })
-    return target
-  }
-
-  function handleFor(id: string): HTMLAttributes<HTMLButtonElement> {
-    return {
-      onPointerDown: (e: PointerEvent<HTMLButtonElement>) => {
-        e.currentTarget.setPointerCapture(e.pointerId)
-        const ids = sorted.map((t) => t.id)
-        const rects = ids.map((i) => rows.current.get(i)!.getBoundingClientRect())
-        setSettled(null)
-        setDrag({
-          id,
-          dy: 0,
-          target: ids.indexOf(id),
-          ids,
-          tops: rects.map((x) => x.top),
-          heights: rects.map((x) => x.height),
-          startY: e.clientY,
-        })
-      },
-      onPointerMove: (e: PointerEvent<HTMLButtonElement>) => {
-        if (drag?.id !== id) return
-        const dy = e.clientY - drag.startY
-        setDrag({ ...drag, dy, target: targetFor(drag, dy) })
-      },
-      onPointerUp: () => {
-        if (drag?.id === id) {
-          const ids = [...drag.ids]
-          const from = ids.indexOf(id)
-          ids.splice(from, 1)
-          ids.splice(drag.target, 0, id)
-          if (ids.join() !== drag.ids.join()) {
-            setSettled(ids)
-            setTimeout(() => setSettled(null), 800)
-            void save(ids)
-          }
-        }
-        setDrag(null)
-      },
-      onPointerCancel: () => {
-        setDrag(null)
-      },
-      // teclado: con el asa enfocada, ↑ y ↓ mueven la etiqueta
-      onKeyDown: (e: KeyboardEvent<HTMLButtonElement>) => {
-        if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return
-        e.preventDefault()
-        void save(moveId(sorted.map((t) => t.id), id, e.key === 'ArrowUp' ? -1 : 1))
-      },
-    }
-  }
-
-  const byId = new Map(tags.map((t) => [t.id, t]))
-  const shown = settled && !drag ? settled.map((i) => byId.get(i)).filter((t): t is Tag => !!t) : sorted
-
-  /** Desplazamiento de cada fila mientras se arrastra: la arrastrada sigue al puntero; las demás se apartan. */
-  function rowStyle(id: string): CSSProperties | undefined {
-    if (!drag) return undefined
-    if (id === drag.id) return { transform: `translateY(${drag.dy}px)`, transition: 'none' }
-    const from = drag.ids.indexOf(drag.id)
-    const j = drag.ids.indexOf(id)
-    const h = drag.heights[from] + 1
-    let shift = 0
-    if (drag.target > from && j > from && j <= drag.target) shift = -h
-    if (drag.target < from && j >= drag.target && j < from) shift = h
-    return { transform: `translateY(${shift}px)`, transition: 'transform 150ms ease' }
-  }
+  })
 
   const usesOf = (id: string) => recipes.filter((r) => r.tagIds?.includes(id)).length
 
@@ -320,12 +216,9 @@ export default function TagsManager({
               tag={t}
               tags={tags}
               uses={usesOf(t.id)}
-              dragging={drag?.id === t.id}
+              dragging={draggingId === t.id}
               style={rowStyle(t.id)}
-              rowRef={(el) => {
-                if (el) rows.current.set(t.id, el)
-                else rows.current.delete(t.id)
-              }}
+              rowRef={rowRef(t.id)}
               handle={handleFor(t.id)}
             />
           ))}

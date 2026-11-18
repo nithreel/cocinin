@@ -16,6 +16,7 @@ import {
 import { clearIndexedDbPersistence, doc, getDoc, onSnapshot, terminate, writeBatch } from 'firebase/firestore'
 import { auth, db } from '../firebase'
 import { setupDoc, usersCol } from '../lib/collections'
+import { disablePush } from '../lib/push'
 
 interface AuthContextValue {
   user: User | null
@@ -109,6 +110,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function signOut() {
+    // los avisos son del dispositivo: se desactivan para que no sigan llegando ni bloqueen al siguiente usuario
+    await disablePush().catch(() => undefined)
     await firebaseSignOut(auth)
     // En un dispositivo compartido no deben quedar datos de la cocina en la caché local.
     try {

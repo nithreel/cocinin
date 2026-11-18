@@ -1,12 +1,13 @@
-import { useEffect } from 'react'
 import { useRegisterSW } from 'virtual:pwa-register/react'
-import { useToast } from './Toast'
+import { primaryButton } from './buttonStyles'
 
 const CHECK_EVERY_MS = 60 * 60 * 1000
 
-/** Avisa cuando hay una versión nueva de CocinIN y deja actualizar con un toque (recarga la app). */
+/**
+ * Aviso de versión nueva de CocinIN: un banner propio (no el aviso flotante, que se pisa con otros avisos como
+ * «Leche agotado»). Se queda arriba hasta que se actualiza; actualizar recarga la app.
+ */
 export default function UpdatePrompt() {
-  const show = useToast()
   const {
     needRefresh: [needRefresh],
     updateServiceWorker,
@@ -17,16 +18,16 @@ export default function UpdatePrompt() {
     },
   })
 
-  useEffect(() => {
-    if (needRefresh) {
-      show({
-        message: 'Hay una versión nueva de CocinIN',
-        actionLabel: 'Actualizar',
-        onAction: () => void updateServiceWorker(true),
-        duration: 0,
-      })
-    }
-  }, [needRefresh, show, updateServiceWorker])
-
-  return null
+  if (!needRefresh) return null
+  return (
+    <div
+      role="status"
+      className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-md bg-emerald-50 px-3 py-2 text-sm text-emerald-900 dark:bg-emerald-950 dark:text-emerald-100"
+    >
+      <span>Hay una versión nueva de CocinIN.</span>
+      <button type="button" onClick={() => void updateServiceWorker(true)} className={primaryButton}>
+        Actualizar
+      </button>
+    </div>
+  )
 }

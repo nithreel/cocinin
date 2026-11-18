@@ -19,7 +19,16 @@ import { PlusIcon, XIcon } from '../../components/icons'
 import { useCollapsedSet } from '../../lib/useCollapsedSet'
 import ListSkeleton from '../../components/ListSkeleton'
 import { useToast } from '../../components/Toast'
-import { matchesSearch } from '../../lib/search'
+import { matchesSearch, normalizeText } from '../../lib/search'
+import { hasWarning } from '../../lib/expiry'
+import { addIngredient } from '../pantry/data'
+
+/** Color del borde izquierdo = estado del interruptor de la Despensa (como en las recetas). */
+function stockBorderClass(i: Ingredient) {
+  if (!i.inPantry) return 'border-l-red-400'
+  if (i.frozen) return 'border-l-frost-400'
+  return hasWarning(i) ? 'border-l-amber-500' : 'border-l-emerald-500'
+}
 
 function formatRelativeDate(timestamp: number) {
   const diffDays = Math.floor((Date.now() - timestamp) / 86400000)
@@ -99,14 +108,39 @@ export default function ShoppingListPage() {
 
   const hasChecked = items.some((i) => i.checked)
 
+  // Sin búsqueda: lo agotado que no está en la lista. Con búsqueda: cualquier ingrediente (también los que tienes).
   const missingAll = useMemo(
     () => ingredients.filter((i) => !i.inPantry && !shoppingIngredientIds.has(i.id)),
     [ingredients, shoppingIngredientIds],
   )
 
   const missing = useMemo(() => {
-    return missingSearch.trim() ? missingAll.filter((i) => matchesSearch(i.name, missingSearch)) : missingAll
-  }, [missingAll, missingSearch])
+    const term = missingSearch.trim()
+    if (!term) return missingAll
+    return ingredients.filter((i) => !shoppingIngredientIds.has(i.id) && matchesSearch(i.name, term))
+  }, [ingredients, missingAll, missingSearch, shoppingIngredientIds])
+
+  // si lo escrito no existe, se ofrece crearlo (agotado, sin grupo) y añadirlo a la lista de una vez
+  const searchTerm = missingSearch.trim()
+  const canCreate = !!searchTerm && !ingredients.some((i) => normalizeText(i.name).trim() === normalizeText(searchTerm))
+
+  function addIngredientToList(ingredient: Ingredient) {
+    // tras añadir, la búsqueda se reinicia y vuelve a verse todo lo que falta
+    setMissingSearch('')
+    const id = addToShoppingList(ingredient.id)
+    toast({
+      message: `${ingredient.name} añadido a la lista`,
+      actionLabel: 'Deshacer',
+      onAction: () => void removeFromShoppingList(id),
+    })
+  }
+
+  function createAndAdd() {
+    const id = addIngredient(searchTerm, null, { mode: 'none', date: null, quantity: '' }, false)
+    setMissingSearch('')
+    const itemId = addToShoppingList(id)
+    toast({ message: `${searchTerm} añadido a la lista`, actionLabel: 'Deshacer', onAction: () => void removeFromShoppingList(itemId) })
+  }
 
   const cartSections = useMemo(
     () => groupByPantryGroup(items, (i: ShoppingItem) => i.ingredientId, ingredientsById, groups),
@@ -138,7 +172,7 @@ export default function ShoppingListPage() {
         {loading && <ListSkeleton />}
 
         {!loading && items.length === 0 && (
-          <p className="text-gray-500 dark:text-gray-400">Tu lista está vacía. Añade algo de lo que te falta abajo.</p>
+          <p className="text-gray-500 dark:text-gray-400">Tu lista está vacía. Añade algo desde «Añadir a la lista», abajo.</p>
         )}
 
         {items.length > 0 && (
@@ -214,16 +248,16 @@ export default function ShoppingListPage() {
       {/* El contenedor acaba antes del historial: al llegar a él, «Te falta» y el buscador dejan de estar fijos */}
       <div className="mb-8">
         <div className="sticky top-[var(--head-h)] z-20 bg-white pb-3 dark:bg-moss-950">
-          <h3 className="mb-2 text-lg font-semibold text-gray-900 dark:text-gray-100">Te falta</h3>
-          {missingAll.length > 0 && <SearchInput value={missingSearch} onChange={setMissingSearch} className="" />}
+          <h3 className="mb-2 text-lg font-semibold text-gray-900 dark:text-gray-100">Añadir a la lista</h3>
+          <SearchInput value={missingSearch} onChange={setMissingSearch} placeholder="Buscar o añadir ingrediente…" className="" />
         </div>
 
-        {!loading && missingAll.length === 0 && (
-          <p className="text-gray-500 dark:text-gray-400">No te falta nada por ahora.</p>
+        {!loading && !searchTerm && missingAll.length === 0 && (
+          <p className="text-gray-500 dark:text-gray-400">No te falta nada por ahora. Escribe arriba para añadir algo.</p>
         )}
 
-        {missingAll.length > 0 && missing.length === 0 && (
-          <p className="text-gray-500 dark:text-gray-400">Nada que coincida con «{missingSearch.trim()}».</p>
+        {searchTerm && missing.length === 0 && !canCreate && (
+          <p className="text-gray-500 dark:text-gray-400">«{searchTerm}» ya está en la lista.</p>
         )}
 
         {missing.length > 0 && (
@@ -241,20 +275,16 @@ export default function ShoppingListPage() {
                   {!isCollapsed && (
                     <ul className="divide-y divide-gray-100 rounded-lg border border-gray-200 bg-white dark:divide-moss-800 dark:border-moss-800 dark:bg-moss-900">
                       {section.items.map((ingredient) => (
-                        <li key={ingredient.id} className="flex items-center justify-between gap-3 py-1 pl-4 pr-2">
+                        <li
+                          key={ingredient.id}
+                          className={
+                            'flex items-center justify-between gap-3 border-l-4 py-1 pl-3 pr-2 ' + stockBorderClass(ingredient)
+                          }
+                        >
                           <span className="text-gray-900 dark:text-gray-100">{ingredient.name}</span>
                           <button
                             type="button"
-                            onClick={async () => {
-                              // tras añadir, la búsqueda se reinicia y vuelve a verse todo lo que falta
-                              setMissingSearch('')
-                              const id = await addToShoppingList(ingredient.id)
-                              toast({
-                                message: `${ingredient.name} añadido a la lista`,
-                                actionLabel: 'Deshacer',
-                                onAction: () => void removeFromShoppingList(id),
-                              })
-                            }}
+                            onClick={() => addIngredientToList(ingredient)}
                             aria-label={`Añadir ${ingredient.name} a la lista`}
                             title="Añadir a la lista"
                             className={rowAddButton}
@@ -269,6 +299,19 @@ export default function ShoppingListPage() {
               )
             })}
           </div>
+        )}
+
+        {canCreate && (
+          <ul className="mt-4 divide-y divide-gray-100 rounded-lg border border-gray-200 bg-white dark:divide-moss-800 dark:border-moss-800 dark:bg-moss-900">
+            <li className="flex items-center justify-between gap-3 border-l-4 border-l-red-400 py-1 pl-3 pr-2">
+              <span className="text-gray-900 dark:text-gray-100">
+                Crear «{searchTerm}» <span className="text-xs text-gray-500 dark:text-gray-400">(nuevo, agotado)</span>
+              </span>
+              <button type="button" onClick={createAndAdd} aria-label={`Crear ${searchTerm} y añadirlo a la lista`} title="Crear y añadir a la lista" className={rowAddButton}>
+                <PlusIcon />
+              </button>
+            </li>
+          </ul>
         )}
       </div>
 

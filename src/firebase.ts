@@ -28,6 +28,8 @@ export const isFirebaseConfigured = Boolean(firebaseConfig.apiKey && firebaseCon
 const app = initializeApp(firebaseConfig)
 
 export const auth = getAuth(app)
+// correos de Firebase (recuperar contraseña) en español
+auth.languageCode = 'es'
 /** Quién hace la escritura: los avisos push no se mandan a quien provoca el cambio. */
 export const currentUid = () => auth.currentUser?.uid ?? null
 // Caché local persistente: la app abre al instante y sigue mostrando datos sin cobertura

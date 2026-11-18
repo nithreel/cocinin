@@ -52,6 +52,7 @@ export default function RecipeForm({
   })
   const [tagIds, setTagIds] = useState<string[]>(initial?.tagIds ?? [])
   const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   // al editar una receta con ingredientes solo se ven los suyos (cantidades y unidades a mano); «Todos» permite añadir más
   const [view, setView] = useState<'recipe' | 'all'>(Object.keys(selected).length > 0 ? 'recipe' : 'all')
@@ -110,7 +111,9 @@ export default function RecipeForm({
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
-    if (!title.trim() || Object.keys(selected).length === 0) return
+    setError(null)
+    if (!title.trim()) return
+    if (Object.keys(selected).length === 0) return setError('Marca al menos un ingrediente de la receta.')
     setSubmitting(true)
     try {
       const recipeIngredients: RecipeIngredient[] = Object.entries(selected).map(
@@ -290,6 +293,7 @@ export default function RecipeForm({
         <button type="button" onClick={onDone} className={cancelButton}>
           Cancelar
         </button>
+        {error && <p role="alert" className="self-center text-sm text-red-600 dark:text-red-400">{error}</p>}
       </div>
     </form>
   )

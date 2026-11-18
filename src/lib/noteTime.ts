@@ -14,9 +14,22 @@ export function joinDateTime(date: string, time: string) {
   return new Date(`${date}T${time}:00`).getTime()
 }
 
-/** Hora actual, para proponer el recordatorio al crear una nota. */
+/** Próxima hora en punto, para proponer el recordatorio al crear una nota. */
 export function defaultRemindAt(now = Date.now()) {
-  return now
+  const d = new Date(now)
+  d.setMinutes(0, 0, 0)
+  return d.getTime() + 3_600_000
+}
+
+/** ¿Cambia el aviso (activación, hora o destinatarios)? Solo entonces hay que rearmarlo. */
+export function reminderChanged(
+  before: { notify: boolean; remindAt: number | null; recipients: string[] },
+  after: { notify: boolean; remindAt: number | null; recipients: string[] },
+) {
+  if (before.notify !== after.notify || before.remindAt !== after.remindAt) return true
+  const a = [...before.recipients].sort().join()
+  const b = [...after.recipients].sort().join()
+  return a !== b
 }
 
 /** «17:30 · martes 12 nov» */

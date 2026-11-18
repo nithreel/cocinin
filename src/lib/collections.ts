@@ -7,6 +7,8 @@ export interface Group {
   createdAt: number
   /** grupo de comida: sus ingredientes salen en las recetas y se pueden congelar (por defecto sí) */
   isFood?: boolean
+  /** posición elegida a mano (como las etiquetas); sin ella, alfabético */
+  order?: number
 }
 
 export type ExpiryMode = 'none' | 'date' | 'sinceStocked'
@@ -111,6 +113,8 @@ export interface Note {
   recipients: string[]
   /** lo marca el servicio de avisos cuando ya lo ha enviado */
   sent?: boolean
+  /** marcada como hecha: sin aviso pendiente y al final de la lista */
+  done?: boolean
 }
 
 export type Role = 'admin' | 'member'
@@ -131,6 +135,8 @@ export const recipesCol = collection(db, 'recipes')
 export const tagsCol = collection(db, 'tags')
 export const purchaseHistoryCol = collection(db, 'purchaseHistory')
 export const pushSubscriptionsCol = collection(db, 'pushSubscriptions')
+/** Petición de aviso de prueba real: el servicio de avisos la atiende y anota el resultado en `status`. */
+export const pushTestsCol = collection(db, 'pushTests')
 export const notesCol = collection(db, 'notes')
 export const usersCol = collection(db, 'users')
 export const setupDoc = doc(db, 'meta', 'setup')

@@ -17,17 +17,18 @@ import {
 } from './data'
 import type { ExpiryMode, Group, Ingredient } from '../../lib/collections'
 import { ConfirmDelete } from '../../components/DeleteButton'
-import { AlertIcon, SnowflakeIcon } from '../../components/icons'
+import GroupsOrder from './GroupsOrder'
+import { AlertIcon, CartIcon, SnowflakeIcon, SortIcon } from '../../components/icons'
 import SearchInput from '../../components/SearchInput'
 import Switch from '../../components/Switch'
 import { useToast } from '../../components/Toast'
 import ListSkeleton from '../../components/ListSkeleton'
-import { addToShoppingList, useShoppingList } from '../shopping-list/data'
+import { addToShoppingList, removeFromShoppingList, useShoppingList } from '../shopping-list/data'
 import { scrollMainToTop } from '../../lib/scroll'
 import { useCollapsedSet } from '../../lib/useCollapsedSet'
 import StickyHeader from '../../components/StickyHeader'
-import { cancelButton, dangerTextButton, outlineButton, primaryButton } from '../../components/buttonStyles'
-import { matchesSearch } from '../../lib/search'
+import { cancelButton, dangerTextButton, outlineButton, primaryButton, rowIconButton } from '../../components/buttonStyles'
+import { matchesSearch, normalizeText } from '../../lib/search'
 import KebabMenu from '../../components/KebabMenu'
 import { expiryBadgeClasses, getExpiryInfo, hasWarning, remainingLabel, soonMarkLabel } from '../../lib/expiry'
 import { NO_GROUP } from '../../lib/groupByPantryGroup'
@@ -120,7 +121,8 @@ function IngredientRow({
   usedIn: string[]
 }) {
   const toast = useToast()
-  const onList = useShoppingList().items.some((i) => i.ingredientId === ingredient.id)
+  const listItem = useShoppingList().items.find((i) => i.ingredientId === ingredient.id)
+  const onList = !!listItem
   const [busy, setBusy] = useState(false)
   const [panelOpen, setPanelOpen] = useState(false)
   const rowRef = useRef<HTMLLIElement>(null)
@@ -221,6 +223,16 @@ function IngredientRow({
     } finally {
       setBusy(false)
     }
+  }
+
+  /** Carrito: para comprar algo que aún queda («queda poca leche») sin marcarlo como agotado; pulsar de nuevo lo quita. */
+  function toggleOnList() {
+    if (listItem) {
+      removeFromShoppingList(listItem.id)
+      return
+    }
+    const id = addToShoppingList(ingredient.id)
+    toast({ message: `${ingredient.name} añadido a la lista`, actionLabel: 'Deshacer', onAction: () => void removeFromShoppingList(id) })
   }
 
   async function handleDelete() {
@@ -329,6 +341,21 @@ function IngredientRow({
                 <AlertIcon />
               </button>
             )}
+      <button
+        type="button"
+        aria-pressed={onList}
+        aria-label={`${ingredient.name}: ${onList ? 'está en la lista de la compra, pulsa para quitarlo' : 'pulsa para añadirlo a la lista de la compra'}`}
+        title={onList ? 'En la lista (pulsa para quitar)' : 'Añadir a la lista de la compra'}
+        onClick={toggleOnList}
+        className={
+          'relative flex h-8 w-8 items-center justify-center rounded-full transition-colors max-md:h-10 max-md:w-10 ' +
+          (onList
+            ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400'
+            : 'text-gray-400 hover:bg-gray-100 hover:text-emerald-700 dark:text-gray-500 dark:hover:bg-moss-800 dark:hover:text-emerald-400')
+        }
+      >
+        <CartIcon />
+      </button>
       {(canFreeze || ingredient.frozen) && (
         <button
           type="button"
@@ -507,7 +534,7 @@ function IsFoodCheckbox({
   )
 }
 
-function AddGroupForm({ onDone }: { onDone: () => void }) {
+function AddGroupForm({ groups, onDone }: { groups: Group[]; onDone: () => void }) {
   const [name, setName] = useState('')
   const [isFood, setIsFood] = useState(true)
   const [submitting, setSubmitting] = useState(false)
@@ -517,7 +544,8 @@ function AddGroupForm({ onDone }: { onDone: () => void }) {
     if (!name.trim()) return
     setSubmitting(true)
     try {
-      await addGroup(name.trim(), isFood)
+      // si ya hay un orden elegido a mano, el grupo nuevo va al final
+      await addGroup(name.trim(), isFood, groups.some((g) => g.order !== undefined) ? Math.max(...groups.map((g) => g.order ?? -1)) + 1 : undefined)
       onDone()
     } finally {
       setSubmitting(false)
@@ -554,9 +582,12 @@ function AddGroupForm({ onDone }: { onDone: () => void }) {
 
 function AddIngredientForm({
   groups,
+  existingNames,
   onDone,
 }: {
   groups: { id: string; name: string }[]
+  /** nombres que ya hay, para avisar de duplicados («Leche» / «leche») */
+  existingNames: string[]
   onDone: (id?: string, groupId?: string | null) => void
 }) {
   const [name, setName] = useState('')
@@ -565,10 +596,17 @@ function AddIngredientForm({
   const [expiryDate, setExpiryDate] = useState('')
   const [quantity, setQuantity] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  // nombre ya avisado como duplicado: si se vuelve a pulsar «Añadir», se crea igualmente
+  const [warnedName, setWarnedName] = useState<string | null>(null)
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
     if (!name.trim()) return
+    const key = normalizeText(name).trim()
+    if (warnedName !== key && existingNames.some((n) => normalizeText(n).trim() === key)) {
+      setWarnedName(key)
+      return
+    }
     setSubmitting(true)
     try {
       const expiry: ExpiryInput = { mode: expiryMode, date: expiryDate || null, quantity }
@@ -586,7 +624,10 @@ function AddIngredientForm({
         <input
           autoFocus
           value={name}
-          onChange={(e) => setName(e.target.value)}
+          onChange={(e) => {
+            setName(e.target.value)
+            setWarnedName(null)
+          }}
           placeholder="Nombre del ingrediente"
           className="min-w-40 flex-1 rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-moss-700 dark:bg-moss-800 dark:text-gray-100"
         />
@@ -606,6 +647,11 @@ function AddIngredientForm({
       <div className="flex flex-wrap gap-2">
         <ExpiryFields mode={expiryMode} date={expiryDate} onModeChange={setExpiryMode} onDateChange={setExpiryDate} quantity={quantity} onQuantityChange={setQuantity} />
       </div>
+      {warnedName !== null && (
+        <p role="alert" className="text-sm text-amber-700 dark:text-amber-400">
+          Ya existe un ingrediente con ese nombre. Pulsa «Añadir» otra vez si quieres crearlo igualmente.
+        </p>
+      )}
       <div className="flex items-center gap-2">
         <button
           type="submit"
@@ -765,6 +811,7 @@ export default function PantryPage() {
   const { ingredients, loading: loadingIngredients } = useIngredients()
   const { recipes } = useRecipes()
   const [showAddGroup, setShowAddGroup] = useState(false)
+  const [showOrder, setShowOrder] = useState(false)
   const [showAddIngredient, setShowAddIngredient] = useState(false)
   const { collapsed, toggle: toggleCollapsed, expand } = useCollapsedSet('despensa')
   const [search, setSearch] = useState('')
@@ -837,7 +884,25 @@ export default function PantryPage() {
       {/* Cabecera fija (título, botones y buscador); los formularios se abren debajo, en el flujo normal. */}
       <StickyHeader
         title="Despensa"
-        below={(ingredients.length > 0 || search) && <SearchInput value={search} onChange={setSearch} className="" />}
+        below={
+          (ingredients.length > 0 || search) && (
+            <div className="flex items-center gap-2">
+              <SearchInput value={search} onChange={setSearch} className="min-w-0 flex-1" />
+              {groups.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() => openForm(setShowOrder)}
+                  aria-label="Ordenar los grupos"
+                  title="Ordenar los grupos"
+                  aria-pressed={showOrder}
+                  className={rowIconButton}
+                >
+                  <SortIcon />
+                </button>
+              )}
+            </div>
+          )
+        }
       >
         <button type="button" onClick={() => openForm(setShowAddGroup)} className={outlineButton}>
           + Grupo
@@ -847,9 +912,10 @@ export default function PantryPage() {
         </button>
       </StickyHeader>
 
-      {showAddGroup && <AddGroupForm onDone={() => setShowAddGroup(false)} />}
+      {showOrder && <GroupsOrder groups={groups} onClose={() => setShowOrder(false)} />}
+      {showAddGroup && <AddGroupForm groups={groups} onDone={() => setShowAddGroup(false)} />}
       {showAddIngredient && (
-        <AddIngredientForm groups={groups} onDone={handleIngredientAdded} />
+        <AddIngredientForm groups={groups} existingNames={ingredients.map((i) => i.name)} onDone={handleIngredientAdded} />
       )}
 
       {loading && <ListSkeleton />}

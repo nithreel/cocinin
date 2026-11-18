@@ -1,4 +1,4 @@
-import { addDoc, deleteDoc, doc, getDocs, updateDoc, writeBatch } from 'firebase/firestore'
+import { deleteDoc, doc, getDocs, setDoc, updateDoc, writeBatch } from 'firebase/firestore'
 import { currentUid, db } from '../../firebase'
 import {
   ingredientsCol,
@@ -11,18 +11,23 @@ import { localDateString } from '../../lib/expiry'
 
 export { useShoppingList, usePurchaseHistory } from '../../lib/AppDataContext'
 
+/*
+ * Las escrituras no esperan la confirmación del servidor: Firestore ya las aplica en la caché local y las sube
+ * cuando hay red. Así la interfaz responde al instante sin cobertura; un fallo real llega al aviso global.
+ */
 /** Devuelve el id del elemento creado (para poder deshacer). */
-export async function addToShoppingList(ingredientId: string) {
-  const ref = await addDoc(shoppingListCol, { ingredientId, checked: false, addedAt: Date.now(), by: currentUid() })
+export function addToShoppingList(ingredientId: string) {
+  const ref = doc(shoppingListCol)
+  void setDoc(ref, { ingredientId, checked: false, addedAt: Date.now(), by: currentUid() })
   return ref.id
 }
 
 export async function removeFromShoppingList(itemId: string) {
-  await deleteDoc(doc(shoppingListCol, itemId))
+  void deleteDoc(doc(shoppingListCol, itemId))
 }
 
 export async function setShoppingItemChecked(itemId: string, checked: boolean) {
-  await updateDoc(doc(shoppingListCol, itemId), { checked })
+  void updateDoc(doc(shoppingListCol, itemId), { checked })
 }
 
 export async function confirmPurchase(items: ShoppingItem[], ingredientsById: Map<string, Ingredient>) {
@@ -39,11 +44,13 @@ export async function confirmPurchase(items: ShoppingItem[], ingredientsById: Ma
       expiryMode: 'sinceStocked',
       stockedDate,
       expiryDate: null,
+      // lo recién comprado está entero: se vacía la cantidad que quedaba
+      quantity: null,
     })
     const ingredientName = ingredientsById.get(item.ingredientId)?.name ?? '(ingrediente eliminado)'
     batch.set(doc(purchaseHistoryCol), { ingredientName, purchasedAt, by: currentUid() })
   }
-  await batch.commit()
+  void batch.commit()
 }
 
 export async function clearPurchaseHistory() {

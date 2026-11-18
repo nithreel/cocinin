@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { onSnapshot, orderBy, query } from 'firebase/firestore'
 import { useAuth } from '../../auth/AuthContext'
-import { ConfirmDelete } from '../../components/DeleteButton'
+import DeleteButton, { ConfirmDelete } from '../../components/DeleteButton'
 import KebabMenu from '../../components/KebabMenu'
 import ListSkeleton from '../../components/ListSkeleton'
 import { scrollMainToTop } from '../../lib/scroll'
@@ -10,9 +10,10 @@ import Switch from '../../components/Switch'
 import { BellIcon } from '../../components/icons'
 import { cancelButton, primaryButton } from '../../components/buttonStyles'
 import { usersCol, type Member, type Note } from '../../lib/collections'
-import { defaultRemindAt, formatRemind, joinDateTime, splitDateTime } from '../../lib/noteTime'
+import { isPushConfigured } from '../../lib/push'
+import { defaultRemindAt, formatRemind, joinDateTime, reminderChanged, splitDateTime } from '../../lib/noteTime'
 import { memberName } from '../../lib/members'
-import { addNote, deleteNote, updateNote, useNotes, type NoteValues } from './data'
+import { addNote, deleteDoneNotes, deleteNote, setNoteDone, updateNote, useNotes, type NoteValues } from './data'
 
 const inputClasses =
   'rounded-md border border-gray-300 px-2 py-1.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-moss-700 dark:bg-moss-800 dark:text-gray-100'
@@ -69,9 +70,10 @@ function NoteForm({
     const remindAt = notify ? joinDateTime(date, time) : null
     if (notify) {
       if (Number.isNaN(remindAt)) return setError('Elige hora y fecha.')
-      // se admite el minuto en curso (hora por defecto = ahora)
-      if (remindAt! < Date.now() - 60_000) return setError('Esa hora ya ha pasado.')
       if (recipients.size === 0) return setError('Elige a quién avisar.')
+      // una nota ya avisada se puede corregir sin tocar la hora; si se cambia, debe ser futura
+      const unchanged = initial && !reminderChanged(initial, { notify, remindAt, recipients: [...recipients] })
+      if (!unchanged && remindAt! < Date.now() - 60_000) return setError('Esa hora ya ha pasado.')
     }
     setSubmitting(true)
     try {
@@ -97,10 +99,13 @@ function NoteForm({
         className={inputClasses + ' mb-4 w-full'}
       />
 
-      <div className="mb-3 flex items-center gap-3">
-        <Switch checked={notify} onChange={setNotify} label="Avisar a una hora" />
-        <span className="text-sm text-gray-900 dark:text-gray-100">Avisar a una hora</span>
-      </div>
+      {/* sin servicio de avisos (clave VAPID) el aviso nunca llegaría: se oculta, salvo en notas que ya lo tienen */}
+      {(isPushConfigured || notify) && (
+        <div className="mb-3 flex items-center gap-3">
+          <Switch checked={notify} onChange={setNotify} label="Avisar a una hora" />
+          <span className="text-sm text-gray-900 dark:text-gray-100">Avisar a una hora</span>
+        </div>
+      )}
 
       {notify && (
         <>
@@ -150,7 +155,7 @@ function NoteCard({ note, members }: { note: Note; members: Member[] }) {
         members={members}
         initial={note}
         submitLabel="Guardar cambios"
-        onSubmit={(v) => updateNote(note.id, v)}
+        onSubmit={(v) => updateNote(note, v)}
         onDone={() => setEditing(false)}
       />
     )
@@ -162,7 +167,18 @@ function NoteCard({ note, members }: { note: Note; members: Member[] }) {
   return (
     <li className="rounded-lg border border-gray-200 bg-white p-4 dark:border-moss-800 dark:bg-moss-900">
       <div className="flex items-start justify-between gap-2">
-        <p className="whitespace-pre-wrap text-gray-900 dark:text-gray-100">{note.text}</p>
+        <label className="flex min-w-0 flex-1 cursor-pointer items-start gap-3">
+          <input
+            type="checkbox"
+            checked={!!note.done}
+            onChange={(e) => setNoteDone(note.id, e.target.checked)}
+            aria-label="Marcar como hecha"
+            className="mt-0.5 h-4 w-4 shrink-0 rounded border-gray-300 text-emerald-700 focus:ring-emerald-500 max-md:h-5 max-md:w-5 dark:border-moss-600 dark:bg-moss-800"
+          />
+          <p className={'whitespace-pre-wrap ' + (note.done ? 'text-gray-500 line-through dark:text-gray-400' : 'text-gray-900 dark:text-gray-100')}>
+            {note.text}
+          </p>
+        </label>
         <KebabMenu
           items={[
             { label: 'Editar', onClick: () => setEditing(true) },
@@ -212,6 +228,7 @@ export default function NotesPage() {
   const [showForm, setShowForm] = useState(false)
 
   // primero las que tienen aviso pendiente (la más próxima arriba), luego las simples, al final las ya avisadas
+  // (marcar una como hecha no la mueve de sitio)
   const ordered = useMemo(() => {
     const rank = (n: Note) => (n.notify && !n.sent ? 0 : n.notify ? 2 : 1)
     return [...notes].sort((a, b) => rank(a) - rank(b) || (rank(a) === 0 ? (a.remindAt ?? 0) - (b.remindAt ?? 0) : b.createdAt - a.createdAt))
@@ -235,6 +252,12 @@ export default function NotesPage() {
       {loading && <ListSkeleton />}
       {!loading && notes.length === 0 && (
         <p className="text-gray-500 dark:text-gray-400">Aún no hay notas. Crea la primera con «+ Nota».</p>
+      )}
+
+      {notes.some((n) => n.done) && (
+        <div className="mb-3 flex justify-end">
+          <DeleteButton onConfirm={() => deleteDoneNotes(notes)} label="Borrar hechas" confirmLabel="Sí, borrar" />
+        </div>
       )}
 
       <ul className="space-y-3">

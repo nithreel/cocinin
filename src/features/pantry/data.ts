@@ -1,9 +1,13 @@
-import { addDoc, doc, getDocs, query, updateDoc, where, writeBatch } from 'firebase/firestore'
+import { doc, getDocsFromCache, query, setDoc, updateDoc, where, writeBatch } from 'firebase/firestore'
 import { currentUid, db } from '../../firebase'
 import { groupsCol, ingredientsCol, shoppingListCol, type ExpiryMode } from '../../lib/collections'
 
 export { useGroups, useIngredients, useRecipes } from '../../lib/AppDataContext'
 
+/*
+ * Las escrituras no esperan la confirmación del servidor: Firestore ya las aplica en la caché local y las sube
+ * cuando hay red. Así la interfaz responde al instante sin cobertura; un fallo real llega al aviso global.
+ */
 export interface ExpiryInput {
   mode: ExpiryMode
   date: string | null
@@ -11,17 +15,25 @@ export interface ExpiryInput {
   quantity: string
 }
 
-export async function addGroup(name: string, isFood: boolean) {
-  await addDoc(groupsCol, { name, isFood, createdAt: Date.now() })
+export async function addGroup(name: string, isFood: boolean, order?: number) {
+  void setDoc(doc(groupsCol), { name, isFood, createdAt: Date.now(), ...(order === undefined ? {} : { order }) })
+}
+
+/** Guarda el orden elegido: la posición de cada id pasa a ser su `order`. */
+export async function reorderGroups(ids: string[]) {
+  const batch = writeBatch(db)
+  ids.forEach((id, i) => batch.update(doc(groupsCol, id), { order: i }))
+  void batch.commit()
 }
 
 export async function updateGroup(id: string, name: string, isFood: boolean) {
-  await updateDoc(doc(groupsCol, id), { name, isFood })
+  void updateDoc(doc(groupsCol, id), { name, isFood })
 }
 
 // Un ingrediente nuevo nace disponible (ON): quien lo añade es porque lo tiene.
-export async function addIngredient(name: string, groupId: string | null, expiry: ExpiryInput, inPantry = true) {
-  const ref = await addDoc(ingredientsCol, {
+export function addIngredient(name: string, groupId: string | null, expiry: ExpiryInput, inPantry = true) {
+  const ref = doc(ingredientsCol)
+  void setDoc(ref, {
     name,
     groupId,
     inPantry,
@@ -35,7 +47,7 @@ export async function addIngredient(name: string, groupId: string | null, expiry
 }
 
 export async function updateIngredientExpiry(id: string, expiry: ExpiryInput) {
-  await updateDoc(doc(ingredientsCol, id), {
+  void updateDoc(doc(ingredientsCol, id), {
     expiryMode: expiry.mode,
     expiryDate: expiry.mode === 'date' ? expiry.date : null,
     stockedDate: expiry.mode === 'sinceStocked' ? expiry.date : null,
@@ -49,7 +61,7 @@ export async function updateIngredient(
   groupId: string | null,
   expiry: ExpiryInput,
 ) {
-  await updateDoc(doc(ingredientsCol, id), {
+  void updateDoc(doc(ingredientsCol, id), {
     name,
     groupId,
     expiryMode: expiry.mode,
@@ -63,7 +75,7 @@ export async function updateIngredient(
 const NO_DATES = { expiryMode: 'none', expiryDate: null, stockedDate: null, thawedAt: null, useSoon: false, useSoonAt: null } as const
 
 export async function setIngredientInPantry(id: string, inPantry: boolean) {
-  await updateDoc(
+  void updateDoc(
     doc(ingredientsCol, id),
     // al agotarse deja de estar congelado
     inPantry
@@ -77,7 +89,7 @@ export async function setIngredientInPantry(id: string, inPantry: boolean) {
  * Sacarlo del congelador (`wasFrozen`) arranca la cuenta de descongelado (en nevera); volver a congelar la borra.
  */
 export async function setIngredientFrozen(id: string, frozen: boolean, wasInPantry: boolean, wasFrozen = false) {
-  await updateDoc(
+  void updateDoc(
     doc(ingredientsCol, id),
     frozen
       ? { frozen, thawedAt: null, ...(wasInPantry ? {} : { inPantry: true, ...NO_DATES }) }
@@ -87,21 +99,22 @@ export async function setIngredientFrozen(id: string, frozen: boolean, wasInPant
 
 /** «Gastar pronto»: marca manual que pinta el interruptor en ámbar. */
 export async function setIngredientUseSoon(id: string, useSoon: boolean) {
-  await updateDoc(doc(ingredientsCol, id), { useSoon, useSoonAt: useSoon ? Date.now() : null })
+  void updateDoc(doc(ingredientsCol, id), { useSoon, useSoonAt: useSoon ? Date.now() : null })
 }
 
+/** Lee de la caché local (los listeners la mantienen al día): así borrar no depende de la red. */
 export async function deleteIngredient(id: string) {
   const batch = writeBatch(db)
   batch.delete(doc(ingredientsCol, id))
-  const shoppingSnap = await getDocs(query(shoppingListCol, where('ingredientId', '==', id)))
+  const shoppingSnap = await getDocsFromCache(query(shoppingListCol, where('ingredientId', '==', id)))
   shoppingSnap.forEach((d) => batch.delete(d.ref))
-  await batch.commit()
+  void batch.commit()
 }
 
 export async function deleteGroup(id: string) {
   const batch = writeBatch(db)
-  const ingredientsSnap = await getDocs(query(ingredientsCol, where('groupId', '==', id)))
+  const ingredientsSnap = await getDocsFromCache(query(ingredientsCol, where('groupId', '==', id)))
   ingredientsSnap.forEach((d) => batch.update(d.ref, { groupId: null }))
   batch.delete(doc(groupsCol, id))
-  await batch.commit()
+  void batch.commit()
 }

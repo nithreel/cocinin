@@ -38,9 +38,12 @@ service cloud.firestore {
           request.resource.data.role == 'admin' &&
           existsAfter(/databases/$(database)/documents/meta/setup)) ||
         (isAdmin() && request.resource.data.role == 'member');
-      // El admin puede poner o cambiar el alias de cualquiera (solo ese campo).
-      allow update: if isAdmin() &&
-        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['alias']);
+      // El admin puede poner o cambiar el alias de cualquiera (solo ese campo) y nombrar admin a un miembro
+      // (solo el campo role, de member a admin): así se hace el relevo. Nadie baja de rango a otro.
+      allow update: if isAdmin() && (
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['alias']) ||
+        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['role']) &&
+          resource.data.get('role', 'member') == 'member' && request.resource.data.role == 'admin'));
       // Solo el admin quita accesos, y nunca el suyo.
       allow delete: if isAdmin() && request.auth.uid != uid;
     }
@@ -52,6 +55,15 @@ service cloud.firestore {
     match /tags/{id} { allow read, write: if isMember(); }
     match /purchaseHistory/{id} { allow read, write: if isMember(); }
     match /notes/{id} { allow read, write: if isMember(); }
+
+    // Avisos de prueba reales: el miembro pide uno para su dispositivo; el servicio de avisos (cuenta de
+    // servicio, fuera de estas reglas) lo envía y anota el resultado.
+    match /pushTests/{id} {
+      allow create: if isMember() && request.resource.data.uid == request.auth.uid;
+      // (resource == null: la app escucha el documento justo antes de que exista)
+      allow read: if isMember() && (resource == null || resource.data.uid == request.auth.uid);
+      allow delete: if isMember() && resource.data.uid == request.auth.uid;
+    }
 
     // Suscripciones push: cada miembro gestiona solo las suyas. La Raspberry las lee con la
     // cuenta de servicio (que no pasa por estas reglas).

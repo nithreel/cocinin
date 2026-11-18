@@ -138,6 +138,11 @@ export function recipients(subscriptions, kind, exceptUid) {
   return subscriptions.filter((s) => s.prefs?.[kind] !== false && (!exceptUid || s.uid !== exceptUid))
 }
 
+/** Descarta suscripciones de quien ya no es miembro (su uid no está en `users`). */
+export function onlyMembers(subscriptions, memberUids) {
+  return subscriptions.filter((s) => memberUids.has(s.uid))
+}
+
 /** Agrupa avisos que llegan seguidos: tras `waitMs` sin novedades entrega todo junto. */
 export function createCollector(waitMs, flush, setTimer = setTimeout, clearTimer = clearTimeout) {
   let items = []
@@ -160,7 +165,7 @@ export function createCollector(waitMs, flush, setTimer = setTimeout, clearTimer
 export function dueNotes(notes, now = Date.now()) {
   const out = []
   for (const [id, n] of notes) {
-    if (n.notify === true && n.sent !== true && typeof n.remindAt === 'number' && n.remindAt <= now) out.push({ id, ...n })
+    if (n.notify === true && n.sent !== true && n.done !== true && typeof n.remindAt === 'number' && n.remindAt <= now) out.push({ id, ...n })
   }
   return out.sort((a, b) => a.remindAt - b.remindAt)
 }

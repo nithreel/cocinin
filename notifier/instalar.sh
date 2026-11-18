@@ -34,7 +34,7 @@ PUBLIC_KEY=$(node -p "JSON.parse(require('fs').readFileSync('secrets/vapid.json'
 # 2. La clave pública debe estar en .env para que la app la use (hay que volver a desplegar la app)
 if [ "$(env_val VITE_VAPID_PUBLIC_KEY)" != "$PUBLIC_KEY" ]; then
   if grep -q "^VITE_VAPID_PUBLIC_KEY=" "$ENV_FILE"; then
-    sed -i "s|^VITE_VAPID_PUBLIC_KEY=.*|VITE_VAPID_PUBLIC_KEY=$PUBLIC_KEY|" "$ENV_FILE"
+    sed -i.bak "s|^VITE_VAPID_PUBLIC_KEY=.*|VITE_VAPID_PUBLIC_KEY=$PUBLIC_KEY|" "$ENV_FILE" && rm -f "$ENV_FILE.bak"
   else
     printf '\nVITE_VAPID_PUBLIC_KEY=%s\n' "$PUBLIC_KEY" >> "$ENV_FILE"
   fi
@@ -55,6 +55,17 @@ PROJECT=$(node -p "JSON.parse(require('fs').readFileSync('secrets/service-accoun
 if [ ! -f .env ]; then
   printf 'VAPID_SUBJECT=https://%s\n' "$(env_val VITE_FIREBASE_AUTH_DOMAIN)" > .env
   echo "✓ notifier/.env creado"
+fi
+
+# 4b. Zona horaria: se detecta la de la máquina donde corre el servicio (sin permisos de ubicación).
+#     Marca la ventana de avisos (8–22 h) y los días de caducidad. Si ya hay TZ en notifier/.env, se respeta.
+if ! grep -q '^TZ=' .env; then
+  DETECT='timedatectl show -p Timezone --value 2>/dev/null || cat /etc/timezone 2>/dev/null || readlink /etc/localtime 2>/dev/null | sed "s|.*zoneinfo/||"'
+  if [ -z "$REMOTE" ]; then ZONA=$(sh -c "$DETECT" | head -1); else ZONA=$(ssh "$REMOTE" "$DETECT" | head -1); fi
+  case "$ZONA" in
+    */*|UTC) printf 'TZ=%s\n' "$ZONA" >> .env; echo "✓ Zona horaria detectada: $ZONA" ;;
+    *) echo "! No se pudo detectar la zona horaria: se usará Europe/Madrid (cámbiala con TZ=… en notifier/.env)" ;;
+  esac
 fi
 
 # 5. Arrancar

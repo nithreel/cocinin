@@ -23,7 +23,7 @@ export default function ProtectedRoute({ children }: { children: ReactNode }) {
     return (
       <div className="flex h-dvh flex-col items-center justify-center gap-3 p-6 text-center text-gray-600 dark:text-gray-300">
         <p>Tu cuenta ({user.email}) no tiene acceso a esta cocina.</p>
-        <p className="text-sm text-gray-400">Pide a un miembro que te añada desde la sección Usuarios.</p>
+        <p className="text-sm text-gray-400">Pide al administrador que te añada desde la sección Usuarios.</p>
         <button
           type="button"
           onClick={() => signOut()}

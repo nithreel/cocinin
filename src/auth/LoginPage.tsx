@@ -41,6 +41,7 @@ export default function LoginPage() {
   const [info, setInfo] = useState<string | null>(null)
 
   const setupMode = needsSetup === true
+  const noAccess = !!user && !isMember
 
   if (user && isMember) {
     const redirectTo = (location.state as { from?: string } | null)?.from ?? '/despensa'
@@ -130,6 +131,11 @@ export default function LoginPage() {
           </button>
         </div>
 
+        {noAccess && (
+          <p role="alert" className="mb-4 text-sm text-red-700 dark:text-red-400">
+            Tu cuenta ({user?.email}) no tiene acceso a esta cocina. Pide al administrador que te añada.
+          </p>
+        )}
         {error && <p role="alert" className="mb-4 text-sm text-red-700 dark:text-red-400">{error}</p>}
         {info && <p role="status" className="mb-4 text-sm text-emerald-700 dark:text-emerald-400">{info}</p>}
 

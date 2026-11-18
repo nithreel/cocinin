@@ -1,19 +1,22 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { FirebaseError } from 'firebase/app'
 import { deleteDoc, doc, onSnapshot, orderBy, query, setDoc, updateDoc } from 'firebase/firestore'
-import { Navigate } from 'react-router-dom'
 import { useAuth } from '../../auth/AuthContext'
-import DeleteButton from '../../components/DeleteButton'
+import { ConfirmDelete } from '../../components/DeleteButton'
+import KebabMenu from '../../components/KebabMenu'
 import { usersCol, type Member } from '../../lib/collections'
 import { memberName } from '../../lib/members'
 import { createAccount } from '../../firebase'
 import StickyHeader from '../../components/StickyHeader'
 import { cancelButton, primaryButton } from '../../components/buttonStyles'
+import RestoreBackup from './RestoreBackup'
+import ChangePassword from './ChangePassword'
 
 function MemberRow({ m, isSelf }: { m: Member; isSelf: boolean }) {
   const [editing, setEditing] = useState(false)
   const [alias, setAlias] = useState(m.alias ?? '')
   const [busy, setBusy] = useState(false)
+  const [pending, setPending] = useState<'promote' | 'remove' | null>(null)
 
   async function save(e: FormEvent) {
     e.preventDefault()
@@ -51,7 +54,7 @@ function MemberRow({ m, isSelf }: { m: Member; isSelf: boolean }) {
   }
 
   return (
-    <li className="flex items-center justify-between gap-3 px-4 py-2">
+    <li className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 px-4 py-2">
       <span className="min-w-0">
         <span className="block truncate text-gray-900 dark:text-gray-100">
           {memberName(m)}
@@ -60,14 +63,27 @@ function MemberRow({ m, isSelf }: { m: Member; isSelf: boolean }) {
         </span>
         {m.alias?.trim() && <span className="block truncate text-xs text-gray-500 dark:text-gray-400">{m.email}</span>}
       </span>
-      <span className="flex shrink-0 items-center gap-1">
-        <button type="button" onClick={() => setEditing(true)} className={cancelButton}>
-          {m.alias?.trim() ? 'Editar alias' : 'Alias'}
-        </button>
-        {!isSelf && m.role !== 'admin' && (
-          <DeleteButton onConfirm={() => deleteDoc(doc(usersCol, m.id))} label="Quitar acceso" confirmLabel="Sí, quitar" />
-        )}
-      </span>
+      <KebabMenu
+        items={[
+          { label: m.alias?.trim() ? 'Editar alias' : 'Poner alias', onClick: () => setEditing(true) },
+          ...(!isSelf && m.role !== 'admin' ? [{ label: 'Hacer admin', onClick: () => setPending('promote') }] : []),
+          ...(!isSelf ? [{ label: 'Quitar acceso', onClick: () => setPending('remove'), danger: true }] : []),
+        ]}
+      />
+      {pending && (
+        <ConfirmDelete
+          className="w-full basis-full"
+          question={pending === 'promote' ? `¿Nombrar admin a ${memberName(m)}?` : `¿Quitar el acceso a ${memberName(m)}?`}
+          questionClassName="w-full"
+          confirmLabel={pending === 'promote' ? 'Sí, nombrar' : 'Sí, quitar'}
+          onConfirm={() => {
+            if (pending === 'promote') void updateDoc(doc(usersCol, m.id), { role: 'admin' })
+            else void deleteDoc(doc(usersCol, m.id))
+            setPending(null)
+          }}
+          onCancel={() => setPending(null)}
+        />
+      )}
     </li>
   )
 }
@@ -105,7 +121,15 @@ export default function UsersPage() {
     })
   }, [])
 
-  if (!isAdmin) return <Navigate to="/despensa" replace />
+  // quien no es admin solo ve su propio cambio de contraseña
+  if (!isAdmin) {
+    return (
+      <div>
+        <StickyHeader title="Usuarios" />
+        <ChangePassword />
+      </div>
+    )
+  }
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
@@ -178,6 +202,10 @@ export default function UsersPage() {
           la consola de Firebase Authentication.
         </p>
       </form>
+
+      <RestoreBackup />
+
+      <ChangePassword />
     </div>
   )
 }

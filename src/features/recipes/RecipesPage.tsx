@@ -4,11 +4,14 @@ import { addRecipe, deleteRecipe, migrateLegacyTags, updateRecipe, useRecipes, u
 import TagsManager from './TagsManager'
 import { planLegacyMigration, sortTags } from '../../lib/tags'
 import RecipeForm from './RecipeForm'
-import { ChevronIcon } from '../../components/icons'
+import { getExpiryInfo } from '../../lib/expiry'
+import { CartIcon, ChevronIcon } from '../../components/icons'
 import SearchInput from '../../components/SearchInput'
 import ListSkeleton from '../../components/ListSkeleton'
 import { scrollMainToTop } from '../../lib/scroll'
 import { matchesSearch } from '../../lib/search'
+import { addToShoppingList, removeFromShoppingList, useShoppingList } from '../shopping-list/data'
+import { useToast } from '../../components/Toast'
 import StickyHeader from '../../components/StickyHeader'
 import ImportRecipes from './ImportRecipes'
 import DeleteButton from '../../components/DeleteButton'
@@ -17,10 +20,15 @@ import type { Group, Ingredient, Recipe, Tag } from '../../lib/collections'
 
 type RecipeStatus = 'full' | 'partial' | 'missing'
 
+/** Disponible para cocinar: lo tienes (congelado también) y no está caducado. */
+function isUsable(ing: Ingredient | undefined) {
+  return ing?.inPantry === true && getExpiryInfo(ing)?.status !== 'expired'
+}
+
 function getRecipeStatus(recipe: Recipe, ingredientsById: Map<string, Ingredient>): RecipeStatus {
   let missingOptional = false
   for (const ri of recipe.ingredients) {
-    const have = ingredientsById.get(ri.ingredientId)?.inPantry === true
+    const have = isUsable(ingredientsById.get(ri.ingredientId))
     if (!have) {
       if (ri.optional) missingOptional = true
       else return 'missing'
@@ -31,7 +39,7 @@ function getRecipeStatus(recipe: Recipe, ingredientsById: Map<string, Ingredient
 
 /** Cuántos ingredientes necesarios (no opcionales) faltan en la despensa. */
 function countMissingRequired(recipe: Recipe, ingredientsById: Map<string, Ingredient>) {
-  return recipe.ingredients.filter((ri) => !ri.optional && ingredientsById.get(ri.ingredientId)?.inPantry !== true).length
+  return recipe.ingredients.filter((ri) => !ri.optional && !isUsable(ingredientsById.get(ri.ingredientId))).length
 }
 
 const statusBorderClasses: Record<RecipeStatus, string> = {
@@ -61,6 +69,25 @@ function RecipeCard({
 }) {
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState(false)
+  const toast = useToast()
+  const { items: shoppingItems } = useShoppingList()
+  // lo necesario que falta en la despensa y aún no está en la lista
+  const toBuy = useMemo(() => {
+    const onList = new Set(shoppingItems.map((i) => i.ingredientId))
+    return recipe.ingredients
+      .filter((ri) => !ri.optional && ingredientsById.has(ri.ingredientId))
+      .map((ri) => ingredientsById.get(ri.ingredientId)!)
+      .filter((ing) => !isUsable(ing) && !onList.has(ing.id))
+  }, [recipe.ingredients, ingredientsById, shoppingItems])
+
+  function addMissingToList() {
+    const ids = toBuy.map((ing) => addToShoppingList(ing.id))
+    toast({
+      message: `${ids.length} ingrediente${ids.length === 1 ? '' : 's'} añadido${ids.length === 1 ? '' : 's'} a la lista`,
+      actionLabel: 'Deshacer',
+      onAction: () => ids.forEach((id) => void removeFromShoppingList(id)),
+    })
+  }
   const articleRef = useRef<HTMLElement>(null)
   const titleRef = useRef<HTMLButtonElement>(null)
   const recipeTags = useMemo(
@@ -130,12 +157,26 @@ function RecipeCard({
           ) : (
             <>
               <section>
-              <h4 className={sectionHead}>Ingredientes</h4>
+              <h4 className={sectionHead + ' flex items-center justify-between'}>
+                Ingredientes
+                {toBuy.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={addMissingToList}
+                    aria-label={`Añadir a la lista de la compra lo que falta (${toBuy.length})`}
+                    title={`Añadir a la lista lo que falta (${toBuy.length})`}
+                    className="-my-1.5 flex h-8 w-8 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-gray-100 hover:text-emerald-700 max-md:h-10 max-md:w-10 dark:text-gray-500 dark:hover:bg-moss-800 dark:hover:text-emerald-400"
+                  >
+                    <CartIcon />
+                  </button>
+                )}
+              </h4>
               {/* pb-8 (≥ alto del título fijo): al acabar la sección el título queda sobre espacio vacío y no a medias sobre la última fila */}
               <ul className="space-y-1 pb-8 text-sm text-gray-600 dark:text-gray-300">
                 {recipe.ingredients.map((ri) => {
                   const ing = ingredientsById.get(ri.ingredientId)
-                  const have = ing?.inPantry
+                  const expired = !!ing?.inPantry && !isUsable(ing)
+                  const have = isUsable(ing)
                   const missingOptional = !have && ri.optional
                   return (
                     <li
@@ -150,6 +191,7 @@ function RecipeCard({
                     >
                       {ing?.name ?? '(ingrediente eliminado: edita la receta para quitarlo)'}
                       {ri.quantity && ` — ${ri.quantity}${ri.unit ? ` ${ri.unit}` : ''}`}
+                      {expired && ' — ⚠ caducado'}
                       {ri.optional && ' (opcional)'}
                     </li>
                   )
@@ -213,7 +255,9 @@ export default function RecipesPage() {
     () =>
       recipes.filter(
         (r) =>
-          (!search.trim() || matchesSearch(r.title, search)) &&
+          (!search.trim() ||
+            matchesSearch(r.title, search) ||
+            r.ingredients.some((ri) => matchesSearch(ingredientsById.get(ri.ingredientId)?.name ?? '', search))) &&
           (!onlyReady || countMissingRequired(r, ingredientsById) === 0) &&
           effectiveTags.every((id) => r.tagIds?.includes(id)),
       ),
@@ -227,7 +271,7 @@ export default function RecipesPage() {
         below={
           recipes.length > 0 && (
             <div className="space-y-2">
-              <SearchInput value={search} onChange={setSearch} placeholder="Buscar receta…" className="" />
+              <SearchInput value={search} onChange={setSearch} placeholder="Buscar receta o ingrediente…" className="" />
               <div role="group" aria-label="Filtrar recetas" className="flex gap-2">
                 {(
                   [

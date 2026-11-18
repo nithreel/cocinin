@@ -16,6 +16,7 @@ import {
   type ShoppingItem,
   type Tag,
 } from './collections'
+import { sortByText } from './search'
 
 interface AppDataValue {
   groups: Group[]
@@ -37,6 +38,11 @@ interface AppDataValue {
 }
 
 const AppDataContext = createContext<AppDataValue | null>(null)
+
+/** Primero los ordenados a mano (`order`), luego el resto alfabéticamente. */
+function sortGroups(groups: Group[]) {
+  return sortByText(groups, (g) => g.name).sort((a, b) => (a.order ?? Infinity) - (b.order ?? Infinity))
+}
 
 export function AppDataProvider({ children }: { children: ReactNode }) {
   const [groups, setGroups] = useState<Group[]>([])
@@ -66,7 +72,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const q = query(groupsCol, orderBy('name'))
     return onSnapshot(q, (snap) => {
-      setGroups(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Group))
+      setDataError(null)
+      setGroups(sortGroups(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Group)))
       setGroupsLoading(false)
     }, handleError(() => setGroupsLoading(false)))
   }, [])
@@ -74,7 +81,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const q = query(ingredientsCol, orderBy('name'))
     return onSnapshot(q, (snap) => {
-      setIngredients(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Ingredient))
+      setDataError(null)
+      setIngredients(sortByText(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Ingredient), (i) => i.name))
       setIngredientsLoading(false)
     }, handleError(() => setIngredientsLoading(false)))
   }, [])
@@ -90,7 +98,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const q = query(recipesCol, orderBy('title'))
     return onSnapshot(q, (snap) => {
-      setRecipes(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Recipe))
+      setRecipes(sortByText(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Recipe), (r) => r.title))
       setRecipesLoading(false)
     }, handleError(() => setRecipesLoading(false)))
   }, [])
@@ -117,6 +125,15 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       setNotes(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Note))
       setNotesLoading(false)
     }, handleError(() => setNotesLoading(false)))
+  }, [])
+
+  // Los estados de caducidad y descongelado dependen de la hora: cada minuto se vuelve a pintar con la app abierta.
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setIngredients((prev) => [...prev])
+      setRecipes((prev) => [...prev])
+    }, 60_000)
+    return () => clearInterval(timer)
   }, [])
 
   return (

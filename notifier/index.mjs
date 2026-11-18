@@ -19,6 +19,7 @@ import {
   purchaseMessage,
   recipeMessage,
   recipients,
+  onlyMembers,
   spentMessage,
 } from './lib.mjs'
 
@@ -29,16 +30,19 @@ const DATA_DIR = process.env.DATA_DIR ?? '/data'
 const STATE_FILE = `${DATA_DIR}/expiry-state.json`
 const log = (...a) => console.log(new Date().toISOString(), ...a)
 
+const members = new Set() // uids con acceso (colección users)
 let subscriptions = [] // { id, uid, endpoint, keys, prefs }
 const ingredients = new Map() // id -> datos
 
 async function send(kind, message, url, exceptUid, targetsOverride, tag = kind) {
-  const targets = targetsOverride ?? recipients(subscriptions, kind, exceptUid)
+  const targets = onlyMembers(targetsOverride ?? recipients(subscriptions, kind, exceptUid), members)
   const payload = JSON.stringify({ ...message, url, tag })
   log(`aviso «${kind}»: ${message.body} → ${targets.length} dispositivo(s)`)
+  let sent = 0
   for (const s of targets) {
     try {
       await webpush.sendNotification({ endpoint: s.endpoint, keys: s.keys }, payload, { TTL: kind === 'nota' ? 6 * 3600 : 3600 })
+      sent++
     } catch (e) {
       // 404/410: el dispositivo ya no existe; se limpia para no reintentar siempre
       if (e.statusCode === 404 || e.statusCode === 410) {
@@ -49,6 +53,7 @@ async function send(kind, message, url, exceptUid, targetsOverride, tag = kind) 
       }
     }
   }
+  return sent
 }
 
 /** Escucha una colección: la primera carga solo fija la base, después entrega cada cambio. */
@@ -108,10 +113,25 @@ listen('recipes', (type, _id, data, first) => {
   if (!first && type === 'added') recipes.push({ title: data.title, by: data.by ?? null })
 })
 
-listen('users', (type, _id, data, first) => {
+listen('users', (type, id, data, first) => {
+  if (type === 'removed') members.delete(id)
+  else members.add(id)
   if (!first && type === 'added') {
     void send('usuario', { title: 'Usuario nuevo', body: `${data.email} se ha unido` }, '/usuarios', data.by)
   }
+})
+
+// Aviso de prueba real pedido desde la app («Enviarme un aviso de prueba»): se envía solo al dispositivo que lo pide
+// y se anota el resultado en el propio documento, que la app espera y borra. Las peticiones viejas se limpian al arrancar.
+listen('pushTests', async (type, id, data, first) => {
+  if (type !== 'added') return
+  const ref = db.collection('pushTests').doc(id)
+  if (first) return void ref.delete().catch(() => {})
+  const targets = subscriptions.filter((s) => s.uid === data.uid && s.endpoint === data.endpoint)
+  const sent = targets.length
+    ? await send('prueba', { title: 'CocinIN', body: 'Los avisos funcionan: este es un aviso de prueba.' }, '/avisos', null, targets)
+    : 0
+  await ref.update({ status: sent > 0 ? 'sent' : 'no-device' }).catch(() => {})
 })
 
 // Notas con aviso: se revisan cada 30 s. Se marcan como enviadas antes de enviar, para no repetir si falla algo.

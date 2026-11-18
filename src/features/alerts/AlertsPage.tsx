@@ -9,7 +9,7 @@ import {
   enablePush,
   getPushState,
   savePrefs,
-  showLocalTestNotification,
+  requestServerTest,
   type PushState,
 } from '../../lib/push'
 
@@ -65,7 +65,14 @@ export default function AlertsPage() {
       await action()
     } catch (e) {
       console.error(e)
-      setError('No se ha podido completar la acción. Inténtalo de nuevo.')
+      const msg = e instanceof Error ? e.message : ''
+      setError(
+        msg === 'timeout'
+          ? 'El servicio de avisos no responde: comprueba que la Raspberry está encendida y con el servicio en marcha.'
+          : msg === 'no-device'
+            ? 'Este dispositivo no está registrado para recibir avisos. Desactiva y vuelve a activar los avisos.'
+            : 'No se ha podido completar la acción. Inténtalo de nuevo.',
+      )
     } finally {
       setBusy(false)
     }
@@ -92,7 +99,10 @@ export default function AlertsPage() {
 
   const test = () =>
     run(async () => {
-      await showLocalTestNotification()
+      if (!user) return
+      const result = await requestServerTest(user.uid)
+      if (result === 'timeout') throw new Error('timeout')
+      if (result === 'no-device') throw new Error('no-device')
       setTested(true)
       setTimeout(() => setTested(false), 3000)
     })
@@ -148,7 +158,7 @@ export default function AlertsPage() {
 
           {state === 'on' && (
             <button type="button" disabled={busy} onClick={test} className={cancelButton}>
-              {tested ? 'Enviado ✓' : 'Probar en este dispositivo'}
+              {tested ? 'Enviado ✓ (debería llegarte ahora)' : 'Enviarme un aviso de prueba'}
             </button>
           )}
         </>

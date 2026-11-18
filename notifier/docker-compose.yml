@@ -9,6 +9,8 @@ services:
       VAPID_FILE: /secrets/vapid.json
       VAPID_SUBJECT: ${VAPID_SUBJECT:?ejecuta ./instalar.sh}
       DATA_DIR: /data
+      # zona horaria de la casa: la fija instalar.sh (la detecta de la máquina); por defecto Madrid
+      TZ: ${TZ:-Europe/Madrid}
     volumes:
       - ./secrets:/secrets:ro
       - ./data:/data
