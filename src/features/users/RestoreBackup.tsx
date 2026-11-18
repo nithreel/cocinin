@@ -79,7 +79,10 @@ export default function RestoreBackup() {
           </label>
           <label className="mb-3 flex items-start gap-2 text-sm text-gray-900 dark:text-gray-100">
             <input type="radio" checked={mode === 'replace'} onChange={() => setMode('replace')} className="mt-1" />
-            <span>Reemplazar: además borra lo que no esté en la copia.</span>
+            <span>
+              Reemplazar: además borra lo que no esté en la copia. No es atómico: si se corta a mitad queda una mezcla,
+              así que descarga una copia antes.
+            </span>
           </label>
           <div className="flex items-center gap-2">
             <button type="button" disabled={busy} onClick={handleRestore} className={mode === 'replace' ? dangerTextButton : primaryButton}>

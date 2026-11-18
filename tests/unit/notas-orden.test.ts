@@ -37,3 +37,11 @@ describe('parseBackup', () => {
     expect(() => parseBackup('{"recipes":[{"title":"sin id"}]}')).toThrow()
   })
 })
+
+describe('parseBackup: validación', () => {
+  it('rechaza documentos sin los campos imprescindibles', () => {
+    expect(() => parseBackup('{"ingredients":[{"id":"a"}]}')).toThrow(/nombre/)
+    expect(() => parseBackup('{"recipes":[{"id":"a","title":"x"}]}')).toThrow()
+    expect(() => parseBackup('{"purchaseHistory":[{"id":"a","ingredientName":"x"}]}')).toThrow()
+  })
+})

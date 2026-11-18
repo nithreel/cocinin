@@ -73,7 +73,13 @@ function MemberRow({ m, isSelf }: { m: Member; isSelf: boolean }) {
       {pending && (
         <ConfirmDelete
           className="w-full basis-full"
-          question={pending === 'promote' ? `¿Nombrar admin a ${memberName(m)}?` : `¿Quitar el acceso a ${memberName(m)}?`}
+          question={
+            pending === 'promote'
+              ? `¿Nombrar admin a ${memberName(m)}?`
+              : m.role === 'admin'
+                ? `${memberName(m)} es administrador. ¿Quitarle el acceso?`
+                : `¿Quitar el acceso a ${memberName(m)}?`
+          }
           questionClassName="w-full"
           confirmLabel={pending === 'promote' ? 'Sí, nombrar' : 'Sí, quitar'}
           onConfirm={() => {

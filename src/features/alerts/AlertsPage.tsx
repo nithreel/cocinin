@@ -67,7 +67,9 @@ export default function AlertsPage() {
       console.error(e)
       const msg = e instanceof Error ? e.message : ''
       setError(
-        msg === 'timeout'
+        msg === 'offline'
+          ? 'No tienes conexión: vuelve a intentarlo cuando tengas cobertura.'
+          : msg === 'timeout'
           ? 'El servicio de avisos no responde: comprueba que la Raspberry está encendida y con el servicio en marcha.'
           : msg === 'no-device'
             ? 'Este dispositivo no está registrado para recibir avisos. Desactiva y vuelve a activar los avisos.'
@@ -101,6 +103,7 @@ export default function AlertsPage() {
     run(async () => {
       if (!user) return
       const result = await requestServerTest(user.uid)
+      if (result === 'offline') throw new Error('offline')
       if (result === 'timeout') throw new Error('timeout')
       if (result === 'no-device') throw new Error('no-device')
       setTested(true)

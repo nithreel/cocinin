@@ -21,7 +21,7 @@ import ListSkeleton from '../../components/ListSkeleton'
 import { useToast } from '../../components/Toast'
 import { matchesSearch, normalizeText } from '../../lib/search'
 import { hasWarning } from '../../lib/expiry'
-import { addIngredient } from '../pantry/data'
+import { addIngredient, deleteIngredient } from '../pantry/data'
 
 /** Color del borde izquierdo = estado del interruptor de la Despensa (como en las recetas). */
 function stockBorderClass(i: Ingredient) {
@@ -138,8 +138,9 @@ export default function ShoppingListPage() {
   function createAndAdd() {
     const id = addIngredient(searchTerm, null, { mode: 'none', date: null, quantity: '' }, false)
     setMissingSearch('')
-    const itemId = addToShoppingList(id)
-    toast({ message: `${searchTerm} añadido a la lista`, actionLabel: 'Deshacer', onAction: () => void removeFromShoppingList(itemId) })
+    addToShoppingList(id)
+    // deshacer quita también el ingrediente recién creado (si fue una errata no queda en la despensa)
+    toast({ message: `${searchTerm} añadido a la lista`, actionLabel: 'Deshacer', onAction: () => void deleteIngredient(id) })
   }
 
   const cartSections = useMemo(

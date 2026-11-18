@@ -39,6 +39,16 @@ interface AppDataValue {
 
 const AppDataContext = createContext<AppDataValue | null>(null)
 
+/** Entradas del historial que se cargan (no compras): una compra grande no debe salir cortada. */
+const HISTORY_LIMIT = 300
+
+/** Si se llegó al límite, la compra más antigua puede venir incompleta: se descarta entera. */
+function wholePurchases(entries: PurchaseHistoryEntry[], limit: number) {
+  if (entries.length < limit) return entries
+  const oldest = entries[entries.length - 1].purchasedAt
+  return entries.filter((e) => e.purchasedAt !== oldest)
+}
+
 /** Primero los ordenados a mano (`order`), luego el resto alfabéticamente. */
 function sortGroups(groups: Group[]) {
   return sortByText(groups, (g) => g.name).sort((a, b) => (a.order ?? Infinity) - (b.order ?? Infinity))
@@ -112,9 +122,9 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   }, [])
 
   useEffect(() => {
-    const q = query(purchaseHistoryCol, orderBy('purchasedAt', 'desc'), limit(50))
+    const q = query(purchaseHistoryCol, orderBy('purchasedAt', 'desc'), limit(HISTORY_LIMIT))
     return onSnapshot(q, (snap) => {
-      setPurchaseHistory(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as PurchaseHistoryEntry))
+      setPurchaseHistory(wholePurchases(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as PurchaseHistoryEntry), HISTORY_LIMIT))
       setPurchaseHistoryLoading(false)
     }, handleError(() => setPurchaseHistoryLoading(false)))
   }, [])

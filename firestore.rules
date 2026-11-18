@@ -24,6 +24,12 @@ service cloud.firestore {
         existsAfter(/databases/$(database)/documents/users/$(request.auth.uid));
     }
 
+    // Marca de "restaurando copia": la escribe el admin al restaurar; el servicio de avisos (cuenta de servicio)
+    // la lee para no avisar de cada cambio de la restauración.
+    match /meta/restoring {
+      allow write: if isAdmin();
+    }
+
     function isAdmin() {
       return isMember() &&
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', 'member') == 'admin';

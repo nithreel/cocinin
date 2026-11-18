@@ -82,10 +82,22 @@ export async function enablePush(uid: string, prefs: PushPrefs): Promise<boolean
   return true
 }
 
+/** Espera una promesa como mucho `ms`; si no llega, sigue con `undefined` (sin red muchas promesas no resuelven). */
+function withTimeout<T>(promise: Promise<T>, ms: number) {
+  return Promise.race([promise, new Promise<undefined>((resolve) => setTimeout(() => resolve(undefined), ms))])
+}
+
+/**
+ * Quita este dispositivo de los avisos. No se queda colgada sin cobertura ni sin service worker: la baja en
+ * Firestore espera 3 s como mucho (queda en cola) y el dispositivo se desuscribe en cualquier caso.
+ */
 export async function disablePush() {
-  const sub = await currentSubscription()
+  if (!isPushSupported()) return
+  const reg = await withTimeout(navigator.serviceWorker.ready, 3000)
+  const sub = await reg?.pushManager.getSubscription()
   if (!sub) return
-  await deleteDoc(doc(pushSubscriptionsCol, await subscriptionId(sub.endpoint)))
+  const ref = doc(pushSubscriptionsCol, await subscriptionId(sub.endpoint))
+  await withTimeout(deleteDoc(ref).catch(() => undefined), 3000)
   await sub.unsubscribe()
 }
 
@@ -98,23 +110,26 @@ export async function savePrefs(prefs: PushPrefs) {
 /**
  * Aviso de prueba REAL: pide al servicio de avisos (la Raspberry) que envíe una notificación a este dispositivo,
  * así se comprueba toda la cadena. 'ok' = el servidor la envió; 'no-device' = no encontró este dispositivo;
- * 'timeout' = el servicio no responde (apagado o sin red).
+ * 'timeout' = el servicio no responde (apagado); 'offline' = este dispositivo no tiene conexión.
  */
-export async function requestServerTest(uid: string): Promise<'ok' | 'no-device' | 'timeout'> {
+export async function requestServerTest(uid: string): Promise<'ok' | 'no-device' | 'timeout' | 'offline'> {
+  if (!navigator.onLine) return 'offline'
   const sub = await currentSubscription()
   if (!sub) return 'no-device'
   const ref = doc(pushTestsCol)
   return new Promise((resolve) => {
-    const finish = (result: 'ok' | 'no-device' | 'timeout') => {
+    let pending = true // la petición aún no ha llegado al servidor: el móvil no tiene red
+    const finish = (result: 'ok' | 'no-device' | 'timeout' | 'offline') => {
       clearTimeout(timer)
       unsubscribe()
       void deleteDoc(ref).catch(() => undefined)
       resolve(result)
     }
-    const timer = setTimeout(() => finish('timeout'), 15_000)
+    const timer = setTimeout(() => finish(pending || !navigator.onLine ? 'offline' : 'timeout'), 15_000)
     const unsubscribe = onSnapshot(
       ref,
       (snap) => {
+        pending = snap.metadata.hasPendingWrites
         const status = snap.data()?.status
         if (status) finish(status === 'sent' ? 'ok' : 'no-device')
       },

@@ -31,6 +31,10 @@ const STATE_FILE = `${DATA_DIR}/expiry-state.json`
 const log = (...a) => console.log(new Date().toISOString(), ...a)
 
 const members = new Set() // uids con acceso (colección users)
+// Restauración de copia en curso (la app escribe meta/restoring): durante ella y unos segundos después no se
+// avisa de los cambios, que no son actividad real (recetas «nuevas», compras, ingredientes «gastados»…).
+let restoring = { active: false, until: 0 }
+const quiet = () => restoring.active || Date.now() < restoring.until
 let subscriptions = [] // { id, uid, endpoint, keys, prefs }
 const ingredients = new Map() // id -> datos
 
@@ -76,6 +80,18 @@ listen('pushSubscriptions', (type, id, data) => {
   if (type !== 'removed') subscriptions.push({ id, ...data })
 })
 
+db.doc('meta/restoring').onSnapshot(
+  (snap) => {
+    const d = snap.data()
+    if (!d) restoring = { active: false, until: 0 }
+    else if (d.endedAt) restoring = { active: false, until: Date.now() + 45_000 }
+    // una marca sin fin con más de 15 min es de una restauración que se cortó: se ignora
+    else restoring = { active: Date.now() - (d.startedAt ?? 0) < 15 * 60_000, until: 0 }
+    if (quiet()) log('restauración de copia: avisos en pausa')
+  },
+  (err) => log('error escuchando meta/restoring:', err.message),
+)
+
 // Elemento gastado: inPantry pasa de true a false. Se agrupa lo que llega en 60 s.
 const spent = createCollector(60_000, (batch) => {
   const only = new Set(batch.map((b) => b.by))
@@ -85,7 +101,7 @@ listen('ingredients', (type, id, data, first) => {
   const before = ingredients.get(id)
   if (type === 'removed') ingredients.delete(id)
   else ingredients.set(id, data)
-  if (!first && type === 'modified' && before?.inPantry === true && data.inPantry === false) {
+  if (!first && !quiet() && type === 'modified' && before?.inPantry === true && data.inPantry === false) {
     spent.push({ name: data.name, by: data.by ?? null })
   }
 })
@@ -93,7 +109,7 @@ listen('ingredients', (type, id, data, first) => {
 // Lista de la compra: un añadido solo no avisa; varios seguidos, un aviso.
 const burst = createShoppingBurst()
 listen('shoppingList', (type, _id, data, first) => {
-  if (first || type !== 'added') return
+  if (first || quiet() || type !== 'added') return
   if (burst.add()) void send('lista', { title: 'Lista de la compra', body: 'Se están añadiendo elementos a la lista' }, '/lista', data.by)
 })
 
@@ -102,7 +118,7 @@ const purchases = createCollector(5_000, (batch) => {
   void send('compra', purchaseMessage(batch.length), '/lista', batch[0].by)
 })
 listen('purchaseHistory', (type, _id, data, first) => {
-  if (!first && type === 'added') purchases.push({ by: data.by ?? null })
+  if (!first && !quiet() && type === 'added') purchases.push({ by: data.by ?? null })
 })
 
 // 2 s: casi al momento, pero una importación en lote (varias recetas a la vez) sale como un solo aviso
@@ -110,13 +126,13 @@ const recipes = createCollector(2_000, (batch) => {
   void send('receta', recipeMessage(batch.map((b) => b.title)), '/recetario', batch[0].by)
 })
 listen('recipes', (type, _id, data, first) => {
-  if (!first && type === 'added') recipes.push({ title: data.title, by: data.by ?? null })
+  if (!first && !quiet() && type === 'added') recipes.push({ title: data.title, by: data.by ?? null })
 })
 
 listen('users', (type, id, data, first) => {
   if (type === 'removed') members.delete(id)
   else members.add(id)
-  if (!first && type === 'added') {
+  if (!first && !quiet() && type === 'added') {
     void send('usuario', { title: 'Usuario nuevo', body: `${data.email} se ha unido` }, '/usuarios', data.by)
   }
 })
@@ -142,6 +158,7 @@ listen('notes', (type, id, data) => {
 })
 let notesFirstLoad = true
 async function checkNotes() {
+  if (quiet()) return
   for (const note of dueNotes(notes)) {
     note.sent = true
     notes.set(note.id, { ...notes.get(note.id), sent: true })

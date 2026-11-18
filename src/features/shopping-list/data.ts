@@ -1,5 +1,6 @@
 import { deleteDoc, doc, getDocs, setDoc, updateDoc, writeBatch } from 'firebase/firestore'
 import { currentUid, db } from '../../firebase'
+import { localDateString } from '../../lib/expiry'
 import {
   ingredientsCol,
   purchaseHistoryCol,
@@ -7,7 +8,6 @@ import {
   type Ingredient,
   type ShoppingItem,
 } from '../../lib/collections'
-import { localDateString } from '../../lib/expiry'
 
 export { useShoppingList, usePurchaseHistory } from '../../lib/AppDataContext'
 
@@ -41,11 +41,16 @@ export async function confirmPurchase(items: ShoppingItem[], ingredientsById: Ma
     if (!ingredientsById.has(item.ingredientId)) continue
     batch.update(doc(ingredientsCol, item.ingredientId), {
       inPantry: true,
+      // lo recién comprado sale como «Comprado hoy» (sin fecha de caducidad: se pone a mano si hace falta), sin
+      // cantidad y sin el estado anterior (congelado, descongelando o «gastar pronto» de lo que quedaba)
       expiryMode: 'sinceStocked',
       stockedDate,
       expiryDate: null,
-      // lo recién comprado está entero: se vacía la cantidad que quedaba
       quantity: null,
+      frozen: false,
+      thawedAt: null,
+      useSoon: false,
+      useSoonAt: null,
     })
     const ingredientName = ingredientsById.get(item.ingredientId)?.name ?? '(ingrediente eliminado)'
     batch.set(doc(purchaseHistoryCol), { ingredientName, purchasedAt, by: currentUid() })

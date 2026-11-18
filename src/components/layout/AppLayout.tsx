@@ -6,6 +6,8 @@ import ErrorToast from '../ErrorToast'
 import UpdatePrompt from '../UpdatePrompt'
 import ReleaseNotice from '../ReleaseNotice'
 import { ConfirmDelete } from '../DeleteButton'
+import { dangerTextButton, primaryButton } from '../buttonStyles'
+import { allWritesSynced } from '../../lib/pendingWrites'
 import { BellIcon, BookIcon, CartIcon, DownloadIcon, LogoutIcon, NoteIcon, PantryIcon, UsersIcon } from '../icons'
 import { downloadBackup } from '../../lib/backup'
 import { useDataError } from '../../lib/AppDataContext'
@@ -75,15 +77,31 @@ function BackupIcon({ withUsers }: { withUsers: boolean }) {
 function LogoutButton({ up }: { up: boolean }) {
   const { signOut } = useAuth()
   const [open, setOpen] = useState(false)
+  const [checking, setChecking] = useState(false)
+  // hay cambios hechos sin cobertura que aún no han subido: salir los perdería (se borra la caché local)
+  const [unsynced, setUnsynced] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
+
+  async function handleLogout() {
+    setChecking(true)
+    const synced = await allWritesSynced()
+    setChecking(false)
+    if (synced) void signOut()
+    else setUnsynced(true)
+  }
+
+  function close() {
+    setOpen(false)
+    setUnsynced(false)
+  }
 
   useEffect(() => {
     if (!open) return
     function onDown(e: Event) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+      if (ref.current && !ref.current.contains(e.target as Node)) close()
     }
     function onKey(e: KeyboardEvent) {
-      if (e.key === 'Escape') setOpen(false)
+      if (e.key === 'Escape') close()
     }
     document.addEventListener('pointerdown', onDown)
     document.addEventListener('keydown', onKey)
@@ -110,16 +128,32 @@ function LogoutButton({ up }: { up: boolean }) {
           role="alertdialog"
           aria-label="Confirmar cierre de sesión"
           className={
-            'absolute right-0 z-50 w-56 rounded-lg border border-gray-200 bg-white p-3 shadow-lg dark:border-moss-700 dark:bg-moss-800 ' +
+            'absolute right-0 z-50 w-60 rounded-lg border border-gray-200 bg-white p-3 shadow-lg dark:border-moss-700 dark:bg-moss-800 ' +
             (up ? 'bottom-full mb-2' : 'top-full mt-2')
           }
         >
-          <ConfirmDelete
-            question="¿Cerrar sesión?"
-            confirmLabel="Sí, salir"
-            onConfirm={() => signOut()}
-            onCancel={() => setOpen(false)}
-          />
+          {unsynced ? (
+            <>
+              <p className="mb-2 text-sm text-gray-700 dark:text-gray-300">
+                Hay cambios sin subir (sin conexión). Si sales ahora, se perderán.
+              </p>
+              <div className="flex items-center gap-2">
+                <button type="button" onClick={close} className={primaryButton}>
+                  Esperar
+                </button>
+                <button type="button" onClick={() => void signOut()} className={dangerTextButton}>
+                  Salir igualmente
+                </button>
+              </div>
+            </>
+          ) : (
+            <ConfirmDelete
+              question="¿Cerrar sesión?"
+              confirmLabel={checking ? 'Comprobando…' : 'Sí, salir'}
+              onConfirm={() => void handleLogout()}
+              onCancel={close}
+            />
+          )}
         </div>
       )}
     </div>

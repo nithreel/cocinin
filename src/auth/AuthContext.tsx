@@ -111,6 +111,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function signOut() {
     // los avisos son del dispositivo: se desactivan para que no sigan llegando ni bloqueen al siguiente usuario
+    // (no espera al servidor: sin cobertura el cierre de sesión no puede quedarse colgado)
     await disablePush().catch(() => undefined)
     await firebaseSignOut(auth)
     // En un dispositivo compartido no deben quedar datos de la cocina en la caché local.

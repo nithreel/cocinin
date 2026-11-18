@@ -114,6 +114,13 @@ describe('instalación hecha', () => {
     await assertFails(getDoc(doc(admin, 'pushTests/t1')))
   })
 
+  it('solo el admin escribe la marca meta/restoring', async () => {
+    const admin = env.authenticatedContext('admin').firestore()
+    await assertSucceeds(setDoc(doc(admin, 'meta/restoring'), { startedAt: 1, endedAt: null }))
+    const member = env.authenticatedContext('member').firestore()
+    await assertFails(setDoc(doc(member, 'meta/restoring'), { startedAt: 1, endedAt: null }))
+  })
+
   it('el admin crea miembros, pero no otro admin', async () => {
     const db = env.authenticatedContext('admin').firestore()
     await assertSucceeds(setDoc(doc(db, 'users/nuevo'), { email: 'n@x.es', role: 'member', createdAt: 3 }))

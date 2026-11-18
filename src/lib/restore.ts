@@ -1,4 +1,4 @@
-import { doc, getDocs, writeBatch } from 'firebase/firestore'
+import { doc, getDocs, setDoc, writeBatch } from 'firebase/firestore'
 import { db } from '../firebase'
 import {
   groupsCol,
@@ -38,6 +38,26 @@ export const COLLECTION_LABELS: Record<RestorableName, string> = {
   notes: 'notas',
 }
 
+const isText = (v: unknown) => typeof v === 'string' && v.trim() !== ''
+
+/** Campos imprescindibles de cada colección (un JSON editado a mano sin ellos rompería la app al ordenar o pintar). */
+function validateDoc(name: RestorableName, data: Record<string, unknown>): string | null {
+  switch (name) {
+    case 'groups':
+    case 'ingredients':
+    case 'tags':
+      return isText(data.name) ? null : 'falta el nombre'
+    case 'recipes':
+      return isText(data.title) && Array.isArray(data.ingredients) ? null : 'falta el título o los ingredientes'
+    case 'notes':
+      return typeof data.text === 'string' ? null : 'falta el texto'
+    case 'shoppingList':
+      return isText(data.ingredientId) ? null : 'falta el ingrediente'
+    case 'purchaseHistory':
+      return isText(data.ingredientName) && typeof data.purchasedAt === 'number' ? null : 'faltan datos de la compra'
+  }
+}
+
 /** Lee el JSON de «Descargar copia de seguridad». Lanza un Error con mensaje legible si no es una copia válida. */
 export function parseBackup(text: string): ParsedBackup {
   let raw: unknown
@@ -52,11 +72,13 @@ export function parseBackup(text: string): ParsedBackup {
     const list = (raw as Record<string, unknown>)[name]
     if (list === undefined) continue
     if (!Array.isArray(list)) throw new Error(`«${name}» no tiene el formato esperado.`)
-    result[name] = list.map((item) => {
+    result[name] = list.map((item, i) => {
       if (typeof item !== 'object' || item === null || typeof (item as { id?: unknown }).id !== 'string' || !(item as { id: string }).id) {
         throw new Error(`Hay un elemento sin id en «${name}».`)
       }
       const { id, ...data } = item as { id: string } & Record<string, unknown>
+      const problem = validateDoc(name, data)
+      if (problem) throw new Error(`«${name}» #${i + 1}: ${problem}.`)
       return { id, data }
     })
   }
@@ -70,11 +92,27 @@ export function parseBackup(text: string): ParsedBackup {
  * `replace`: además borra de cada colección presente en la copia lo que no esté en ella.
  */
 export async function restoreBackup(backup: ParsedBackup, mode: 'merge' | 'replace') {
+  // marca para el servicio de avisos: durante la restauración no avisa de cada receta, compra o ingrediente
+  const marker = doc(db, 'meta', 'restoring')
+  await setDoc(marker, { startedAt: Date.now(), endedAt: null })
+  try {
+    return await writeRestore(backup, mode)
+  } finally {
+    await setDoc(marker, { startedAt: Date.now(), endedAt: Date.now() }).catch(() => undefined)
+  }
+}
+
+async function writeRestore(backup: ParsedBackup, mode: 'merge' | 'replace') {
+  const now = Date.now()
   const ops: ((b: ReturnType<typeof writeBatch>) => void)[] = []
   for (const name of Object.keys(backup) as RestorableName[]) {
     const col = RESTORABLE[name]
     const docs = backup[name] ?? []
-    for (const d of docs) ops.push((b) => b.set(doc(col, d.id), d.data))
+    for (const d of docs) {
+      // una nota con aviso cuya hora ya pasó se restaura como enviada: no se avisa de lo antiguo
+      const stale = name === 'notes' && d.data.notify === true && typeof d.data.remindAt === 'number' && d.data.remindAt < now
+      ops.push((b) => b.set(doc(col, d.id), stale ? { ...d.data, sent: true } : d.data))
+    }
     if (mode === 'replace') {
       const keep = new Set(docs.map((d) => d.id))
       const snap = await getDocs(col)

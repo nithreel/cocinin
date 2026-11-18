@@ -18,10 +18,10 @@
 CocinIN responde a tres preguntas del día a día: **¿qué tenemos en casa?**, **¿qué hay que comprar?** y **¿qué podemos cocinar?** Todo se sincroniza al instante entre las personas de la casa: si alguien tacha algo en el súper, los demás lo ven en su móvil.
 
 - 🥫 **Despensa**: ingredientes por grupos con un interruptor de color que resume el estado (verde disponible, rojo agotado, azul congelado, ámbar con aviso). Con fecha de compra o de caducidad, o sin fecha. Puedes marcar lo que quieras **congelado** y, al sacarlo, empieza la **cuenta de descongelado** en la nevera (azul las primeras 24 h, ámbar a partir de ahí y rojo a las 48 h, con «Descongelado hace 1 día y 6 h»), y un botón de alerta para marcar lo que quieres **gastar pronto** («Marcado hace 2 días»). Las cabeceras de grupo muestran cuántos ingredientes tienen aviso, aunque estén plegadas. «Comprado hace X días» solo lo anota la lista de la compra.
-- 🛒 **Lista de la compra**: lo que te falta, con buscador y un «+» para añadirlo (con «Deshacer»). Al confirmar la compra, lo comprado vuelve a la despensa y se anota en el historial.
-- 📖 **Recetario**: recetas con ingredientes (obligatorios u opcionales) y preparación, con buscador, filtro «Puedo hacerla» y **etiquetas** propias (con emoji, ordenables arrastrando) para filtrar. Lo que te falta sale en rojo (y en ámbar si es opcional).
-- 📝 **Notas**: recordatorios con hora y fecha («Sacar pollo del congelador, mañana a las 17:30») que avisan por el móvil a las personas que elijas.
-- 👥 **Usuarios**: un administrador da de alta a los demás y puede ponerles un alias. Cada casa tiene su propia instalación y sus datos son privados.
+- 🛒 **Lista de la compra**: abajo, «Añadir a la lista» busca en toda la despensa (también lo que aún tienes) y, si no existe, lo crea agotado y lo añade; muestra por defecto lo que te falta, con una franja del color del interruptor. Un «+» lo añade (con «Deshacer»). Al confirmar la compra, lo comprado vuelve a la despensa como «Comprado hoy», **sin cantidad ni caducidad** (se ponen a mano), y se anota en el historial. Los grupos se ordenan a tu gusto desde la Despensa (icono de flechas junto al buscador), igual que las etiquetas.
+- 📖 **Recetario**: recetas con ingredientes (obligatorios u opcionales) y preparación, con buscador, filtro «Puedo hacerla» y **etiquetas** propias (con emoji, ordenables arrastrando) para filtrar. Lo que te falta sale en rojo (y en ámbar si es opcional); lo caducado no cuenta como disponible. Un carrito junto a «Ingredientes» añade a la lista lo que falta, y el buscador también busca por ingrediente.
+- 📝 **Notas**: recordatorios con hora y fecha («Sacar pollo del congelador, mañana a las 17:30») que avisan por el móvil a las personas que elijas, y que se pueden marcar como hechas (y «Borrar hechas»).
+- 👥 **Usuarios**: un administrador da de alta a los demás, les pone un alias, puede nombrar a otros administradores y **restaurar una copia** de seguridad (fusionar o reemplazar). Cada persona cambia su contraseña desde ahí. Cada casa tiene su propia instalación y sus datos son privados.
 - 📥 **Importar recetas**: pega el JSON que te prepare cualquier IA con la receta y se añaden al recetario, con vista previa.
 - 🔔 **Avisos en el móvil** (opcional): algo se ha agotado, compra hecha, algo va a caducar, algo lleva 24 h o 48 h descongelado, una nota con hora…
 - 🌗 Modo claro y oscuro automático, copia de seguridad en un clic (icono de descarga de la barra superior) y aviso cuando hay una versión nueva de la app.
@@ -129,17 +129,18 @@ Tanto con la opción A como con la B, la instalación ha terminado cuando tu URL
 | Gastar pronto | En el mismo panel, el triángulo de alerta marca el ingrediente (toggle ámbar y «⚠ Marcado hace X días»). Se quita al agotarlo. |
 | Fecha, cantidad, editar o eliminar | Toca el ingrediente: tipo de fecha (**Sin fecha**, de compra o de caducidad) y la fecha, cantidad (texto libre, p. ej. «500 g») y botones **Editar** y **Eliminar**. Mientras algo se descongela, la fecha de descongelado manda sobre las demás. |
 | Buscar | El buscador de la Despensa filtra por ingrediente **o por grupo**. |
-| Comprar | Lista → «+» en lo que falta → marca lo comprado → «Confirmar compra». |
+| Añadir a la lista | Lista → «Añadir a la lista» (abajo): escribe para buscar o crear, y pulsa «+». En la Despensa, el **carrito** del ingrediente lo añade aunque aún quede. |
+| Comprar | Marca lo comprado en la lista → «Confirmar compra». Vuelve a la despensa como «Comprado hoy», sin cantidad ni caducidad (pónlas a mano si hace falta). |
 | Receta nueva | Recetario → «+ Receta», o **Importar** para pegar un JSON con una o varias recetas (vista previa y «Deshacer importación»). |
 | Nota con aviso | Notas → «+ Nota» → activa «Avisar a una hora», elige hora y fecha y a quién avisar (por defecto, a todos). |
-| Usuarios y copia de seguridad | En la barra superior: **Usuarios** (solo administrador: alta, baja y alias) y el icono de **descargar copia de seguridad**, para cualquiera. |
+| Usuarios y copia de seguridad | En la barra superior: **Usuarios** (el administrador da de alta, quita, pone alias, nombra admins y restaura copias; todos cambian ahí su contraseña) y el icono de **descargar copia de seguridad**, para cualquiera. |
 | Olvidé la contraseña | Login → «¿Has olvidado la contraseña?» |
 
 ---
 
 ## Usuarios y seguridad
 
-- Es **miembro** quien tiene un documento `users/{uid}`; las reglas (`firestore.rules`) solo dejan leer y escribir a los miembros. **Solo el admin** (el primero creado) da de alta o quita acceso a otros.
+- Es **miembro** quien tiene un documento `users/{uid}`; las reglas (`firestore.rules`) solo dejan leer y escribir a los miembros. **Solo un admin** (el primero creado, y los que él nombre) da de alta o quita acceso a otros; todos los admins son iguales.
 - «Quitar acceso» bloquea al usuario en la app; su cuenta sigue en Authentication y puede borrarse en la consola.
 - La configuración web de Firebase (`VITE_FIREBASE_*`) **no es secreta**: la protección real son las reglas de Firestore. Aun así, `.env` no se sube a git.
 - **Un proyecto de Firebase por casa**: no compartas proyecto entre casas distintas, se mezclarían los datos.
