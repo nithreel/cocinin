@@ -11,7 +11,7 @@ function describe(reason: unknown) {
         return 'Sin conexión con el servidor. Revisa tu conexión: el cambio puede no haberse guardado.'
     }
   }
-  return 'No se ha podido completar la acción. Inténtalo de nuevo.'
+  return 'No se pudo completar la acción. Inténtalo de nuevo.'
 }
 
 /**

@@ -321,7 +321,7 @@ export default function ShoppingListPage() {
       </div>
 
       <div>
-        <div className="sticky top-[var(--head-h)] z-20 flex items-center justify-between gap-2 bg-white pb-1 pt-1 dark:bg-moss-950">
+        <div className="sticky top-[var(--head-h)] z-20 flex flex-wrap items-center justify-between gap-2 bg-white pb-1 pt-1 dark:bg-moss-950">
           <SectionHeader
             name="Historial de compras"
             count={historyCollapsed ? undefined : purchaseBatches.length}
@@ -329,7 +329,12 @@ export default function ShoppingListPage() {
             onToggle={() => setHistoryCollapsed((v) => !v)}
           />
           {!historyCollapsed && historyEntries.length > 0 && (
-            <DeleteButton onConfirm={clearPurchaseHistory} label="Borrar historial" confirmLabel="Sí, borrar" />
+            <DeleteButton
+              onConfirm={clearPurchaseHistory}
+              label="Eliminar historial"
+              question="¿Eliminar el historial de compras?"
+              confirmClassName="w-full basis-full"
+            />
           )}
         </div>
         {!historyCollapsed &&

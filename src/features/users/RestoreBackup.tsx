@@ -19,7 +19,7 @@ export default function RestoreBackup() {
       setBackup(parseBackup(await file.text()))
       setFileName(file.name)
     } catch (e) {
-      setMessage({ ok: false, text: e instanceof Error ? e.message : 'No se pudo leer el archivo.' })
+      setMessage({ ok: false, text: e instanceof Error ? e.message : 'No se pudo leer el archivo. Comprueba que es una copia de Cocinin.' })
     }
   }
 
@@ -37,7 +37,7 @@ export default function RestoreBackup() {
       setMessage({ ok: true, text: `Copia restaurada (${n} cambios).` })
       reset()
     } catch (e) {
-      setMessage({ ok: false, text: `No se pudo restaurar: ${e instanceof Error ? e.message : 'error desconocido'}. Hace falta conexión.` })
+      setMessage({ ok: false, text: `No se pudo restaurar: ${e instanceof Error ? e.message : 'error desconocido'}. Hace falta conexión; inténtalo de nuevo.` })
     } finally {
       setBusy(false)
     }

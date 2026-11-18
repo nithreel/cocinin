@@ -207,11 +207,16 @@ function RecipeCard({
               )}
 
               {/* Pie fijo: Editar y Eliminar siguen a la vista aunque la receta sea larga */}
-              <div className="sticky -bottom-4 z-10 -mx-4 mt-3 flex items-center justify-end gap-1 border-t border-gray-100 bg-white px-4 py-2 md:-bottom-8 dark:border-moss-800 dark:bg-moss-900">
+              <div className="sticky -bottom-4 z-10 -mx-4 mt-3 flex flex-wrap items-center justify-end gap-1 border-t border-gray-100 bg-white px-4 py-2 md:-bottom-8 dark:border-moss-800 dark:bg-moss-900">
                 <button type="button" onClick={() => setEditing(true)} className={cancelButton}>
                   Editar
                 </button>
-                <DeleteButton onConfirm={() => deleteRecipe(recipe.id)} label="Eliminar" />
+                <DeleteButton
+                  onConfirm={() => deleteRecipe(recipe.id)}
+                  label="Eliminar"
+                  question={`¿Eliminar la receta «${recipe.title}»?`}
+                  confirmClassName="w-full basis-full justify-end"
+                />
               </div>
             </>
           )}
@@ -377,11 +382,11 @@ export default function RecipesPage() {
       {loading && <ListSkeleton />}
 
       {!loading && recipes.length === 0 && (
-        <p className="text-gray-500 dark:text-gray-400">Aún no hay recetas. Crea la primera con «+ Receta».</p>
+        <p className="text-gray-500 dark:text-gray-400">Aún no hay recetas. Añade la primera con «+ Receta».</p>
       )}
 
       {recipes.length > 0 && visibleRecipes.length === 0 && (
-        <p className="text-gray-500 dark:text-gray-400">Ninguna receta coincide.</p>
+        <p className="text-gray-500 dark:text-gray-400">No hay recetas que coincidan {search.trim() ? `con «${search.trim()}»` : 'con los filtros elegidos'}.</p>
       )}
 
       <div className="space-y-4">

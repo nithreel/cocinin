@@ -105,7 +105,7 @@ function errorMessage(err: unknown) {
         return 'La contraseña es demasiado débil (mínimo 6 caracteres).'
     }
   }
-  return 'No se ha podido crear el usuario. Inténtalo de nuevo.'
+  return 'No se pudo añadir el usuario. Inténtalo de nuevo.'
 }
 
 const inputClasses =
@@ -201,7 +201,7 @@ export default function UsersPage() {
           disabled={submitting}
           className={primaryButton}
         >
-          {submitting ? 'Creando…' : 'Crear usuario'}
+          {submitting ? 'Añadiendo…' : 'Añadir usuario'}
         </button>
         <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">
           "Quitar acceso" bloquea al usuario en la app; su cuenta de Firebase sigue existiendo y puede borrarse desde

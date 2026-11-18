@@ -12,7 +12,7 @@ export default function GroupsOrder({ groups, onClose }: { groups: Group[]; onCl
   return (
     <section className="mb-6 rounded-lg border border-gray-200 bg-white p-4 dark:border-moss-700 dark:bg-moss-900">
       <div className="mb-1 flex items-center justify-between gap-2">
-        <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">Orden de los grupos</h3>
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Orden de los grupos</h3>
         <button type="button" onClick={onClose} aria-label="Cerrar" className={cancelButton + ' -mr-2'}>
           <XIcon />
         </button>

@@ -36,11 +36,15 @@ export function ConfirmDelete({
 export default function DeleteButton({
   onConfirm,
   label = 'Eliminar',
-  confirmLabel,
+  question = '¿Eliminar?',
+  confirmClassName = 'shrink-0',
 }: {
   onConfirm: () => Promise<void>
   label?: string
-  confirmLabel?: string
+  /** qué se elimina, con su nombre si lo tiene: «¿Eliminar la receta «Lentejas»?» */
+  question?: string
+  /** p. ej. «basis-full» para que la confirmación pase a su propia línea si no cabe junto al botón */
+  confirmClassName?: string
 }) {
   const [confirming, setConfirming] = useState(false)
   const [busy, setBusy] = useState(false)
@@ -57,12 +61,12 @@ export default function DeleteButton({
   if (confirming) {
     return (
       <ConfirmDelete
-        question="¿Seguro?"
-        confirmLabel={confirmLabel}
+        question={question}
+        questionClassName="w-full"
         busy={busy}
         onConfirm={handleConfirm}
         onCancel={() => setConfirming(false)}
-        className="shrink-0"
+        className={confirmClassName}
       />
     )
   }

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import Switch from '../../components/Switch'
+import StickyHeader from '../../components/StickyHeader'
 import { useAuth } from '../../auth/AuthContext'
 import { cancelButton, outlineButton, primaryButton } from '../../components/buttonStyles'
 import type { PushPrefs } from '../../lib/collections'
@@ -50,7 +51,7 @@ export default function AlertsPage() {
       .catch((e: Error) => {
         if (cancelled) return
         console.error(e)
-        setError('No se han podido cargar los avisos. Inténtalo de nuevo.')
+        setError('No se pudieron cargar los avisos. Inténtalo de nuevo.')
         setState('off')
       })
     return () => {
@@ -73,7 +74,7 @@ export default function AlertsPage() {
           ? 'El servicio de avisos no responde: comprueba que la Raspberry está encendida y con el servicio en marcha.'
           : msg === 'no-device'
             ? 'Este dispositivo no está registrado para recibir avisos. Desactiva y vuelve a activar los avisos.'
-            : 'No se ha podido completar la acción. Inténtalo de nuevo.',
+            : 'No se pudo completar la acción. Inténtalo de nuevo.',
       )
     } finally {
       setBusy(false)
@@ -112,7 +113,7 @@ export default function AlertsPage() {
 
   return (
     <div>
-      <h2 className="mb-4 text-2xl font-semibold text-gray-900 dark:text-gray-100">Avisos</h2>
+      <StickyHeader title="Avisos" />
 
       {state === null && <p className="text-gray-500 dark:text-gray-400">Cargando…</p>}
 

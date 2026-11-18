@@ -212,7 +212,7 @@ export default function RecipeForm({
         </p>
       )}
       {search.trim() && sections.length === 0 && (
-        <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">Nada que coincida con «{search.trim()}».</p>
+        <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">No hay ingredientes que coincidan con «{search.trim()}».</p>
       )}
       <div className="mb-4 space-y-3">
         {sections.map((section) => (

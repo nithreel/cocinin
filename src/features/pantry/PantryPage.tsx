@@ -570,7 +570,7 @@ function AddGroupForm({ groups, onDone }: { groups: Group[]; onDone: () => void 
           disabled={submitting}
           className={primaryButton}
         >
-          Crear
+          Añadir
         </button>
         <button type="button" onClick={onDone} className={cancelButton}>
           Cancelar

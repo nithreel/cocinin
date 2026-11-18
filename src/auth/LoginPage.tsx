@@ -24,10 +24,10 @@ function errorMessage(err: unknown) {
       case 'auth/too-many-requests':
         return 'Demasiados intentos. Prueba de nuevo en unos minutos.'
       default:
-        return 'No se ha podido completar la operación. Inténtalo de nuevo.'
+        return 'No se pudo completar la operación. Inténtalo de nuevo.'
     }
   }
-  return 'No se ha podido completar la operación. Inténtalo de nuevo.'
+  return 'No se pudo completar la operación. Inténtalo de nuevo.'
 }
 
 export default function LoginPage() {

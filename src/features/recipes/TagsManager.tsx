@@ -1,5 +1,5 @@
 import { useState, type CSSProperties, type FormEvent, type HTMLAttributes } from 'react'
-import { cancelButton, outlineButton, primaryButton } from '../../components/buttonStyles'
+import { cancelButton, outlineButton, primaryButton, rowIconButton } from '../../components/buttonStyles'
 import { ConfirmDelete } from '../../components/DeleteButton'
 import { XIcon } from '../../components/icons'
 import type { Recipe, Tag } from '../../lib/collections'
@@ -50,7 +50,7 @@ function TagRow({
       setError(null)
     } catch (err) {
       console.error(err)
-      setError('No se pudo guardar.')
+      setError('No se pudo guardar. Inténtalo de nuevo.')
     } finally {
       setBusy(false)
     }
@@ -62,7 +62,7 @@ function TagRow({
       await deleteTag(tag.id)
     } catch (err) {
       console.error(err)
-      setError('No se pudo eliminar.')
+      setError('No se pudo eliminar. Inténtalo de nuevo.')
       setBusy(false)
       setConfirming(false)
     }
@@ -110,14 +110,16 @@ function TagRow({
         {!confirming && (
           <>
             <button type="button" onClick={() => setEditing(true)} className={cancelButton}>
-              Renombrar
+              Editar
             </button>
             <button
               type="button"
               onClick={() => setConfirming(true)}
-              className="rounded-md px-2 py-1.5 text-sm text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950"
+              aria-label={`Eliminar «${tag.name}»`}
+              title="Eliminar"
+              className={rowIconButton}
             >
-              Eliminar
+              <XIcon />
             </button>
           </>
         )}
@@ -170,7 +172,7 @@ export default function TagsManager({
       setError(null)
     } catch (err) {
       console.error(err)
-      setError('No se pudo crear la etiqueta.')
+      setError('No se pudo crear la etiqueta. Inténtalo de nuevo.')
     } finally {
       setBusy(false)
     }
@@ -179,7 +181,7 @@ export default function TagsManager({
   const { shown, draggingId, rowStyle, handleFor, rowRef } = useDragReorder(sortTags(tags), (ids) => {
     reorderTags(ids).catch((err) => {
       console.error(err)
-      setError('No se pudo cambiar el orden.')
+      setError('No se pudo cambiar el orden. Inténtalo de nuevo.')
     })
   })
 
@@ -188,7 +190,7 @@ export default function TagsManager({
   return (
     <section className="mb-6 rounded-lg border border-gray-200 bg-white p-4 dark:border-moss-700 dark:bg-moss-900">
       <div className="mb-3 flex items-center justify-between gap-2">
-        <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">Etiquetas</h3>
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Etiquetas</h3>
         <button type="button" onClick={onClose} aria-label="Cerrar" className={cancelButton + ' -mr-2'}>
           <XIcon />
         </button>
@@ -198,16 +200,16 @@ export default function TagsManager({
           value={name}
           onChange={(e) => setName(e.target.value)}
           maxLength={30}
-          placeholder="Nueva etiqueta (Postre, Fría, 🍲 Caliente…)"
+          placeholder="Nueva etiqueta"
           className={inputClass}
         />
         <button type="submit" disabled={busy || !name.trim()} className={outlineButton}>
-          Crear
+          Añadir
         </button>
       </form>
       {error && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{error}</p>}
       {tags.length === 0 ? (
-        <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">Aún no hay etiquetas.</p>
+        <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">Aún no hay etiquetas. Añade la primera arriba.</p>
       ) : (
         <ul className="mt-3 divide-y divide-gray-100 dark:divide-moss-800">
           {shown.map((t) => (

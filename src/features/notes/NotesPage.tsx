@@ -1,14 +1,14 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { onSnapshot, orderBy, query } from 'firebase/firestore'
 import { useAuth } from '../../auth/AuthContext'
-import DeleteButton, { ConfirmDelete } from '../../components/DeleteButton'
+import { ConfirmDelete } from '../../components/DeleteButton'
 import KebabMenu from '../../components/KebabMenu'
 import ListSkeleton from '../../components/ListSkeleton'
 import { scrollMainToTop } from '../../lib/scroll'
 import StickyHeader from '../../components/StickyHeader'
 import Switch from '../../components/Switch'
 import { BellIcon } from '../../components/icons'
-import { cancelButton, primaryButton } from '../../components/buttonStyles'
+import { cancelButton, dangerTextButton, primaryButton } from '../../components/buttonStyles'
 import { usersCol, type Member, type Note } from '../../lib/collections'
 import { isPushConfigured } from '../../lib/push'
 import { defaultRemindAt, formatRemind, joinDateTime, reminderChanged, splitDateTime } from '../../lib/noteTime'
@@ -95,7 +95,7 @@ function NoteForm({
         rows={3}
         value={text}
         onChange={(e) => setText(e.target.value)}
-        placeholder="Sacar pollo del congelador…"
+        placeholder="Escribe la nota aquí…"
         className={inputClasses + ' mb-4 w-full'}
       />
 
@@ -226,6 +226,8 @@ export default function NotesPage() {
   const { notes, loading } = useNotes()
   const members = useMembers()
   const [showForm, setShowForm] = useState(false)
+  const [confirmingDone, setConfirmingDone] = useState(false)
+  const doneCount = notes.filter((n) => n.done).length
 
   // primero las que tienen aviso pendiente (la más próxima arriba), luego las simples, al final las ya avisadas
   // (marcar una como hecha no la mueve de sitio)
@@ -236,7 +238,29 @@ export default function NotesPage() {
 
   return (
     <div>
-      <StickyHeader title="Notas">
+      <StickyHeader
+        title="Notas"
+        below={
+          confirmingDone && doneCount > 0 && (
+            // la confirmación va en su propia línea bajo la cabecera: en un móvil estrecho no cabría junto a los botones
+            <ConfirmDelete
+              question={doneCount === 1 ? '¿Eliminar la nota?' : `¿Eliminar las ${doneCount} notas?`}
+              questionClassName="w-full"
+              onConfirm={() => {
+                deleteDoneNotes(notes)
+                setConfirmingDone(false)
+              }}
+              onCancel={() => setConfirmingDone(false)}
+            />
+          )
+        }
+      >
+        {/* elimina las marcadas como hechas; junto a «+ Nota» para no desplazar la lista */}
+        {doneCount > 0 && !confirmingDone && (
+          <button type="button" onClick={() => setConfirmingDone(true)} className={dangerTextButton}>
+            Eliminar
+          </button>
+        )}
         <button type="button" onClick={() => {
             setShowForm((v) => !v)
             scrollMainToTop()
@@ -251,13 +275,7 @@ export default function NotesPage() {
 
       {loading && <ListSkeleton />}
       {!loading && notes.length === 0 && (
-        <p className="text-gray-500 dark:text-gray-400">Aún no hay notas. Crea la primera con «+ Nota».</p>
-      )}
-
-      {notes.some((n) => n.done) && (
-        <div className="mb-3 flex justify-end">
-          <DeleteButton onConfirm={() => deleteDoneNotes(notes)} label="Borrar hechas" confirmLabel="Sí, borrar" />
-        </div>
+        <p className="text-gray-500 dark:text-gray-400">Aún no hay notas. Añade la primera con «+ Nota».</p>
       )}
 
       <ul className="space-y-3">

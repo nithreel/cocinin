@@ -14,7 +14,7 @@ function errorMessage(err: unknown) {
     if (err.code === 'auth/too-many-requests') return 'Demasiados intentos. Espera un rato y vuelve a probar.'
     if (err.code === 'auth/network-request-failed') return 'Sin conexión: hace falta red para cambiar la contraseña.'
   }
-  return 'No se pudo cambiar la contraseña.'
+  return 'No se pudo cambiar la contraseña. Inténtalo de nuevo.'
 }
 
 /** Cambio de contraseña del usuario con sesión (pide la actual, para confirmar que eres tú). */

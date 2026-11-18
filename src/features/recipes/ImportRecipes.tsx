@@ -40,7 +40,7 @@ function CreateMissing({ names, groups }: { names: string[]; groups: Group[] }) 
       for (const n of names) await addIngredient(n, picked[n], { mode: 'none', date: null, quantity: '' }, false)
     } catch (e) {
       console.error(e)
-      setError('No se pudieron crear. Inténtalo de nuevo.')
+      setError('No se pudieron crear los ingredientes. Inténtalo de nuevo.')
       setBusy(false)
     }
   }
@@ -137,7 +137,7 @@ export default function ImportRecipes({
       setCopied(true)
       setTimeout(() => setCopied(false), 3000)
     } catch {
-      setError('No se pudo copiar al portapapeles.')
+      setError('No se pudo copiar al portapapeles. Inténtalo de nuevo.')
     }
   }
 
@@ -191,7 +191,7 @@ export default function ImportRecipes({
   return (
     <section className="mb-6 rounded-lg border border-gray-200 bg-white p-4 dark:border-moss-700 dark:bg-moss-900">
       <div className="mb-3 flex items-center justify-between gap-2">
-        <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">Importar recetas</h3>
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Importar recetas</h3>
         <button type="button" onClick={onClose} aria-label="Cerrar" className={cancelButton + ' -mr-2'}>
           <XIcon />
         </button>
@@ -236,7 +236,7 @@ export default function ImportRecipes({
           setDone(null)
         }}
         rows={5}
-        placeholder="Pega aquí el JSON que te devuelva Claude…"
+        placeholder="Pega aquí el JSON devuelto"
         className="mb-3 w-full rounded-md border border-gray-300 px-3 py-2 font-mono text-xs focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-moss-700 dark:bg-moss-800 dark:text-gray-100"
       />
 
