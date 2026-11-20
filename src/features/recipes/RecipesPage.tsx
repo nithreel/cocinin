@@ -6,6 +6,8 @@ import { planLegacyMigration, sortTags } from '../../lib/tags'
 import RecipeForm from './RecipeForm'
 import { getExpiryInfo } from '../../lib/expiry'
 import { CartIcon, ChevronIcon } from '../../components/icons'
+import Collapse from '../../components/Collapse'
+import { prefersReducedMotion } from '../../lib/motion'
 import SearchInput from '../../components/SearchInput'
 import ListSkeleton from '../../components/ListSkeleton'
 import { scrollMainToTop } from '../../lib/scroll'
@@ -80,6 +82,19 @@ function RecipeCard({
       .filter((ing) => !isUsable(ing) && !onList.has(ing.id))
   }, [recipe.ingredients, ingredientsById, shoppingItems])
 
+  // animación del carrito: se pone en verde con ✓ y se encoge antes de desaparecer; los ingredientes que faltan parpadean
+  const [adding, setAdding] = useState(false)
+  function handleAddMissing() {
+    if (adding) return
+    if (prefersReducedMotion()) {
+      addMissingToList()
+      return
+    }
+    setAdding(true)
+    window.setTimeout(addMissingToList, 320)
+    window.setTimeout(() => setAdding(false), 950)
+  }
+
   function addMissingToList() {
     const ids = toBuy.map((ing) => addToShoppingList(ing.id))
     toast({
@@ -135,7 +150,7 @@ function RecipeCard({
         </span>
       </button>
 
-      {open && (
+      <Collapse open={open}>
         <div className={`border-t border-gray-100 px-4 pt-3 dark:border-moss-800 ${editing ? 'pb-4' : 'pb-0'}`}>
           {editing ? (
             <RecipeForm
@@ -159,15 +174,23 @@ function RecipeCard({
               <section>
               <h4 className={sectionHead + ' flex items-center justify-between'}>
                 Ingredientes
-                {toBuy.length > 0 && (
+                {(toBuy.length > 0 || adding) && (
                   <button
                     type="button"
-                    onClick={addMissingToList}
+                    onClick={handleAddMissing}
                     aria-label={`Añadir a la lista de la compra lo que falta (${toBuy.length})`}
                     title={`Añadir a la lista lo que falta (${toBuy.length})`}
-                    className="-my-1.5 flex h-8 w-8 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-gray-100 hover:text-emerald-700 max-md:h-10 max-md:w-10 dark:text-gray-500 dark:hover:bg-moss-800 dark:hover:text-emerald-400"
+                    className={
+                      'cart-btn ripple relative -my-1.5 flex h-8 w-8 items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-emerald-700 max-md:h-10 max-md:w-10 dark:text-gray-500 dark:hover:bg-moss-800 dark:hover:text-emerald-400' +
+                      (adding ? ' cart-done' : '')
+                    }
                   >
-                    <CartIcon />
+                    <span className="cart-ico">
+                      <CartIcon />
+                    </span>
+                    <svg viewBox="0 0 24 24" className="add-check absolute h-4 w-4" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <path d="M5 12.5l4.5 4.5L19 7" />
+                    </svg>
                   </button>
                 )}
               </h4>
@@ -182,11 +205,12 @@ function RecipeCard({
                     <li
                       key={ri.ingredientId}
                       className={
-                        have
+                        (adding && !have && !ri.optional ? 'row-flash ' : '') +
+                        (have
                           ? ''
                           : missingOptional
                             ? 'text-amber-700 dark:text-amber-400'
-                            : 'font-medium text-red-700 dark:text-red-400'
+                            : 'font-medium text-red-700 dark:text-red-400')
                       }
                     >
                       {ing?.name ?? '(ingrediente eliminado: edita la receta para quitarlo)'}
@@ -221,7 +245,7 @@ function RecipeCard({
             </>
           )}
         </div>
-      )}
+      </Collapse>
     </article>
   )
 }
@@ -290,7 +314,7 @@ export default function RecipesPage() {
                     aria-pressed={onlyReady === ready}
                     onClick={() => setOnlyReady(ready)}
                     className={
-                      'rounded-full border px-3 py-1 text-sm ' +
+                      'ripple relative rounded-full border px-3 py-1 text-sm ' +
                       (onlyReady === ready
                         ? 'border-emerald-700 bg-emerald-700 text-white'
                         : 'border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-moss-700 dark:text-gray-300 dark:hover:bg-moss-800')
@@ -307,7 +331,7 @@ export default function RecipesPage() {
                     scrollMainToTop()
                   }}
                   className={
-                    'ml-auto rounded-full border px-3 py-1 text-sm ' +
+                    'ripple relative ml-auto rounded-full border px-3 py-1 text-sm ' +
                     (showTags
                       ? 'border-emerald-700 bg-emerald-700 text-white'
                       : 'border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-moss-700 dark:text-gray-300 dark:hover:bg-moss-800')
@@ -334,7 +358,7 @@ export default function RecipesPage() {
                           setActiveTags((prev) => (on ? prev.filter((t) => t !== tag.id) : [...prev, tag.id]))
                         }
                         className={
-                          'shrink-0 whitespace-nowrap rounded-full border px-3 py-1 text-sm ' +
+                          'ripple relative shrink-0 whitespace-nowrap rounded-full border px-3 py-1 text-sm ' +
                           (on
                             ? 'border-emerald-700 bg-emerald-700 text-white'
                             : 'border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-moss-700 dark:text-gray-300 dark:hover:bg-moss-800')
@@ -365,11 +389,15 @@ export default function RecipesPage() {
         </button>
       </StickyHeader>
 
-      {showTags && <TagsManager tags={tags} recipes={recipes} onClose={() => setShowTags(false)} />}
+      <Collapse open={showTags}>
+        <TagsManager tags={tags} recipes={recipes} onClose={() => setShowTags(false)} />
+      </Collapse>
 
-      {showImport && <ImportRecipes ingredients={ingredients} groups={groups} recipes={recipes} tags={tags} onClose={() => setShowImport(false)} />}
+      <Collapse open={showImport}>
+        <ImportRecipes ingredients={ingredients} groups={groups} recipes={recipes} tags={tags} onClose={() => setShowImport(false)} />
+      </Collapse>
 
-      {showForm && (
+      <Collapse open={showForm}>
         <RecipeForm
           ingredients={ingredients}
           groups={groups}
@@ -377,7 +405,7 @@ export default function RecipesPage() {
           onSubmit={(values) => addRecipe(values.title, values.instructions, values.ingredients, values.tagIds)}
           onDone={() => setShowForm(false)}
         />
-      )}
+      </Collapse>
 
       {loading && <ListSkeleton />}
 

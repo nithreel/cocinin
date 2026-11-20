@@ -161,7 +161,7 @@ export default function RecipeForm({
                 aria-pressed={on}
                 onClick={() => toggleTag(tag.id)}
                 className={
-                  'rounded-full border px-3 py-1 text-sm max-md:min-h-10 ' +
+                  'ripple relative rounded-full border px-3 py-1 text-sm max-md:min-h-10 ' +
                   (on
                     ? 'border-emerald-700 bg-emerald-700 text-white'
                     : 'border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-moss-700 dark:text-gray-300 dark:hover:bg-moss-800')
@@ -230,7 +230,7 @@ export default function RecipeForm({
                         type="checkbox"
                         checked={isSelected}
                         onChange={() => toggleIngredient(ing.id)}
-                        className="h-4 w-4 shrink-0 rounded border-gray-300 text-emerald-700 focus:ring-emerald-500 dark:border-moss-600 dark:bg-moss-800"
+                        className="cb h-4 w-4 shrink-0"
                       />
                       {ing.name}
                     </label>
@@ -253,7 +253,7 @@ export default function RecipeForm({
                             type="checkbox"
                             checked={selected[ing.id].optional}
                             onChange={() => toggleOptional(ing.id)}
-                            className="h-4 w-4 rounded border-gray-300 text-emerald-700 focus:ring-emerald-500 dark:border-moss-600 dark:bg-moss-800"
+                            className="cb h-4 w-4 shrink-0"
                           />
                           Opcional
                         </label>

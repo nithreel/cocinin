@@ -1,6 +1,7 @@
 import { useState, type CSSProperties, type FormEvent, type HTMLAttributes } from 'react'
-import { cancelButton, outlineButton, primaryButton, rowIconButton } from '../../components/buttonStyles'
+import { cancelButton, outlineButton, primaryButton } from '../../components/buttonStyles'
 import { ConfirmDelete } from '../../components/DeleteButton'
+import RemoveButton from '../../components/RemoveButton'
 import { XIcon } from '../../components/icons'
 import type { Recipe, Tag } from '../../lib/collections'
 import { findTag, sortTags } from '../../lib/tags'
@@ -112,15 +113,7 @@ function TagRow({
             <button type="button" onClick={() => setEditing(true)} className={cancelButton}>
               Editar
             </button>
-            <button
-              type="button"
-              onClick={() => setConfirming(true)}
-              aria-label={`Eliminar «${tag.name}»`}
-              title="Eliminar"
-              className={rowIconButton}
-            >
-              <XIcon />
-            </button>
+            <RemoveButton onRemove={() => setConfirming(true)} label={`Eliminar «${tag.name}»`} title="Eliminar" row={false} />
           </>
         )}
       </div>

@@ -38,10 +38,13 @@ export const db = initializeFirestore(app, {
   localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
 })
 
+// en el móvil, los emuladores están en el PC: se usa el nombre/IP con que se abrió la web
+const EMU_HOST = typeof location !== 'undefined' && location.hostname ? location.hostname : '127.0.0.1'
+
 // Desarrollo local sin tocar datos reales: `npm run emulators` + VITE_USE_EMULATORS=true
 if (import.meta.env.VITE_USE_EMULATORS === 'true') {
-  connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true })
-  connectFirestoreEmulator(db, '127.0.0.1', 8089)
+  connectAuthEmulator(auth, `http://${EMU_HOST}:9099`, { disableWarnings: true })
+  connectFirestoreEmulator(db, EMU_HOST, 8089)
 }
 
 /**
@@ -53,7 +56,7 @@ export async function createAccount(email: string, password: string): Promise<st
   try {
     const secondaryAuth = getAuth(secondary)
     if (import.meta.env.VITE_USE_EMULATORS === 'true') {
-      connectAuthEmulator(secondaryAuth, 'http://127.0.0.1:9099', { disableWarnings: true })
+      connectAuthEmulator(secondaryAuth, `http://${EMU_HOST}:9099`, { disableWarnings: true })
     }
     let uid: string
     try {

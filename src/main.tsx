@@ -3,6 +3,11 @@ import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import './index.css'
 import App from './App.tsx'
+import { initRipple } from './lib/ripple'
+import { initCheckboxPop } from './lib/motion'
+
+initRipple()
+initCheckboxPop()
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

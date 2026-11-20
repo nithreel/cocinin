@@ -95,6 +95,11 @@ export function hasWarning(ingredient: Ingredient) {
   return !!ingredient.useSoon || status === 'soon' || status === 'expired'
 }
 
+/** Congelado con «gastar pronto» marcado: sale el aviso aunque `hasWarning` no cuente los congelados. */
+export function frozenWithWarning(ingredient: Ingredient) {
+  return ingredient.inPantry && !!ingredient.frozen && !!ingredient.useSoon
+}
+
 export function expiryBadgeClasses(status: ExpiryStatus) {
   switch (status) {
     case 'expired':

@@ -82,6 +82,7 @@ function MemberRow({ m, isSelf }: { m: Member; isSelf: boolean }) {
           }
           questionClassName="w-full"
           confirmLabel={pending === 'promote' ? 'Sí, nombrar' : 'Sí, quitar'}
+          leave={pending !== 'promote'}
           onConfirm={() => {
             if (pending === 'promote') void updateDoc(doc(usersCol, m.id), { role: 'admin' })
             else void deleteDoc(doc(usersCol, m.id))

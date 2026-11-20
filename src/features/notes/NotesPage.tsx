@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import Collapse from '../../components/Collapse'
 import { onSnapshot, orderBy, query } from 'firebase/firestore'
 import { useAuth } from '../../auth/AuthContext'
 import { ConfirmDelete } from '../../components/DeleteButton'
@@ -120,7 +121,7 @@ function NoteForm({
             {members.map((m) => (
               <li key={m.id} className="flex items-center px-3">
                 <label className="flex min-h-10 flex-1 cursor-pointer items-center gap-3 text-sm text-gray-900 dark:text-gray-100">
-                  <input type="checkbox" className="h-5 w-5" checked={recipients.has(m.id)} onChange={(e) => toggleRecipient(m.id, e.target.checked)} />
+                  <input type="checkbox" className="cb h-5 w-5" checked={recipients.has(m.id)} onChange={(e) => toggleRecipient(m.id, e.target.checked)} />
                   <span className="min-w-0 truncate">
                     {memberName(m)}
                     {m.id === user?.uid && <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">(tú)</span>}
@@ -173,7 +174,7 @@ function NoteCard({ note, members }: { note: Note; members: Member[] }) {
             checked={!!note.done}
             onChange={(e) => setNoteDone(note.id, e.target.checked)}
             aria-label="Marcar como hecha"
-            className="mt-0.5 h-4 w-4 shrink-0 rounded border-gray-300 text-emerald-700 focus:ring-emerald-500 max-md:h-5 max-md:w-5 dark:border-moss-600 dark:bg-moss-800"
+            className="cb mt-0.5 h-4 w-4 shrink-0 max-md:h-5 max-md:w-5"
           />
           <p className={'whitespace-pre-wrap ' + (note.done ? 'text-gray-500 line-through dark:text-gray-400' : 'text-gray-900 dark:text-gray-100')}>
             {note.text}
@@ -269,9 +270,9 @@ export default function NotesPage() {
         </button>
       </StickyHeader>
 
-      {showForm && (
+      <Collapse open={showForm}>
         <NoteForm members={members} submitLabel="Guardar nota" onSubmit={addNote} onDone={() => setShowForm(false)} />
-      )}
+      </Collapse>
 
       {loading && <ListSkeleton />}
       {!loading && notes.length === 0 && (

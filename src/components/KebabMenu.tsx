@@ -18,7 +18,7 @@ export function MenuPopup({
   return (
     <div
       role="menu"
-      className={'absolute z-10 w-36 overflow-hidden rounded-md border border-gray-200 bg-white py-1 shadow-lg dark:border-moss-700 dark:bg-moss-800 ' + className}
+      className={'menu-pop absolute z-10 w-36 overflow-hidden rounded-md border border-gray-200 bg-white py-1 shadow-lg dark:border-moss-700 dark:bg-moss-800 ' + className}
     >
       {items.map((item) => (
         <button
@@ -68,7 +68,7 @@ export default function KebabMenu({ items }: { items: MenuItem[] }) {
         aria-label="Más opciones"
         aria-haspopup="menu"
         aria-expanded={open}
-        className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-moss-800 dark:hover:text-gray-300"
+        className="ripple relative flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-moss-800 dark:hover:text-gray-300"
       >
         <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor">
           <circle cx="12" cy="5" r="1.75" />

@@ -27,16 +27,6 @@
   --head-h: 43px; /* 44 menos 1 px de solape bajo la cabecera (ver StickyHeader) */
 }
 
-/* checkboxes con el verde de la app */
-input[type='checkbox'] {
-  accent-color: var(--color-emerald-700);
-}
-@media (prefers-color-scheme: dark) {
-  input[type='checkbox'] {
-    accent-color: var(--color-emerald-500);
-  }
-}
-
 html,
 body,
 #root {
@@ -55,4 +45,352 @@ body {
     background-color: var(--color-moss-950);
     color: #f3f4f6;
   }
+}
+
+/* Desplegables: alto suave + contenido que cae y rebota (ver Collapse) */
+.collapse-grid {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition: grid-template-rows var(--collapse-ms, 340ms) cubic-bezier(0.3, 0.9, 0.3, 1), opacity 180ms ease-out;
+}
+.collapse-grid.collapse-open {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+@keyframes collapse-in {
+  from { opacity: 0; transform: translateY(-18px) scaleY(0.9); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes collapse-out {
+  to { opacity: 0; transform: translateY(-10px) scaleY(0.94); }
+}
+.collapse-in {
+  transform-origin: top;
+  animation: collapse-in 480ms cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+}
+.collapse-out {
+  transform-origin: top;
+  animation: collapse-out 240ms ease-in forwards;
+}
+
+/* Avisos flotantes: suben con rebote y se van hacia abajo */
+@keyframes toast-in { from { opacity: 0; transform: translateY(24px) scale(0.94); } }
+@keyframes toast-out { to { opacity: 0; transform: translateY(16px) scale(0.96); } }
+.toast-in { animation: toast-in 420ms cubic-bezier(0.34, 1.56, 0.64, 1) backwards; }
+.toast-out { animation: toast-out 240ms ease-in forwards; }
+
+/* Confirmación de borrado: la pregunta entra desde la izquierda y los botones saltan uno tras otro */
+@keyframes confirm-q { from { opacity: 0; transform: translateX(-10px); } }
+@keyframes confirm-b { from { opacity: 0; transform: scale(0.6); } }
+.confirm-in > span { animation: confirm-q 260ms ease-out backwards; }
+.confirm-in > button { animation: confirm-b 380ms cubic-bezier(0.34, 1.56, 0.64, 1) backwards; animation-delay: calc(var(--i, 1) * 70ms); }
+
+/* Checkbox animado de la lista de la compra: se rellena, la marca se dibuja con rebote y el texto se tacha de izquierda a derecha */
+.cb {
+  appearance: none;
+  display: inline-grid;
+  place-content: center;
+  flex-shrink: 0;
+  cursor: pointer;
+  border: 2px solid #9ca3af;
+  border-radius: 0.375rem;
+  background-color: transparent;
+  transition: background-color 200ms ease, border-color 200ms ease, transform 300ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@media (prefers-color-scheme: dark) {
+  .cb { border-color: var(--color-moss-600); }
+}
+.cb::before {
+  content: '';
+  width: 6px;
+  height: 11px;
+  margin-top: -3px;
+  border: solid #fff;
+  border-width: 0 2.5px 2.5px 0;
+  transform: rotate(45deg) scale(0);
+  transition: transform 380ms cubic-bezier(0.34, 1.7, 0.64, 1);
+}
+.cb:checked {
+  background-color: var(--color-emerald-700);
+  border-color: var(--color-emerald-700);
+}
+.cb.cb-anim:checked { animation: cb-pop 380ms cubic-bezier(0.34, 1.56, 0.64, 1); }
+@media (prefers-color-scheme: dark) {
+  .cb:checked { background-color: var(--color-emerald-500); border-color: var(--color-emerald-500); }
+}
+.cb:checked::before { transform: rotate(45deg) scale(1); }
+.cb:active { transform: scale(0.8); }
+.cb:focus-visible { outline: 2px solid var(--color-emerald-500); outline-offset: 2px; }
+@keyframes cb-pop {
+  0% { transform: scale(0.8); }
+  55% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+.strike {
+  background: linear-gradient(currentColor, currentColor) no-repeat left center / 0% 1.5px;
+  transition: background-size 320ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+.strike-on { background-size: 100% 1.5px; }
+
+/* Interruptor: el pomo se estira al pulsar y rebota al soltar */
+.switch-knob {
+  transition: translate 380ms cubic-bezier(0.34, 1.56, 0.64, 1), width 180ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+button:active:not(:disabled) > .switch-knob {
+  width: 1.3rem;
+}
+button[aria-checked='true']:active:not(:disabled) > .switch-knob {
+  translate: 1.2rem 0;
+}
+
+/* Menú de los tres puntos: aparece con rebote desde su esquina */
+@keyframes menu-pop {
+  from { opacity: 0; transform: scale(0.85) translateY(-4px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+.menu-pop {
+  transform-origin: top right;
+  animation: menu-pop 240ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Interruptor: el color entra con barrido y rebote, igual que el pomo */
+@keyframes wipe-l {
+  from { clip-path: inset(0 100% 0 0); }
+  to { clip-path: inset(0 0 0 0); }
+}
+@keyframes wipe-r {
+  from { clip-path: inset(0 0 0 100%); }
+  to { clip-path: inset(0 0 0 0); }
+}
+.wipe-l { animation: wipe-l 380ms cubic-bezier(0.34, 1.3, 0.64, 1) both; }
+.wipe-r { animation: wipe-r 380ms cubic-bezier(0.34, 1.3, 0.64, 1) both; }
+
+/* Remate redondo del interruptor partido (congelado + aviso). En reposo ocupa desde su borde izquierdo (14 px) hasta el
+   extremo derecho, con un arco de radio 15 (suave, recortado arriba y abajo por el interruptor). Su forma no cambia nunca:
+   en vez de crecer en ancho (se volvía ovalado) se desliza desde la derecha --cap-slide px (lo que mide lo visible).
+   Sobresale por la derecha (recortado por el interruptor) para que el rebote no deje ver el fondo.
+   Mide: --cap-h alto, --cap-w ancho total, --cap-slide = ancho visible (44 de interruptor - 14 de borde izquierdo). */
+.cap { --cap-h: 30px; --cap-w: 42px; --cap-slide: 30px; position: absolute; right: -12px; top: -3px; width: var(--cap-w); height: var(--cap-h); border-radius: 9999px; }
+@keyframes cap-in {
+  from { transform: translateX(var(--cap-slide)); }
+}
+@keyframes cap-out {
+  to { transform: translateX(var(--cap-slide)); }
+}
+.cap-in { animation: cap-in 420ms cubic-bezier(0.34, 1.56, 0.64, 1) backwards; }
+.cap-in.cap-delay { animation-delay: 170ms; }
+.cap-out { animation: cap-out 280ms ease-in forwards; }
+
+/* Ripple en botones de icono (lo crea ripple.ts al pulsar) */
+.ripple-wrap {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: inherit;
+  pointer-events: none;
+}
+.ripple-dot {
+  position: absolute;
+  border-radius: 9999px;
+  background: currentColor;
+  opacity: 0.3;
+  transform: scale(0);
+  animation: ripple-in 450ms cubic-bezier(0.2, 0.6, 0.3, 1) forwards;
+}
+.ripple-dot.ripple-out {
+  opacity: 0;
+  transition: opacity 380ms ease-out;
+}
+@keyframes ripple-in {
+  to { transform: scale(1); }
+}
+
+/* Flechas de desplegables (CaretIcon, ChevronIcon): giran con rebote */
+.caret { transition: rotate 420ms cubic-bezier(0.34, 1.56, 0.64, 1); }
+
+/* Navegación (Despensa, Lista, Recetario, Notas): al activarse, el icono salta con rebote */
+@keyframes nav-icon {
+  from { transform: scale(0.55) translateY(5px); }
+  to { transform: none; }
+}
+.nav-link.nav-active svg { animation: nav-icon 520ms cubic-bezier(0.34, 1.7, 0.64, 1); }
+.nav-link svg { transition: transform 300ms cubic-bezier(0.34, 1.56, 0.64, 1); }
+@media (hover: hover) {
+  .nav-link:not(.nav-active):hover svg { transform: scale(1.12) rotate(-6deg); }
+}
+.nav-link:active svg { transform: scale(0.85); }
+
+/* Confirmar compra: mismo lenguaje que el carrito de las recetas (✓ con anillo) */
+.confirm-btn .confirm-label { display: inline-block; transition: transform 220ms ease, opacity 160ms ease; }
+.confirm-btn.confirm-done {
+  pointer-events: none;
+  animation: add-pop 520ms cubic-bezier(0.34, 1.56, 0.64, 1), add-ring 640ms ease-out 80ms;
+}
+.confirm-btn.confirm-done .confirm-label { transform: scale(0.6); opacity: 0; }
+.confirm-btn.confirm-done .add-check { opacity: 1; }
+.confirm-btn.confirm-done .add-check path { animation: add-draw 280ms ease-out 100ms forwards; }
+/* lo tachado: destello verde y salida deslizándose */
+@keyframes row-confirm {
+  0% { background-color: transparent; transform: none; opacity: 1; }
+  28% { background-color: rgb(16 185 129 / 0.3); transform: none; opacity: 1; }
+  55% { background-color: rgb(16 185 129 / 0.3); transform: none; opacity: 1; }
+  100% { background-color: rgb(16 185 129 / 0.1); transform: translateX(36px); opacity: 0; }
+}
+.row-confirm { animation: row-confirm 650ms ease-in-out forwards; }
+
+/* Botón ✕ de quitar (RemoveButton): la cruz se vuelve roja */
+.rm-btn.ripple { transition: transform 300ms cubic-bezier(0.34, 1.56, 0.64, 1), color 200ms ease; }
+.rm-x { transition: transform 420ms cubic-bezier(0.34, 1.56, 0.64, 1); }
+@media (hover: hover) {
+  .rm-btn:hover:not(:disabled) { color: var(--color-red-500); }
+  .rm-btn:hover:not(:disabled) .rm-x { transform: rotate(90deg) scale(1.15); }
+}
+.rm-btn:active:not(:disabled) { transform: scale(0.88); transition-duration: 90ms; }
+.rm-btn.rm-done {
+  color: var(--color-red-500);
+  animation: add-pop 420ms cubic-bezier(0.34, 1.56, 0.64, 1), rm-ring 560ms ease-out;
+}
+.rm-btn.rm-done .rm-x { transform: rotate(180deg) scale(1.2); }
+@keyframes rm-ring {
+  from { box-shadow: 0 0 0 0 rgb(239 68 68 / 0.55); }
+  to { box-shadow: 0 0 0 12px rgb(239 68 68 / 0); }
+}
+
+/* Botón verde de añadir (AddButton): plano y minimalista */
+.add-btn.ripple {
+  background-color: var(--color-emerald-600);
+  transition: transform 320ms cubic-bezier(0.34, 1.56, 0.64, 1), background-color 200ms ease;
+}
+.add-plus { transition: transform 420ms cubic-bezier(0.34, 1.56, 0.64, 1), opacity 200ms ease; }
+.add-check path { stroke-dasharray: 24; stroke-dashoffset: 24; }
+.add-check { opacity: 0; }
+@media (hover: hover) {
+  .add-btn:hover:not(:disabled) {
+    transform: scale(1.1);
+    background-color: var(--color-emerald-700);
+  }
+  .add-btn:hover:not(:disabled) .add-plus { transform: rotate(90deg) scale(1.15); }
+}
+.add-btn:active:not(:disabled) { transform: scale(0.9); transition-duration: 90ms; }
+.add-btn.add-done {
+  animation: add-pop 440ms cubic-bezier(0.34, 1.56, 0.64, 1), add-ring 560ms ease-out;
+}
+.add-btn.add-done .add-plus { transform: rotate(180deg) scale(0); opacity: 0; }
+.add-btn.add-done .add-check { opacity: 1; }
+.add-btn.add-done .add-check path { animation: add-draw 300ms ease-out 140ms forwards; }
+@keyframes add-pop {
+  0% { transform: scale(1); }
+  45% { transform: scale(1.3); }
+  100% { transform: scale(1); }
+}
+@keyframes add-ring {
+  from { box-shadow: 0 0 0 0 rgb(16 185 129 / 0.6); }
+  to { box-shadow: 0 0 0 14px rgb(16 185 129 / 0); }
+}
+@keyframes add-draw { to { stroke-dashoffset: 0; } }
+/* Carrito de la receta («añadir lo que falta»): se llena de verde con ✓, pulsa y se encoge hasta desaparecer */
+.cart-btn .cart-ico { display: flex; transition: transform 200ms ease, opacity 140ms ease; }
+.cart-btn.cart-done {
+  animation: cart-done 950ms cubic-bezier(0.34, 1.4, 0.64, 1) forwards, add-ring 600ms ease-out 80ms;
+  pointer-events: none;
+}
+.cart-btn.cart-done .cart-ico { transform: translateX(10px) scale(0.4); opacity: 0; }
+.cart-btn.cart-done .add-check { opacity: 1; }
+.cart-btn.cart-done .add-check path { animation: add-draw 260ms ease-out 70ms forwards; }
+@keyframes cart-done {
+  0% { transform: scale(1); background-color: transparent; color: inherit; }
+  22% { transform: scale(1.3); background-color: var(--color-emerald-600); color: #fff; }
+  38% { transform: scale(1); background-color: var(--color-emerald-600); color: #fff; }
+  70% { transform: scale(1.08); background-color: var(--color-emerald-600); color: #fff; opacity: 1; }
+  100% { transform: scale(0); background-color: var(--color-emerald-600); color: #fff; opacity: 0; }
+}
+/* ingredientes que faltan: destello verde al añadirlos */
+@keyframes row-flash {
+  0% { background-color: transparent; }
+  25% { background-color: rgb(16 185 129 / 0.28); }
+  100% { background-color: transparent; }
+}
+.row-flash { animation: row-flash 900ms ease-out; border-radius: 0.25rem; }
+
+/* Hover y pulsado: un círculo alrededor del cursor (ripple.ts le pasa la posición en --rx/--ry).
+   Entra y sale con fundido (más lento al salir); el radio también se anima al pulsar y soltar. */
+@property --rr {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 26px;
+}
+.ripple {
+  /* el cambio de fondo/color/borde del propio botón (hover de Tailwind) también se funde */
+  transition: background-color 260ms ease, color 260ms ease, border-color 260ms ease, box-shadow 260ms ease;
+}
+.ripple::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(circle var(--rr) at var(--rx, 50%) var(--ry, 50%), currentColor, transparent 100%);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 380ms ease-out, --rr 380ms ease-out;
+}
+@media (hover: hover) {
+  .ripple:hover:not(:disabled)::before { opacity: 0.12; transition: opacity 180ms ease-out, --rr 220ms ease-out; }
+}
+.ripple:active:not(:disabled)::before { --rr: 46px; opacity: 0.2; transition: opacity 120ms ease-out, --rr 220ms ease-out; }
+
+
+/* Reducir movimiento: todo salta al estado final (se aplica a cualquier regla, sea cual sea su especificidad) */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 1ms !important;
+    animation-delay: 0s !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+    transition-delay: 0s !important;
+    scroll-behavior: auto !important;
+  }
+  .ripple-dot { display: none; }
+}
+
+/* Transición entre páginas (View Transitions): el contenido se desliza con parallax; la navegación queda fija.
+   Pestañas principales: entran de abajo a arriba; Usuarios y Avisos: de arriba a abajo. */
+.page-view {
+  view-transition-name: page;
+  /* fondo opaco: si no, la página anterior se transparenta durante el deslizamiento */
+  background-color: #fff;
+}
+@media (prefers-color-scheme: dark) {
+  .page-view { background-color: var(--color-moss-950); }
+}
+::view-transition-group(root) {
+  animation: none;
+}
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+::view-transition-group(page) {
+  overflow: clip;
+}
+::view-transition-old(page),
+::view-transition-new(page) {
+  animation-duration: 380ms;
+  animation-timing-function: cubic-bezier(0.32, 0.72, 0, 1);
+  animation-fill-mode: both;
+  mix-blend-mode: normal;
+}
+@keyframes pg-in-bottom { from { transform: translateY(100%); } }
+@keyframes pg-out-up { to { transform: translateY(-28%); opacity: 0.55; } }
+@keyframes pg-in-top { from { transform: translateY(-100%); } }
+@keyframes pg-out-down { to { transform: translateY(28%); opacity: 0.55; } }
+html:not([data-nav-dir='down'])::view-transition-old(page) { animation-name: pg-out-up; }
+html:not([data-nav-dir='down'])::view-transition-new(page) { animation-name: pg-in-bottom; z-index: 2; }
+html[data-nav-dir='down']::view-transition-old(page) { animation-name: pg-out-down; }
+html[data-nav-dir='down']::view-transition-new(page) { animation-name: pg-in-top; z-index: 2; }
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(page),
+  ::view-transition-new(page) { animation: none; }
 }

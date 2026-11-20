@@ -18,19 +18,22 @@ import {
 import type { ExpiryMode, Group, Ingredient } from '../../lib/collections'
 import { ConfirmDelete } from '../../components/DeleteButton'
 import GroupsOrder from './GroupsOrder'
-import { AlertIcon, CartIcon, SnowflakeIcon, SortIcon } from '../../components/icons'
+import { AlertIcon, CaretIcon, CartIcon, SnowflakeIcon, SortIcon } from '../../components/icons'
 import SearchInput from '../../components/SearchInput'
+import Collapse from '../../components/Collapse'
+import Pop, { useSettled } from '../../components/Pop'
 import Switch from '../../components/Switch'
 import { useToast } from '../../components/Toast'
 import ListSkeleton from '../../components/ListSkeleton'
 import { addToShoppingList, removeFromShoppingList, useShoppingList } from '../shopping-list/data'
-import { scrollMainToTop } from '../../lib/scroll'
+import { COLLAPSE_MS } from '../../lib/motion'
+import { scrollMainToTop, smoothBehavior } from '../../lib/scroll'
 import { useCollapsedSet } from '../../lib/useCollapsedSet'
 import StickyHeader from '../../components/StickyHeader'
 import { cancelButton, dangerTextButton, outlineButton, primaryButton, rowIconButton } from '../../components/buttonStyles'
 import { matchesSearch, normalizeText } from '../../lib/search'
 import KebabMenu from '../../components/KebabMenu'
-import { expiryBadgeClasses, getExpiryInfo, hasWarning, remainingLabel, soonMarkLabel } from '../../lib/expiry'
+import { expiryBadgeClasses, frozenWithWarning, getExpiryInfo, hasWarning, remainingLabel, soonMarkLabel } from '../../lib/expiry'
 import { NO_GROUP } from '../../lib/groupByPantryGroup'
 
 function ExpiryFields({
@@ -123,6 +126,7 @@ function IngredientRow({
   const toast = useToast()
   const listItem = useShoppingList().items.find((i) => i.ingredientId === ingredient.id)
   const onList = !!listItem
+  const settled = useSettled()
   const [busy, setBusy] = useState(false)
   const [panelOpen, setPanelOpen] = useState(false)
   const rowRef = useRef<HTMLLIElement>(null)
@@ -137,7 +141,7 @@ function IngredientRow({
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
-    if (highlight) rowRef.current?.scrollIntoView({ block: 'center', behavior: 'smooth' })
+    if (highlight) rowRef.current?.scrollIntoView({ block: 'center', behavior: smoothBehavior() })
   }, [highlight])
 
   function closePanel() {
@@ -175,7 +179,10 @@ function IngredientRow({
 
   // al abrir el panel de una fila del final, se desplaza para que se vea entero (sin quedar bajo la barra)
   useEffect(() => {
-    if (panelOpen) rowRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+    if (!panelOpen) return
+    // tras la animación de apertura, para medir la altura final
+    const t = setTimeout(() => rowRef.current?.scrollIntoView({ block: 'nearest', behavior: smoothBehavior() }), COLLAPSE_MS)
+    return () => clearTimeout(t)
   }, [panelOpen, confirmingDelete])
 
   async function handleSaveDates(e: FormEvent) {
@@ -320,7 +327,7 @@ function IngredientRow({
   }
 
   const expiryInfo = getExpiryInfo(ingredient)
-  const soonFlag = !!ingredient.useSoon && ingredient.inPantry && !ingredient.frozen
+  const soonFlag = !!ingredient.useSoon && ingredient.inPantry
   const actionButtons = (
     <>
       {ingredient.inPantry && (
@@ -332,7 +339,7 @@ function IngredientRow({
                 onClick={toggleUseSoon}
                 disabled={busy}
                 className={
-                  'relative flex h-8 w-8 items-center justify-center rounded-full transition-colors disabled:opacity-50 max-md:h-10 max-md:w-10 ' +
+                  'ripple relative flex h-8 w-8 items-center justify-center rounded-full transition-colors disabled:opacity-50 max-md:h-10 max-md:w-10 ' +
                   (ingredient.useSoon
                     ? 'bg-amber-100 text-amber-600 dark:bg-amber-950 dark:text-amber-400'
                     : 'text-gray-400 hover:bg-gray-100 hover:text-amber-600 dark:text-gray-500 dark:hover:bg-moss-800 dark:hover:text-amber-400')
@@ -348,7 +355,7 @@ function IngredientRow({
         title={onList ? 'En la lista (pulsa para quitar)' : 'Añadir a la lista de la compra'}
         onClick={toggleOnList}
         className={
-          'relative flex h-8 w-8 items-center justify-center rounded-full transition-colors max-md:h-10 max-md:w-10 ' +
+          'ripple relative flex h-8 w-8 items-center justify-center rounded-full transition-colors max-md:h-10 max-md:w-10 ' +
           (onList
             ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400'
             : 'text-gray-400 hover:bg-gray-100 hover:text-emerald-700 dark:text-gray-500 dark:hover:bg-moss-800 dark:hover:text-emerald-400')
@@ -369,7 +376,7 @@ function IngredientRow({
           onClick={toggleFrozen}
           disabled={busy}
           className={
-            'relative flex h-8 w-8 items-center justify-center rounded-full transition-colors disabled:opacity-50 max-md:h-10 max-md:w-10 ' +
+            'ripple relative flex h-8 w-8 items-center justify-center rounded-full transition-colors disabled:opacity-50 max-md:h-10 max-md:w-10 ' +
             (ingredient.frozen
               ? 'bg-frost-100 text-frost-700 dark:bg-frost-950 dark:text-frost-400'
               : 'text-gray-400 hover:bg-gray-100 hover:text-frost-700 dark:text-gray-500 dark:hover:bg-moss-800 dark:hover:text-frost-400')
@@ -401,6 +408,8 @@ function IngredientRow({
                   ? 'amber'
                   : 'emerald'
             }
+            // congelado + aviso, en cualquier orden: azul con remate amarillo
+            capTone={frozenWithWarning(ingredient) ? 'amber' : undefined}
             offTone="red"
             label={
               ingredient.inPantry
@@ -424,21 +433,21 @@ function IngredientRow({
           <span className={ingredient.inPantry ? 'text-gray-900 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400'}>
             {ingredient.name}
           </span>
-          {(expiryInfo || ingredient.quantity || soonFlag) && (
+          <Collapse open={!!(expiryInfo || ingredient.quantity || soonFlag)}>
             <span className="text-xs">
               {ingredient.quantity && (
                 <span className="text-gray-500 dark:text-gray-400">{remainingLabel(ingredient.quantity)} {ingredient.quantity}</span>
               )}
               {expiryInfo && ingredient.quantity && <span className="text-gray-400"> · </span>}
-              {expiryInfo && <span className={expiryBadgeClasses(expiryInfo.status)}>{expiryInfo.label}</span>}
+              {expiryInfo && <Pop animate={settled} text className={expiryBadgeClasses(expiryInfo.status)}>{expiryInfo.label}</Pop>}
               {soonFlag && (ingredient.quantity || expiryInfo) && <span className="text-gray-400"> · </span>}
-              {soonFlag && <span className="whitespace-nowrap font-medium text-amber-600 dark:text-amber-400">⚠ {soonMarkLabel(ingredient)}</span>}
+              {soonFlag && <Pop animate={settled} text className="whitespace-nowrap font-medium text-amber-600 dark:text-amber-400">⚠ {soonMarkLabel(ingredient)}</Pop>}
             </span>
-          )}
+          </Collapse>
         </div>
       </div>
 
-      {panelOpen && (
+      <Collapse open={panelOpen}>
         <form
           onSubmit={handleSaveDates}
           className="mt-2 flex flex-col gap-2 border-t border-gray-100 pt-2 dark:border-moss-800"
@@ -504,7 +513,7 @@ function IngredientRow({
             </div>
           )}
         </form>
-      )}
+      </Collapse>
     </li>
   )
 }
@@ -522,7 +531,7 @@ function IsFoodCheckbox({
         type="checkbox"
         checked={checked}
         onChange={(e) => onChange(e.target.checked)}
-        className="mt-0.5 h-4 w-4 shrink-0 rounded border-gray-300 text-emerald-700 focus:ring-emerald-500 dark:border-moss-600 dark:bg-moss-800"
+        className="mt-0.5 cb h-4 w-4 shrink-0"
       />
       <span>
         Es comida
@@ -677,11 +686,11 @@ function GroupHeader({
   isCollapsed: boolean
   onToggleCollapsed: () => void
 }) {
-  const warnCount = section.items.filter(hasWarning).length
-  // descongelando todavía sin aviso (<24 h): los que ya pasaron de 24 h cuentan en el ámbar
-  const thawCount = section.items.filter(
-    (i) => i.inPantry && !i.frozen && typeof i.thawedAt === 'number' && !hasWarning(i),
-  ).length
+  const settled = useSettled()
+  const warnCount = section.items.filter((i) => hasWarning(i) || frozenWithWarning(i)).length
+  // congelados (❄) y descongelando (❄ tachado) van aparte; los descongelando con aviso cuentan también en el ámbar
+  const frozenCount = section.items.filter((i) => i.inPantry && i.frozen).length
+  const thawCount = section.items.filter((i) => i.inPantry && !i.frozen && typeof i.thawedAt === 'number').length
   const [editing, setEditing] = useState(false)
   const [confirmingDelete, setConfirmingDelete] = useState(false)
   const [deleting, setDeleting] = useState(false)
@@ -749,29 +758,44 @@ function GroupHeader({
         className="flex min-w-0 flex-1 items-center gap-1.5 text-sm font-semibold uppercase tracking-wide text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
       >
         <span aria-hidden="true" className="shrink-0 text-gray-500 dark:text-gray-400">
-          {isCollapsed ? '▶' : '▼'}
+          <CaretIcon open={!isCollapsed} />
         </span>
         <span className="truncate">{section.name}</span>
         <span className="shrink-0 font-normal normal-case text-gray-500 dark:text-gray-400">
           ({section.items.length})
         </span>
+        {frozenCount > 0 && (
+          <Pop
+            animate={settled}
+            trigger={frozenCount}
+            title={`${frozenCount} congelado${frozenCount === 1 ? '' : 's'}`}
+            aria-label={`${frozenCount} ingrediente${frozenCount === 1 ? '' : 's'} congelado${frozenCount === 1 ? '' : 's'}`}
+            className="flex shrink-0 items-center gap-1 rounded-full bg-frost-100 px-2 text-xs font-semibold normal-case text-frost-700 dark:bg-frost-950 dark:text-frost-400"
+          >
+            <SnowflakeIcon className="h-3 w-3" /> {frozenCount}
+          </Pop>
+        )}
         {thawCount > 0 && (
-          <span
+          <Pop
+            animate={settled}
+            trigger={thawCount}
             title={`${thawCount} descongelando`}
             aria-label={`${thawCount} ingrediente${thawCount === 1 ? '' : 's'} descongelando`}
             className="flex shrink-0 items-center gap-1 rounded-full bg-frost-100 px-2 text-xs font-semibold normal-case text-frost-700 dark:bg-frost-950 dark:text-frost-400"
           >
-            <SnowflakeIcon className="h-3 w-3" /> {thawCount}
-          </span>
+            <SnowflakeIcon className="h-3 w-3" crossed /> {thawCount}
+          </Pop>
         )}
         {warnCount > 0 && (
-          <span
+          <Pop
+            animate={settled}
+            trigger={warnCount}
             title={`${warnCount} con aviso`}
             aria-label={`${warnCount} ingrediente${warnCount === 1 ? '' : 's'} con aviso`}
             className="shrink-0 rounded-full bg-amber-100 px-2 text-xs font-semibold normal-case text-amber-700 dark:bg-amber-950 dark:text-amber-400"
           >
             ⚠ {warnCount}
-          </span>
+          </Pop>
         )}
       </button>
       {section.deletable &&
@@ -912,11 +936,15 @@ export default function PantryPage() {
         </button>
       </StickyHeader>
 
-      {showOrder && <GroupsOrder groups={groups} onClose={() => setShowOrder(false)} />}
-      {showAddGroup && <AddGroupForm groups={groups} onDone={() => setShowAddGroup(false)} />}
-      {showAddIngredient && (
+      <Collapse open={showOrder}>
+        <GroupsOrder groups={groups} onClose={() => setShowOrder(false)} />
+      </Collapse>
+      <Collapse open={showAddGroup}>
+        <AddGroupForm groups={groups} onDone={() => setShowAddGroup(false)} />
+      </Collapse>
+      <Collapse open={showAddIngredient}>
         <AddIngredientForm groups={groups} existingNames={ingredients.map((i) => i.name)} onDone={handleIngredientAdded} />
-      )}
+      </Collapse>
 
       {loading && <ListSkeleton />}
 
@@ -940,8 +968,8 @@ export default function PantryPage() {
                 isCollapsed={isCollapsed}
                 onToggleCollapsed={() => toggleCollapsed(section.id)}
               />
-              {!isCollapsed &&
-                (section.items.length === 0 ? (
+              <Collapse open={!isCollapsed}>
+                {section.items.length === 0 ? (
                   <p className="rounded-lg border border-dashed border-gray-200 px-4 py-3 text-sm text-gray-400 dark:border-moss-700 dark:text-gray-500">
                     Sin ingredientes en este grupo.
                   </p>
@@ -958,7 +986,8 @@ export default function PantryPage() {
                       />
                     ))}
                   </ul>
-                ))}
+                )}
+              </Collapse>
             </section>
           )
         })}

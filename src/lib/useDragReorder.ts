@@ -86,7 +86,7 @@ export function useDragReorder<T extends { id: string }>(sorted: T[], onSave: (i
   /** Desplazamiento de cada fila mientras se arrastra: la arrastrada sigue al puntero; las demás se apartan. */
   function rowStyle(id: string): CSSProperties | undefined {
     if (!drag) return undefined
-    if (id === drag.id) return { transform: `translateY(${drag.dy}px)`, transition: 'none' }
+    if (id === drag.id) return { transform: `translateY(${drag.dy}px) scale(1.03)`, transition: 'none' }
     const from = drag.ids.indexOf(drag.id)
     const j = drag.ids.indexOf(id)
     const h = drag.heights[from] + 1

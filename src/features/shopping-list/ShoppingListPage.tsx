@@ -11,11 +11,15 @@ import {
 } from './data'
 import type { Ingredient, PurchaseHistoryEntry, ShoppingItem } from '../../lib/collections'
 import { groupByPantryGroup } from '../../lib/groupByPantryGroup'
+import AddButton from '../../components/AddButton'
+import RemoveButton from '../../components/RemoveButton'
+import { CaretIcon } from '../../components/icons'
+import Collapse from '../../components/Collapse'
+import { prefersReducedMotion } from '../../lib/motion'
 import DeleteButton from '../../components/DeleteButton'
 import SearchInput from '../../components/SearchInput'
 import StickyHeader from '../../components/StickyHeader'
-import { outlineButton, primaryButton, rowAddButton, rowIconButton } from '../../components/buttonStyles'
-import { PlusIcon, XIcon } from '../../components/icons'
+import { outlineButton, primaryButton } from '../../components/buttonStyles'
 import { useCollapsedSet } from '../../lib/useCollapsedSet'
 import ListSkeleton from '../../components/ListSkeleton'
 import { useToast } from '../../components/Toast'
@@ -78,7 +82,7 @@ function SectionHeader({
       className="mb-1 flex items-center gap-1.5 text-sm font-semibold uppercase tracking-wide text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
     >
       <span aria-hidden="true" className="text-gray-500 dark:text-gray-400">
-        {isCollapsed ? '▶' : '▼'}
+        <CaretIcon open={!isCollapsed} />
       </span>
       {name}
       {count !== undefined && <span className="font-normal normal-case text-gray-500 dark:text-gray-400">({count})</span>}
@@ -159,12 +163,21 @@ export default function ShoppingListPage() {
 
   const loading = loadingIngredients || loadingItems
 
+  // misma animación que el carrito de las recetas: ✓ verde con anillo y destello; lo tachado sale deslizándose
+  const [confirmAnim, setConfirmAnim] = useState(false)
   async function handleConfirmPurchase() {
+    if (confirmAnim) return
+    const reduce = prefersReducedMotion()
+    if (!reduce) {
+      setConfirmAnim(true)
+      await new Promise((r) => window.setTimeout(r, 650))
+    }
     setConfirming(true)
     try {
       await confirmPurchase(items, ingredientsById)
     } finally {
       setConfirming(false)
+      setConfirmAnim(false)
     }
   }
 
@@ -193,43 +206,41 @@ export default function ShoppingListPage() {
                       isCollapsed={isCollapsed}
                       onToggle={() => cartCollapse.toggle(section.id)}
                     />
-                    {!isCollapsed && (
+                    <Collapse open={!isCollapsed}>
                       <ul className="divide-y divide-gray-100 rounded-lg border border-gray-200 bg-white dark:divide-moss-800 dark:border-moss-800 dark:bg-moss-900">
                         {section.items.map((item) => {
                           const ingredient = ingredientsById.get(item.ingredientId)
                           return (
-                            <li key={item.id} className="flex items-center gap-3 pl-4 pr-3">
+                            <li key={item.id} className={'flex items-center gap-3 pl-4 pr-3' + (confirmAnim && item.checked ? ' row-confirm' : '')}>
                               <label className="flex min-h-10 flex-1 cursor-pointer items-center gap-3 py-2 max-md:min-h-11">
                                 <input
                                   type="checkbox"
                                   checked={item.checked}
                                   onChange={(e) => setShoppingItemChecked(item.id, e.target.checked)}
-                                  className="h-4 w-4 rounded border-gray-300 text-emerald-700 focus:ring-emerald-500 max-md:h-5 max-md:w-5 dark:border-moss-600 dark:bg-moss-800"
+                                  className="cb h-5 w-5 max-md:h-6 max-md:w-6"
                                 />
                                 <span
                                   className={
                                     item.checked
-                                      ? 'flex-1 text-gray-500 line-through dark:text-gray-400'
-                                      : 'flex-1 text-gray-900 dark:text-gray-100'
+                                      ? 'flex-1 text-gray-500 transition-colors duration-300 dark:text-gray-400'
+                                      : 'flex-1 text-gray-900 transition-colors duration-300 dark:text-gray-100'
                                   }
                                 >
-                                  {ingredient?.name ?? '(ingrediente eliminado)'}
+                                  <span className={'strike' + (item.checked ? ' strike-on' : '')}>
+                                    {ingredient?.name ?? '(ingrediente eliminado)'}
+                                  </span>
                                 </span>
                               </label>
-                              <button
-                                type="button"
-                                onClick={() => removeFromShoppingList(item.id)}
-                                aria-label="Quitar de la lista"
+                              <RemoveButton
+                                onRemove={() => removeFromShoppingList(item.id)}
+                                label="Quitar de la lista"
                                 title="Quitar de la lista"
-                                className={rowIconButton}
-                              >
-                                <XIcon />
-                              </button>
+                              />
                             </li>
                           )
                         })}
                       </ul>
-                    )}
+                    </Collapse>
                   </section>
                 )
               })}
@@ -241,9 +252,12 @@ export default function ShoppingListPage() {
                 onClick={handleConfirmPurchase}
                 disabled={confirming || !hasChecked}
                 title={hasChecked ? undefined : 'Tacha al menos un artículo para confirmar la compra'}
-                className={primaryButton + ' w-full sm:w-auto'}
+                className={primaryButton + ' confirm-btn w-full sm:w-auto' + (confirmAnim ? ' confirm-done' : '')}
               >
-                {confirming ? 'Confirmando…' : 'Confirmar compra'}
+                <span className="confirm-label">{confirming ? 'Confirmando…' : 'Confirmar compra'}</span>
+                <svg viewBox="0 0 24 24" className="add-check absolute left-1/2 top-1/2 h-5 w-5 -translate-x-1/2 -translate-y-1/2" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M5 12.5l4.5 4.5L19 7" />
+                </svg>
               </button>
             </div>
           </>
@@ -277,7 +291,7 @@ export default function ShoppingListPage() {
                     isCollapsed={isCollapsed}
                     onToggle={() => missingCollapse.toggle(section.id)}
                   />
-                  {!isCollapsed && (
+                  <Collapse open={!isCollapsed}>
                     <ul className="divide-y divide-gray-100 rounded-lg border border-gray-200 bg-white dark:divide-moss-800 dark:border-moss-800 dark:bg-moss-900">
                       {section.items.map((ingredient) => (
                         <li
@@ -287,19 +301,15 @@ export default function ShoppingListPage() {
                           }
                         >
                           <span className="text-gray-900 dark:text-gray-100">{ingredient.name}</span>
-                          <button
-                            type="button"
-                            onClick={() => addIngredientToList(ingredient)}
-                            aria-label={`Añadir ${ingredient.name} a la lista`}
+                          <AddButton
+                            onAdd={() => addIngredientToList(ingredient)}
+                            label={`Añadir ${ingredient.name} a la lista`}
                             title="Añadir a la lista"
-                            className={rowAddButton}
-                          >
-                            <PlusIcon />
-                          </button>
+                          />
                         </li>
                       ))}
                     </ul>
-                  )}
+                  </Collapse>
                 </section>
               )
             })}
@@ -312,9 +322,7 @@ export default function ShoppingListPage() {
               <span className="text-gray-900 dark:text-gray-100">
                 Crear «{searchTerm}» <span className="text-xs text-gray-500 dark:text-gray-400">(nuevo, agotado)</span>
               </span>
-              <button type="button" onClick={createAndAdd} aria-label={`Crear ${searchTerm} y añadirlo a la lista`} title="Crear y añadir a la lista" className={rowAddButton}>
-                <PlusIcon />
-              </button>
+              <AddButton onAdd={createAndAdd} label={`Crear ${searchTerm} y añadirlo a la lista`} title="Crear y añadir a la lista" />
             </li>
           </ul>
         )}
@@ -359,7 +367,7 @@ export default function ShoppingListPage() {
                     >
                       <span className="flex items-center gap-1.5">
                         <span aria-hidden="true" className="text-gray-500 dark:text-gray-400">
-                          {isCollapsed ? '▶' : '▼'}
+                          <CaretIcon open={!isCollapsed} />
                         </span>
                         Compra de {formatRelativeDate(batch.purchasedAt)}
                       </span>
@@ -367,7 +375,7 @@ export default function ShoppingListPage() {
                         {batch.entries.length} artículo{batch.entries.length === 1 ? '' : 's'}
                       </span>
                     </button>
-                    {!isCollapsed && (
+                    <Collapse open={!isCollapsed}>
                       <ul className="divide-y divide-gray-100 border-t border-gray-100 dark:divide-moss-800 dark:border-moss-800">
                         {batch.entries.map((entry) => (
                           <li key={entry.id} className="py-2 text-gray-900 dark:text-gray-100">
@@ -375,7 +383,7 @@ export default function ShoppingListPage() {
                           </li>
                         ))}
                       </ul>
-                    )}
+                    </Collapse>
                   </section>
                 )
               })}

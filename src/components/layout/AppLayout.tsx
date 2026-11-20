@@ -1,4 +1,4 @@
-import { NavLink, Outlet } from 'react-router-dom'
+import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useAuth } from '../../auth/AuthContext'
 import { ToastProvider } from '../Toast'
@@ -11,6 +11,7 @@ import { allWritesSynced } from '../../lib/pendingWrites'
 import { BellIcon, BookIcon, CartIcon, DownloadIcon, LogoutIcon, NoteIcon, PantryIcon, UsersIcon } from '../icons'
 import { downloadBackup } from '../../lib/backup'
 import { useDataError } from '../../lib/AppDataContext'
+import { transitionClick } from '../../lib/pageTransition'
 
 const NAV_ITEMS = [
   { to: '/despensa', label: 'Despensa', Icon: PantryIcon },
@@ -21,9 +22,9 @@ const NAV_ITEMS = [
 
 function navLinkClasses(isActive: boolean) {
   return [
-    'flex flex-1 flex-col items-center justify-center gap-1 py-2 text-sm md:flex-none md:flex-row md:justify-start md:gap-2 md:px-4 md:py-2 md:text-base md:rounded-lg',
+    'nav-link ripple relative flex flex-1 flex-col items-center justify-center gap-1 py-2 text-sm md:flex-none md:flex-row md:justify-start md:gap-2 md:px-4 md:py-2 md:text-base md:rounded-lg',
     isActive
-      ? 'text-emerald-700 md:bg-emerald-100 md:text-emerald-800 dark:text-emerald-400 dark:md:bg-emerald-900/40 dark:md:text-emerald-300'
+      ? 'nav-active text-emerald-700 md:bg-emerald-100 md:text-emerald-800 dark:text-emerald-400 dark:md:bg-emerald-900/40 dark:md:text-emerald-300'
       : 'text-gray-500 hover:text-emerald-700 md:hover:bg-emerald-50 dark:text-gray-400 dark:hover:text-emerald-400 dark:md:hover:bg-emerald-900/20',
   ].join(' ')
 }
@@ -34,11 +35,13 @@ const iconButton =
 const activeIcon = ' !text-emerald-700 dark:!text-emerald-400'
 
 function TopLink({ to, label, children }: { to: string; label: string; children: ReactNode }) {
+  const navigate = useNavigate()
   return (
     <NavLink
       to={to}
       aria-label={label}
       title={label}
+      onClick={transitionClick(navigate, to)}
       className={({ isActive }) => iconButton + (isActive ? activeIcon : '')}
     >
       {children}
@@ -128,8 +131,8 @@ function LogoutButton({ up }: { up: boolean }) {
           role="alertdialog"
           aria-label="Confirmar cierre de sesión"
           className={
-            'absolute right-0 z-50 w-60 rounded-lg border border-gray-200 bg-white p-3 shadow-lg dark:border-moss-700 dark:bg-moss-800 ' +
-            (up ? 'bottom-full mb-2' : 'top-full mt-2')
+            'absolute z-50 w-max max-w-[calc(100vw-1rem)] rounded-lg border border-gray-200 bg-white p-3 shadow-lg dark:border-moss-700 dark:bg-moss-800 ' +
+            (up ? 'bottom-full left-0 mb-2' : 'right-0 top-full mt-2')
           }
         >
           {unsynced ? (
@@ -150,6 +153,8 @@ function LogoutButton({ up }: { up: boolean }) {
             <ConfirmDelete
               question="¿Cerrar sesión?"
               confirmLabel={checking ? 'Comprobando…' : 'Sí, salir'}
+              leave={false}
+              className="flex-nowrap whitespace-nowrap"
               onConfirm={() => void handleLogout()}
               onCancel={close}
             />
@@ -187,6 +192,7 @@ function Brand({ size }: { size: string }) {
 }
 
 export default function AppLayout() {
+  const navigate = useNavigate()
   const { user } = useAuth()
   const dataError = useDataError()
 
@@ -222,6 +228,7 @@ export default function AppLayout() {
           <NavLink
             key={item.to}
             to={item.to}
+            onClick={transitionClick(navigate, item.to)}
             className={({ isActive }) => navLinkClasses(isActive)}
           >
             <item.Icon />
@@ -245,7 +252,7 @@ export default function AppLayout() {
 
       <ErrorToast />
 
-      <main className="flex-1 overflow-y-auto p-4 md:p-8">
+      <main className="page-view flex-1 overflow-y-auto p-4 md:p-8">
         {dataError && (
           <p className="mb-4 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950 dark:text-red-300">
             No se pueden cargar los datos: {dataError}
@@ -263,6 +270,7 @@ export default function AppLayout() {
           <NavLink
             key={item.to}
             to={item.to}
+            onClick={transitionClick(navigate, item.to)}
             className={({ isActive }) => navLinkClasses(isActive)}
           >
             <item.Icon />
