@@ -31,13 +31,22 @@ export function scrollToWhileOpening(el: HTMLElement | null, ms = 420) {
   main.addEventListener('wheel', stop, { passive: true })
   main.addEventListener('touchstart', stop, { passive: true })
   main.addEventListener('pointerdown', stop, { passive: true })
-  const step = () => {
+  const gap = () => {
     const pad = parseFloat(getComputedStyle(main).scrollPaddingTop) || 0
-    const delta = el.getBoundingClientRect().top - (main.getBoundingClientRect().top + pad)
+    return el.getBoundingClientRect().top - (main.getBoundingClientRect().top + pad)
+  }
+  const step = () => {
+    const delta = gap()
     // 22 % de lo que falta en cada fotograma: arranca rápido y frena al llegar
     if (Math.abs(delta) > 0.5) main.scrollTop += Math.sign(delta) * Math.max(1, Math.abs(delta) * 0.22)
     if (performance.now() < end) raf = requestAnimationFrame(step)
-    else stop()
+    else {
+      // remate en un píxel FÍSICO (Chrome redondea el scroll al píxel físico, no al CSS) y siempre por debajo del
+      // punto: así el borde de 1 px de la tarjeta nunca queda un poco por detrás de la cabecera
+      const d = window.devicePixelRatio || 1
+      main.scrollTop = Math.floor((main.scrollTop + gap()) * d) / d
+      stop()
+    }
   }
   raf = requestAnimationFrame(step)
 }

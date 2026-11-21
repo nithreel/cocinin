@@ -18,7 +18,7 @@ export default function SegmentedToggle<T extends string | boolean>({
     <div
       role="group"
       aria-label={label}
-      className={'relative grid grid-cols-2 rounded-md bg-gray-100 p-0.5 text-sm dark:bg-moss-800 ' + className}
+      className={'relative grid grid-cols-2 overflow-hidden rounded-md bg-gray-100 p-0.5 text-sm dark:bg-moss-800 ' + className}
     >
       <span
         aria-hidden="true"

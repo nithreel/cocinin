@@ -9,6 +9,7 @@ import { CartIcon, ChevronIcon } from '../../components/icons'
 import Collapse from '../../components/Collapse'
 import { prefersReducedMotion } from '../../lib/motion'
 import { keepFocus } from '../../lib/keepFocus'
+import { scrollToWhileOpening } from '../../lib/scroll'
 import SegmentedToggle from '../../components/SegmentedToggle'
 import SearchInput from '../../components/SearchInput'
 import ListSkeleton from '../../components/ListSkeleton'
@@ -133,10 +134,11 @@ function RecipeCard({
     })
   }
   const articleRef = useRef<HTMLElement>(null)
-  // al plegar, las demás recetas reaparecen y el scroll quedaba arriba del todo: se vuelve a esta tarjeta
+  // al plegar, las demás recetas reaparecen y la cabecera recupera el buscador y las etiquetas (creciendo con animación):
+  // la pantalla sigue a esta tarjeta hasta dejarla justo debajo de la cabecera, con su alto ya final
   const wasOpen = useRef(false)
   useEffect(() => {
-    if (wasOpen.current && !open) requestAnimationFrame(() => articleRef.current?.scrollIntoView({ block: 'nearest' }))
+    if (wasOpen.current && !open) scrollToWhileOpening(articleRef.current, 600)
     wasOpen.current = open
   }, [open])
   const titleRef = useRef<HTMLDivElement>(null)
