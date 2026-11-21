@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <img src="docs/hero.png?v=3" alt="CocinIN en el ordenador y en el móvil">
+  <img src="docs/hero.png?v=4" alt="CocinIN en el ordenador y en el móvil">
 </p>
 
 ## ¿Qué es?
