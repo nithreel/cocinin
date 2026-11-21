@@ -20,7 +20,6 @@ export function scrollToWhileOpening(el: HTMLElement | null, ms = 420) {
     el.scrollIntoView({ block: 'start' })
     return
   }
-  const end = performance.now() + ms
   let raf = 0
   const stop = () => {
     cancelAnimationFrame(raf)
@@ -35,11 +34,16 @@ export function scrollToWhileOpening(el: HTMLElement | null, ms = 420) {
     const pad = parseFloat(getComputedStyle(main).scrollPaddingTop) || 0
     return el.getBoundingClientRect().top - (main.getBoundingClientRect().top + pad)
   }
+  // La tarjeta recorre en pantalla, a ritmo de reloj, la distancia inicial que le separa del punto de destino
+  // (g0 → 0); su posición real se recalcula en cada fotograma porque las recetas de arriba crecen o se encogen a la vez.
+  // Así nunca sube y baja (zig zag): si ya está arriba (plegar), se queda quieta mientras todo cambia a su alrededor.
+  const start = performance.now()
+  const g0 = gap()
   const step = () => {
-    const delta = gap()
-    // 22 % de lo que falta en cada fotograma: arranca rápido y frena al llegar
-    if (Math.abs(delta) > 0.5) main.scrollTop += Math.sign(delta) * Math.max(1, Math.abs(delta) * 0.22)
-    if (performance.now() < end) raf = requestAnimationFrame(step)
+    const t = Math.min(1, (performance.now() - start) / ms)
+    const e = 1 - Math.pow(1 - t, 3)
+    main.scrollTop += gap() - g0 * (1 - e)
+    if (t < 1) raf = requestAnimationFrame(step)
     else {
       // remate en un píxel FÍSICO (Chrome redondea el scroll al píxel físico, no al CSS) y siempre por debajo del
       // punto: así el borde de 1 px de la tarjeta nunca queda un poco por detrás de la cabecera

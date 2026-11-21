@@ -75,6 +75,21 @@ body {
   animation: collapse-out 240ms ease-in forwards;
 }
 
+/* Desplegable alto (recetas): solo fundido, sin rebote ni escala */
+@keyframes collapse-soft-in { from { opacity: 0; } }
+@keyframes collapse-soft-out { to { opacity: 0; } }
+.collapse-soft-in { animation: collapse-soft-in 300ms ease-out backwards; }
+.collapse-soft-out { animation: collapse-soft-out 200ms ease-in forwards; }
+
+/* Recetas que se pliegan al abrir otra (y reaparecen al cerrarla) */
+.recipe-wrap {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: 1fr;
+  transition: grid-template-rows var(--recipe-ms, 340ms) cubic-bezier(0.3, 0.9, 0.3, 1), opacity 220ms ease-out;
+}
+.recipe-wrap-hidden { grid-template-rows: 0fr; opacity: 0; }
+
 /* Avisos flotantes (arriba): bajan con rebote y se van hacia arriba; también se quitan deslizándolos */
 @keyframes toast-in { from { opacity: 0; transform: translateY(-24px) scale(0.94); } }
 @keyframes toast-out { to { opacity: 0; transform: translateY(-16px) scale(0.96); } }

@@ -7,6 +7,11 @@ export function prefersReducedMotion() {
 /** Duración (ms) del desplegable `Collapse`: la usan su CSS (--collapse-ms), su desmontaje y los scroll que esperan a que termine. */
 export const COLLAPSE_MS = 340
 
+/** Duración de un desplegable alto (recetas): crece con el contenido para que una receta larga no vaya más deprisa que una corta. */
+export function tallCollapseMs(heightPx: number) {
+  return Math.round(Math.min(900, Math.max(COLLAPSE_MS, 260 + heightPx * 0.4)))
+}
+
 /** La fila se desliza hacia la derecha y se desvanece (se queda así: `fill: forwards`). Usa la API de animaciones web
  *  y no toca el `className` de la fila, que controla React. Devuelve la animación (`.cancel()` la deshace si la acción falla). */
 export function leaveRow(el: Element | null | undefined, ms = 300): Animation | null {

@@ -7,7 +7,7 @@ import RecipeForm from './RecipeForm'
 import { getExpiryInfo } from '../../lib/expiry'
 import { CartIcon, ChevronIcon } from '../../components/icons'
 import Collapse from '../../components/Collapse'
-import { prefersReducedMotion } from '../../lib/motion'
+import { prefersReducedMotion, tallCollapseMs } from '../../lib/motion'
 import { keepFocus } from '../../lib/keepFocus'
 import { scrollToWhileOpening } from '../../lib/scroll'
 import SegmentedToggle from '../../components/SegmentedToggle'
@@ -137,8 +137,13 @@ function RecipeCard({
   // al plegar, las demás recetas reaparecen y la cabecera recupera el buscador y las etiquetas (creciendo con animación):
   // la pantalla sigue a esta tarjeta hasta dejarla justo debajo de la cabecera, con su alto ya final
   const wasOpen = useRef(false)
-  useEffect(() => {
-    if (wasOpen.current && !open) scrollToWhileOpening(articleRef.current, 600)
+  useLayoutEffect(() => {
+    if (wasOpen.current !== open) {
+      // misma duración para la tarjeta, las demás recetas y el scroll, según lo alta que sea esta receta
+      const ms = tallCollapseMs(articleRef.current?.querySelector<HTMLElement>('[data-collapse-inner]')?.offsetHeight ?? 0)
+      document.documentElement.style.setProperty('--recipe-ms', ms + 'ms')
+      scrollToWhileOpening(articleRef.current, ms + 120)
+    }
     wasOpen.current = open
   }, [open])
   const titleRef = useRef<HTMLDivElement>(null)
@@ -239,7 +244,7 @@ function RecipeCard({
         )}
       </div>
 
-      <Collapse open={open}>
+      <Collapse open={open} soft>
         <div className={`border-t border-gray-100 px-4 pt-3 dark:border-moss-800 ${editing ? 'pb-4' : 'pb-0'}`}>
           {editing ? (
             <RecipeForm
@@ -517,10 +522,13 @@ export default function RecipesPage() {
         <p className="text-gray-500 dark:text-gray-400">No hay recetas que coincidan {search.trim() ? `con «${search.trim()}»` : 'con los filtros elegidos'}.</p>
       )}
 
-      <div className="space-y-4">
-        {visibleRecipes.map((recipe) => (
-          // mientras se crea, edita o lee (desplegada) una receta, las demás se ocultan (siguen montadas: conservan si estaban abiertas)
-          <div key={recipe.id} className={(formActive || compact || showImport) && !editingIds.has(recipe.id) && !openIds.has(recipe.id) ? 'hidden' : ''}>
+      <div className="-mb-4">
+        {visibleRecipes.map((recipe) => {
+          // mientras se crea, edita o lee (desplegada) una receta, las demás se pliegan con animación (siguen montadas: conservan si estaban abiertas)
+          const hide = (formActive || compact || showImport) && !editingIds.has(recipe.id) && !openIds.has(recipe.id)
+          return (
+          <div key={recipe.id} className={'recipe-wrap' + (hide ? ' recipe-wrap-hidden' : '')} inert={hide}>
+          <div className={'pb-4' + (openIds.has(recipe.id) || editingIds.has(recipe.id) ? '' : ' overflow-clip')} style={{ minHeight: 0 }}>
           <RecipeCard
             recipe={recipe}
             status={getRecipeStatus(recipe, ingredientsById)}
@@ -532,7 +540,9 @@ export default function RecipesPage() {
             onOpen={handleOpen}
           />
           </div>
-        ))}
+          </div>
+          )
+        })}
       </div>
 
     </div>
