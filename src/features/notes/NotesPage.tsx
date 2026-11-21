@@ -9,6 +9,7 @@ import StickyHeader from '../../components/StickyHeader'
 import Switch from '../../components/Switch'
 import { cancelButton, dangerTextButton, primaryButton, rowIconButton } from '../../components/buttonStyles'
 import RemoveButton from '../../components/RemoveButton'
+import IconsReveal from '../../components/IconsReveal'
 import SwapLabelButton from '../../components/SwapLabelButton'
 import { BellIcon, PencilIcon } from '../../components/icons'
 import { useLongPress } from '../../lib/useLongPress'
@@ -202,14 +203,12 @@ function NoteCard({
             {note.text}
           </p>
         </label>
-        {organizing && !confirmingDelete && (
-          <div className="icon-in flex shrink-0 items-center gap-4">
+        <IconsReveal show={organizing && !confirmingDelete} className="flex shrink-0 items-center gap-4">
             <button type="button" onClick={() => setEditing(true)} aria-label="Editar la nota" title="Editar la nota" className={rowIconButton}>
               <PencilIcon />
             </button>
             <RemoveButton row={false} onRemove={() => setConfirmingDelete(true)} label="Eliminar la nota" title="Eliminar la nota" />
-          </div>
-        )}
+        </IconsReveal>
       </div>
       {note.notify && note.remindAt && (
         <p

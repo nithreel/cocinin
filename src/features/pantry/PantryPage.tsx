@@ -19,6 +19,7 @@ import {
 import type { ExpiryMode, Group, Ingredient } from '../../lib/collections'
 import { ConfirmDelete } from '../../components/DeleteButton'
 import RemoveButton from '../../components/RemoveButton'
+import IconsReveal from '../../components/IconsReveal'
 import SwapLabelButton from '../../components/SwapLabelButton'
 import { useDragReorder } from '../../lib/useDragReorder'
 import { AlertIcon, CaretIcon, CartIcon, PencilIcon, SnowflakeIcon } from '../../components/icons'
@@ -30,7 +31,7 @@ import { useToast } from '../../components/Toast'
 import ListSkeleton from '../../components/ListSkeleton'
 import { addToShoppingList, removeFromShoppingList, useShoppingList } from '../shopping-list/data'
 import { COLLAPSE_MS } from '../../lib/motion'
-import { scrollMainToTop, smoothBehavior } from '../../lib/scroll'
+import { scrollMainToTop, scrollToWhileOpening, smoothBehavior } from '../../lib/scroll'
 import { keepFocus } from '../../lib/keepFocus'
 import { useLongPress } from '../../lib/useLongPress'
 import { useCollapsedSet } from '../../lib/useCollapsedSet'
@@ -452,14 +453,12 @@ function IngredientRow({
           </Collapse>
         </div>
         {/* panel abierto: editar y eliminar, con iconos, a la derecha del nombre (el nombre largo se parte en líneas) */}
-        {panelOpen && !confirmingDelete && (
-          <div className="icon-in flex shrink-0 items-center gap-4">
-            <button type="button" onClick={startEdit} aria-label={`Editar «${ingredient.name}»`} title="Editar el ingrediente" className={rowIconButton}>
-              <PencilIcon />
-            </button>
-            <RemoveButton row={false} onRemove={() => setConfirmingDelete(true)} label={`Eliminar «${ingredient.name}»`} title="Eliminar el ingrediente" />
-          </div>
-        )}
+        <IconsReveal show={panelOpen && !confirmingDelete} className="flex shrink-0 items-center gap-4">
+          <button type="button" onClick={startEdit} aria-label={`Editar «${ingredient.name}»`} title="Editar el ingrediente" className={rowIconButton}>
+            <PencilIcon />
+          </button>
+          <RemoveButton row={false} onRemove={() => setConfirmingDelete(true)} label={`Eliminar «${ingredient.name}»`} title="Eliminar el ingrediente" />
+        </IconsReveal>
       </div>
 
       <Collapse open={panelOpen}>
@@ -836,25 +835,19 @@ function GroupHeader({
             {badges}
           </button>
         )}
-        {organizing && canOrganize && (
-          <div className="flex shrink-0 items-center gap-4">
-            {!confirmingDelete && (
-              <button
-                type="button"
-                onClick={() => onDraftChange(draft ? null : { name: section.name, isFood: section.isFood })}
-                aria-label={`Editar «${section.name}»`}
-                aria-pressed={!!draft}
-                title="Editar el grupo"
-                className={rowIconButton + (draft ? ' !text-emerald-600 dark:!text-emerald-400' : '')}
-              >
-                <PencilIcon />
-              </button>
-            )}
-            {!confirmingDelete && (
-              <RemoveButton row={false} onRemove={() => setConfirmingDelete(true)} label={`Eliminar «${section.name}»`} title="Eliminar el grupo" />
-            )}
-          </div>
-        )}
+        <IconsReveal show={organizing && canOrganize && !confirmingDelete} className="flex shrink-0 items-center gap-4">
+          <button
+            type="button"
+            onClick={() => onDraftChange(draft ? null : { name: section.name, isFood: section.isFood })}
+            aria-label={`Editar «${section.name}»`}
+            aria-pressed={!!draft}
+            title="Editar el grupo"
+            className={rowIconButton + (draft ? ' !text-emerald-600 dark:!text-emerald-400' : '')}
+          >
+            <PencilIcon />
+          </button>
+          <RemoveButton row={false} onRemove={() => setConfirmingDelete(true)} label={`Eliminar «${section.name}»`} title="Eliminar el grupo" />
+        </IconsReveal>
       </div>
       {organizing && canOrganize && confirmingDelete && (
         <ConfirmDelete
@@ -1064,6 +1057,7 @@ export default function PantryPage() {
           return (
             <section
               key={section.id}
+              data-group-id={section.id}
               ref={movable ? reorder.rowRef(section.id) : undefined}
               style={movable ? reorder.rowStyle(section.id) : undefined}
               className={organizing ? 'bg-white py-3 dark:bg-moss-950' + (reorder.draggingId === section.id ? ' relative z-10 rounded-md shadow-md' : '') : undefined}
@@ -1071,7 +1065,10 @@ export default function PantryPage() {
               <GroupHeader
                 section={section}
                 isCollapsed={isCollapsed}
-                onToggleCollapsed={() => toggleCollapsed(section.id)}
+                onToggleCollapsed={() => {
+                  toggleCollapsed(section.id)
+                  if (isCollapsed) scrollToWhileOpening(document.querySelector<HTMLElement>(`[data-group-id="${CSS.escape(section.id)}"]`))
+                }}
                 organizing={organizing}
                 onStartOrganize={startOrganize}
                 draft={drafts[section.id]}

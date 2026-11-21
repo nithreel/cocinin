@@ -20,6 +20,7 @@ import StickyHeader from '../../components/StickyHeader'
 import ImportRecipes from './ImportRecipes'
 import { ConfirmDelete } from '../../components/DeleteButton'
 import RemoveButton from '../../components/RemoveButton'
+import IconsReveal from '../../components/IconsReveal'
 import { PencilIcon } from '../../components/icons'
 import { outlineButton, primaryButton, rowIconButton } from '../../components/buttonStyles'
 import type { Group, Ingredient, Recipe, Tag } from '../../lib/collections'
@@ -197,8 +198,7 @@ function RecipeCard({
                 )}
               </button>
               {/* abierta: editar y eliminar, con iconos, a la derecha del título */}
-              {open && !confirmingDelete && (
-                <div className="icon-in flex shrink-0 items-center gap-4">
+              <IconsReveal show={open && !confirmingDelete} className="flex shrink-0 items-center gap-4">
                   <button
                     type="button"
                     onClick={() => {
@@ -213,8 +213,7 @@ function RecipeCard({
                     <PencilIcon />
                   </button>
                   <RemoveButton row={false} onRemove={() => setConfirmingDelete(true)} label={`Eliminar «${recipe.title}»`} title="Eliminar la receta" />
-                </div>
-              )}
+              </IconsReveal>
               <button
                 type="button"
                 onMouseDown={keepFocus}

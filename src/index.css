@@ -414,3 +414,5 @@ html[data-kb] .toast-region { top: auto !important; bottom: 0.5rem; }
 /* Iconos que aparecen (editar / eliminar al abrir una fila o receta): brotan con rebote */
 @keyframes icon-in { from { opacity: 0; transform: scale(0.5); } }
 .icon-in { animation: icon-in 320ms cubic-bezier(0.34, 1.56, 0.64, 1) backwards; }
+.icon-out { animation: icon-out 220ms ease-in forwards; pointer-events: none; }
+@keyframes icon-out { to { opacity: 0; transform: scale(0.5); } }
