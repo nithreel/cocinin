@@ -248,6 +248,7 @@ button[aria-checked='true']:active:not(:disabled) > .switch-knob {
 @media (hover: hover) {
   .rm-btn:hover:not(:disabled) { color: var(--color-red-500); }
   .rm-btn:hover:not(:disabled) .rm-x { transform: rotate(90deg) scale(1.15); }
+  .rm-btn:hover:not(:disabled) .rm-trash { transform: rotate(-10deg) scale(1.15); }
 }
 .rm-btn:active:not(:disabled) { transform: scale(0.88); transition-duration: 90ms; }
 .rm-btn.rm-done {
@@ -255,6 +256,7 @@ button[aria-checked='true']:active:not(:disabled) > .switch-knob {
   animation: add-pop 420ms cubic-bezier(0.34, 1.56, 0.64, 1), rm-ring 560ms ease-out;
 }
 .rm-btn.rm-done .rm-x { transform: rotate(180deg) scale(1.2); }
+.rm-btn.rm-done .rm-trash { transform: rotate(-10deg) scale(1.2); }
 @keyframes rm-ring {
   from { box-shadow: 0 0 0 0 rgb(239 68 68 / 0.55); }
   to { box-shadow: 0 0 0 12px rgb(239 68 68 / 0); }

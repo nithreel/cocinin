@@ -214,7 +214,7 @@ function RecipeCard({
                   >
                     <PencilIcon />
                   </button>
-                  <RemoveButton row={false} onRemove={() => setConfirmingDelete(true)} label={`Eliminar «${recipe.title}»`} title="Eliminar la receta" />
+                  <RemoveButton trash row={false} onRemove={() => setConfirmingDelete(true)} label={`Eliminar «${recipe.title}»`} title="Eliminar la receta" />
               </IconsReveal>
               <button
                 type="button"

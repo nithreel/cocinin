@@ -113,7 +113,7 @@ function TagRow({
             <button type="button" onClick={() => setEditing(true)} className={cancelButton}>
               Editar
             </button>
-            <RemoveButton onRemove={() => setConfirming(true)} label={`Eliminar «${tag.name}»`} title="Eliminar" row={false} />
+            <RemoveButton onRemove={() => setConfirming(true)} label={`Eliminar «${tag.name}»`} title="Eliminar" row={false} trash />
           </>
         )}
       </div>

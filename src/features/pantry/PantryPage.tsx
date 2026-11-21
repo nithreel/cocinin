@@ -457,7 +457,7 @@ function IngredientRow({
           <button type="button" onClick={startEdit} aria-label={`Editar «${ingredient.name}»`} title="Editar el ingrediente" className={rowIconButton}>
             <PencilIcon />
           </button>
-          <RemoveButton row={false} onRemove={() => setConfirmingDelete(true)} label={`Eliminar «${ingredient.name}»`} title="Eliminar el ingrediente" />
+          <RemoveButton trash row={false} onRemove={() => setConfirmingDelete(true)} label={`Eliminar «${ingredient.name}»`} title="Eliminar el ingrediente" />
         </IconsReveal>
       </div>
 
@@ -846,7 +846,7 @@ function GroupHeader({
           >
             <PencilIcon />
           </button>
-          <RemoveButton row={false} onRemove={() => setConfirmingDelete(true)} label={`Eliminar «${section.name}»`} title="Eliminar el grupo" />
+          <RemoveButton trash row={false} onRemove={() => setConfirmingDelete(true)} label={`Eliminar «${section.name}»`} title="Eliminar el grupo" />
         </IconsReveal>
       </div>
       {organizing && canOrganize && confirmingDelete && (

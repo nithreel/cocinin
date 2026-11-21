@@ -207,7 +207,7 @@ function NoteCard({
             <button type="button" onClick={() => setEditing(true)} aria-label="Editar la nota" title="Editar la nota" className={rowIconButton}>
               <PencilIcon />
             </button>
-            <RemoveButton row={false} onRemove={() => setConfirmingDelete(true)} label="Eliminar la nota" title="Eliminar la nota" />
+            <RemoveButton trash row={false} onRemove={() => setConfirmingDelete(true)} label="Eliminar la nota" title="Eliminar la nota" />
         </IconsReveal>
       </div>
       {note.notify && note.remindAt && (
