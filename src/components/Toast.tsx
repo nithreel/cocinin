@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type PointerEvent, type ReactNode } from 'react'
 
 interface ToastOptions {
   message: string
@@ -45,41 +45,76 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   useEffect(() => () => { window.clearTimeout(timer.current); window.clearTimeout(gone.current) }, [])
 
   const isError = toast?.kind === 'error'
+
+  // deslizar el aviso hacia un lado lo quita
+  const [drag, setDrag] = useState({ x: 0, active: false, out: false })
+  const start = useRef<{ x: number; id: number } | null>(null)
+  function onDown(e: PointerEvent) {
+    if ((e.target as HTMLElement).closest('button')) return
+    start.current = { x: e.clientX, id: e.pointerId }
+    e.currentTarget.setPointerCapture(e.pointerId)
+    window.clearTimeout(timer.current)
+    setDrag({ x: 0, active: true, out: false })
+  }
+  function onMove(e: PointerEvent) {
+    if (!start.current) return
+    setDrag({ x: e.clientX - start.current.x, active: true, out: false })
+  }
+  function onUp(e: PointerEvent) {
+    if (!start.current) return
+    const dx = e.clientX - start.current.x
+    start.current = null
+    if (Math.abs(dx) > 70) {
+      setDrag({ x: dx > 0 ? 400 : -400, active: false, out: true })
+      window.setTimeout(() => {
+        setToast(null)
+        setLeaving(false)
+        setDrag({ x: 0, active: false, out: false })
+      }, 200)
+    } else {
+      setDrag({ x: 0, active: false, out: false })
+      // se retoma la cuenta atrás que se paró al tocarlo
+      timer.current = window.setTimeout(hide, 2500)
+    }
+  }
+  // arriba (donde el título de cada pantalla), para no tapar lo que se está tocando abajo
+  const regionClasses = 'pointer-events-none fixed inset-x-4 top-[calc(3.25rem+env(safe-area-inset-top))] z-50 mx-auto max-w-md md:top-6'
+  const card = toast && (
+    <div
+      key={seq}
+      onPointerDown={onDown}
+      onPointerMove={onMove}
+      onPointerUp={onUp}
+      onPointerCancel={onUp}
+      style={drag.x !== 0 || drag.out ? { transform: `translateX(${drag.x}px)`, opacity: drag.out ? 0 : 1 - Math.min(Math.abs(drag.x) / 200, 0.6), transition: drag.active ? 'none' : 'transform 200ms ease-out, opacity 200ms ease-out', touchAction: 'pan-y' } : { touchAction: 'pan-y' }}
+      className={
+        (leaving ? 'toast-out ' : 'toast-in ') +
+        'pointer-events-auto flex items-center justify-between gap-3 rounded-lg px-4 py-3 text-sm text-white shadow-lg ' +
+        (isError ? 'bg-red-700' : 'bg-gray-900 dark:bg-moss-700')
+      }
+    >
+      <span>{toast.message}</span>
+      {toast.actionLabel && (
+        <button
+          type="button"
+          disabled={leaving}
+          onClick={() => {
+            toast.onAction?.()
+            hide()
+          }}
+          className="shrink-0 rounded-md px-2 py-1.5 text-sm font-semibold text-emerald-300 hover:bg-white/10 max-md:min-h-11"
+        >
+          {toast.actionLabel}
+        </button>
+      )}
+    </div>
+  )
   return (
     <ToastContext.Provider value={show}>
       {children}
-      {/* región viva siempre montada (algunos lectores no anuncian una región que nace con su texto) */}
-      <div
-        role={isError ? 'alert' : 'status'}
-        aria-live={isError ? 'assertive' : 'polite'}
-        className="pointer-events-none fixed inset-x-4 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-50 mx-auto max-w-md md:bottom-6"
-      >
-        {toast && (
-          <div
-            key={seq}
-            className={
-              (leaving ? 'toast-out ' : 'toast-in ') +
-              'pointer-events-auto flex items-center justify-between gap-3 rounded-lg px-4 py-3 text-sm text-white shadow-lg ' +
-              (isError ? 'bg-red-700' : 'bg-gray-900 dark:bg-moss-700')
-            }
-          >
-            <span>{toast.message}</span>
-            {toast.actionLabel && (
-              <button
-                type="button"
-                disabled={leaving}
-                onClick={() => {
-                  toast.onAction?.()
-                  hide()
-                }}
-                className="shrink-0 rounded-md px-2 py-1.5 text-sm font-semibold text-emerald-300 hover:bg-white/10 max-md:min-h-11"
-              >
-                {toast.actionLabel}
-              </button>
-            )}
-          </div>
-        )}
-      </div>
+      {/* dos regiones vivas fijas, siempre montadas: el aviso se pinta en la que le toca (cambiar role/aria-live al vuelo no siempre se anuncia) */}
+      <div role="status" aria-live="polite" className={regionClasses}>{toast && !isError && card}</div>
+      <div role="alert" aria-live="assertive" className={regionClasses}>{toast && isError && card}</div>
     </ToastContext.Provider>
   )
 }

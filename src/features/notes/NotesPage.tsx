@@ -111,9 +111,9 @@ function NoteForm({
       {notify && (
         <>
           <div className="mb-4 flex flex-wrap items-center gap-2">
-            <input type="time" required step={60} lang="es-ES" value={time} onChange={(e) => setTime(e.target.value)} aria-label="Hora" className={inputClasses} />
+            <input autoComplete="off" type="time" required step={60} lang="es-ES" value={time} onChange={(e) => setTime(e.target.value)} aria-label="Hora" className={inputClasses} />
             <span className="text-sm text-gray-500 dark:text-gray-400">del</span>
-            <input type="date" required lang="es-ES" value={date} onChange={(e) => setDate(e.target.value)} aria-label="Fecha" className={inputClasses} />
+            <input autoComplete="off" type="date" required lang="es-ES" value={date} onChange={(e) => setDate(e.target.value)} aria-label="Fecha" className={inputClasses} />
           </div>
 
           <p className="mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">Avisar a</p>
@@ -121,7 +121,7 @@ function NoteForm({
             {members.map((m) => (
               <li key={m.id} className="flex items-center px-3">
                 <label className="flex min-h-10 flex-1 cursor-pointer items-center gap-3 text-sm text-gray-900 dark:text-gray-100">
-                  <input type="checkbox" className="cb h-5 w-5" checked={recipients.has(m.id)} onChange={(e) => toggleRecipient(m.id, e.target.checked)} />
+                  <input autoComplete="off" type="checkbox" className="cb h-5 w-5" checked={recipients.has(m.id)} onChange={(e) => toggleRecipient(m.id, e.target.checked)} />
                   <span className="min-w-0 truncate">
                     {memberName(m)}
                     {m.id === user?.uid && <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">(tú)</span>}
@@ -169,7 +169,7 @@ function NoteCard({ note, members }: { note: Note; members: Member[] }) {
     <li className="rounded-lg border border-gray-200 bg-white p-4 dark:border-moss-800 dark:bg-moss-900">
       <div className="flex items-start justify-between gap-2">
         <label className="flex min-w-0 flex-1 cursor-pointer items-start gap-3">
-          <input
+          <input autoComplete="off"
             type="checkbox"
             checked={!!note.done}
             onChange={(e) => setNoteDone(note.id, e.target.checked)}

@@ -202,17 +202,43 @@ export default function AppLayout() {
     const vv = window.visualViewport
     if (!vv) return
     const root = document.documentElement
+    const isField = (el: Element | null) =>
+      !!el && (el.tagName === 'TEXTAREA' || (el.tagName === 'INPUT' && !/^(checkbox|radio|button|submit|range)$/.test((el as HTMLInputElement).type)))
     const apply = () => {
       root.style.setProperty('--app-h', `${vv.height}px`)
+      // teclado abierto = campo enfocado y pantalla visible mucho menor que la física
+      const kb = isField(document.activeElement) && vv.height < screen.height * 0.8
+      root.toggleAttribute('data-kb', kb)
+      // pantalla muy baja (móvil en horizontal con teclado): nada fijo, para que quepa el campo
+      root.toggleAttribute('data-kb-low', kb && vv.height < 300)
       // iOS desplaza la página al abrir el teclado; la app ocupa justo la parte visible
       if (vv.offsetTop > 0) window.scrollTo(0, 0)
     }
+    // al enfocar un campo, llevarlo al centro de lo visible cuando el teclado ya está abierto
+    const onFocus = (e: FocusEvent) => {
+      if (!isField(e.target as Element)) return
+      const t = e.target as HTMLElement
+      window.setTimeout(() => {
+        apply()
+        if (root.hasAttribute('data-kb')) {
+          // buscadores: arriba, para dejar sitio a los resultados; el resto, al centro de lo visible
+          const top = t.dataset.kbAlign === 'start' || root.hasAttribute('data-kb-low')
+          t.scrollIntoView({ block: top ? 'start' : 'center', behavior: 'smooth' })
+        }
+      }, 350)
+    }
+    document.addEventListener('focusin', onFocus)
+    document.addEventListener('focusout', apply)
     apply()
     vv.addEventListener('resize', apply)
     vv.addEventListener('scroll', apply)
     return () => {
       vv.removeEventListener('resize', apply)
       vv.removeEventListener('scroll', apply)
+      document.removeEventListener('focusin', onFocus)
+      document.removeEventListener('focusout', apply)
+      root.removeAttribute('data-kb')
+      root.removeAttribute('data-kb-low')
       root.style.removeProperty('--app-h')
     }
   }, [])
@@ -243,7 +269,7 @@ export default function AppLayout() {
         </div>
       </nav>
 
-      <header className="flex shrink-0 items-center justify-between border-b border-gray-200 bg-white px-3 py-1 md:hidden dark:border-moss-800 dark:bg-moss-900">
+      <header className="kb-hide flex shrink-0 items-center justify-between border-b border-gray-200 bg-white px-3 py-1 md:hidden dark:border-moss-800 dark:bg-moss-900">
         <Brand size="h-7 w-7" />
         <div className="flex items-center">
           <TopIcons />
@@ -252,20 +278,23 @@ export default function AppLayout() {
 
       <ErrorToast />
 
-      <main className="page-view flex-1 overflow-y-auto p-4 md:p-8">
-        {dataError && (
-          <p className="mb-4 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950 dark:text-red-300">
-            No se pueden cargar los datos: {dataError}
-          </p>
-        )}
-        <div className="mx-auto w-full max-w-3xl">
-          <UpdatePrompt />
-          <ReleaseNotice />
-          <Outlet />
-        </div>
-      </main>
+      {/* Avisos de versión fijos arriba (no se mueven con el scroll ni se solapan con la cabecera de cada pantalla) */}
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+        <UpdatePrompt />
+        <ReleaseNotice />
+        <main className="page-view scroll-pt-[calc(var(--head-h,0px)+1rem)] scroll-pb-20 flex-1 overflow-y-auto p-4 md:p-8">
+          {dataError && (
+            <p className="mb-4 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950 dark:text-red-300">
+              No se pueden cargar los datos: {dataError}
+            </p>
+          )}
+          <div className="mx-auto w-full max-w-3xl">
+            <Outlet />
+          </div>
+        </main>
+      </div>
 
-      <nav className="flex shrink-0 border-t border-gray-200 bg-white md:hidden dark:border-moss-800 dark:bg-moss-900">
+      <nav className="kb-hide flex shrink-0 border-t border-gray-200 bg-white md:hidden dark:border-moss-800 dark:bg-moss-900">
         {NAV_ITEMS.map((item) => (
           <NavLink
             key={item.to}

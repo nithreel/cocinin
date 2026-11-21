@@ -2,6 +2,7 @@ import { useMemo, useState, type FormEvent } from 'react'
 import type { Group, Ingredient, RecipeIngredient, Tag } from '../../lib/collections'
 import { groupByPantryGroup } from '../../lib/groupByPantryGroup'
 import { cancelButton, primaryButton } from '../../components/buttonStyles'
+import SegmentedToggle from '../../components/SegmentedToggle'
 import SearchInput from '../../components/SearchInput'
 import { matchesSearch } from '../../lib/search'
 import { sortTags } from '../../lib/tags'
@@ -25,6 +26,9 @@ export default function RecipeForm({
   tags: allTags = [],
   initial,
   submitLabel = 'Guardar receta',
+  title: externalTitle,
+  onTitleChange,
+  onTagsChange,
   onSubmit,
   onDone,
 }: {
@@ -34,10 +38,16 @@ export default function RecipeForm({
   tags?: Tag[]
   initial?: RecipeFormValues
   submitLabel?: string
+  /** si se pasan `title` y `onTitleChange`, el título se edita fuera (en la cabecera de la tarjeta) y el formulario no pinta su campo */
+  title?: string
+  onTitleChange?: (title: string) => void
+  /** avisa de las etiquetas elegidas en cada cambio (para verlas en directo arriba) */
+  onTagsChange?: (tagIds: string[]) => void
   onSubmit: (values: RecipeFormValues) => Promise<void>
   onDone: () => void
 }) {
-  const [title, setTitle] = useState(initial?.title ?? '')
+  const [ownTitle, setTitle] = useState(initial?.title ?? '')
+  const title = onTitleChange ? (externalTitle ?? '') : ownTitle
   const [instructions, setInstructions] = useState(initial?.instructions ?? '')
   const [selected, setSelected] = useState<Record<string, SelectedIngredient>>(() => {
     const initialSelected: Record<string, SelectedIngredient> = {}
@@ -60,7 +70,9 @@ export default function RecipeForm({
   const tagOptions = useMemo(() => sortTags(allTags), [allTags])
 
   function toggleTag(id: string) {
-    setTagIds((prev) => (prev.includes(id) ? prev.filter((t) => t !== id) : [...prev, id]))
+    const next = tagIds.includes(id) ? tagIds.filter((t) => t !== id) : [...tagIds, id]
+    setTagIds(next)
+    onTagsChange?.(next)
   }
 
   function toggleIngredient(id: string) {
@@ -133,17 +145,21 @@ export default function RecipeForm({
 
   return (
     <form onSubmit={handleSubmit} className="mb-6 rounded-lg border border-gray-200 bg-white p-4 dark:border-moss-700 dark:bg-moss-900">
-      <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300" htmlFor="recipe-title">
-        Título
-      </label>
-      <input
-        id="recipe-title"
-        autoFocus
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-        placeholder="Nombre de la receta"
-        className="mb-4 w-full rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-moss-700 dark:bg-moss-800 dark:text-gray-100"
-      />
+      {!onTitleChange && (
+        <>
+          <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300" htmlFor="recipe-title">
+            Título
+          </label>
+          <input autoComplete="off"
+            id="recipe-title"
+            autoFocus
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Nombre de la receta"
+            className="mb-4 w-full rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-moss-700 dark:bg-moss-800 dark:text-gray-100"
+          />
+        </>
+      )}
 
       <p className="mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">Etiquetas</p>
       {tagOptions.length === 0 ? (
@@ -176,30 +192,16 @@ export default function RecipeForm({
 
       <p className="mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">Ingredientes</p>
       {availableIngredients.length > 0 && (
-        <div className="sticky top-[calc(var(--head-h)+var(--card-h,0px))] z-10 -mx-4 space-y-2 bg-white px-4 pb-3 pt-2 dark:bg-moss-900">
-          <div role="group" aria-label="Qué ingredientes ver" className="flex gap-1 rounded-md bg-gray-100 p-0.5 text-sm dark:bg-moss-800">
-            {(
-              [
-                ['recipe', `De la receta (${selectedCount})`],
-                ['all', 'Todos'],
-              ] as const
-            ).map(([key, label]) => (
-              <button
-                key={key}
-                type="button"
-                aria-pressed={view === key}
-                onClick={() => setView(key)}
-                className={
-                  'flex-1 rounded px-2 py-1 ' +
-                  (view === key
-                    ? 'bg-white font-medium text-gray-900 shadow-sm dark:bg-moss-700 dark:text-gray-100'
-                    : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100')
-                }
-              >
-                {label}
-              </button>
-            ))}
-          </div>
+        <div className="kb-static sticky top-[calc(var(--head-h)+var(--card-h,0px))] z-10 -mx-4 space-y-2 bg-white px-4 pb-3 pt-2 dark:bg-moss-900">
+          <SegmentedToggle
+            value={view}
+            onChange={setView}
+            label="Qué ingredientes ver"
+            options={[
+              ['recipe', `De la receta (${selectedCount})`],
+              ['all', 'Todos'],
+            ]}
+          />
           <SearchInput value={search} onChange={setSearch} className="" />
         </div>
       )}
@@ -226,7 +228,7 @@ export default function RecipeForm({
                 return (
                   <li key={ing.id} className="flex flex-col gap-2 px-3 py-2">
                     <label className="flex items-center gap-2 text-sm text-gray-900 dark:text-gray-100">
-                      <input
+                      <input autoComplete="off"
                         type="checkbox"
                         checked={isSelected}
                         onChange={() => toggleIngredient(ing.id)}
@@ -236,20 +238,20 @@ export default function RecipeForm({
                     </label>
                     {isSelected && (
                       <div className="flex flex-wrap items-center gap-2 pl-6">
-                        <input
+                        <input autoComplete="off"
                           value={selected[ing.id].quantity}
                           onChange={(e) => updateSelected(ing.id, 'quantity', e.target.value)}
                           placeholder="Cantidad"
                           className="w-24 rounded-md border border-gray-300 px-2 py-1 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-moss-700 dark:bg-moss-800 dark:text-gray-100"
                         />
-                        <input
+                        <input autoComplete="off"
                           value={selected[ing.id].unit}
                           onChange={(e) => updateSelected(ing.id, 'unit', e.target.value)}
                           placeholder="Unidad"
                           className="w-24 rounded-md border border-gray-300 px-2 py-1 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-moss-700 dark:bg-moss-800 dark:text-gray-100"
                         />
                         <label className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-300">
-                          <input
+                          <input autoComplete="off"
                             type="checkbox"
                             checked={selected[ing.id].optional}
                             onChange={() => toggleOptional(ing.id)}
@@ -278,11 +280,12 @@ export default function RecipeForm({
         onChange={(e) => setInstructions(e.target.value)}
         rows={6}
         placeholder="Pasos a seguir…"
-        className="mb-4 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-moss-700 dark:bg-moss-800 dark:text-gray-100"
+        autoComplete="off"
+        className="mb-4 max-h-[60vh] min-h-36 w-full [field-sizing:content] rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-moss-700 dark:bg-moss-800 dark:text-gray-100"
       />
 
       {/* Pie fijo: Guardar y Cancelar siguen a la vista en formularios largos */}
-      <div className="sticky -bottom-4 z-10 -mx-4 -mb-4 flex gap-2 rounded-b-lg border-t border-gray-100 bg-white px-4 py-3 md:-bottom-8 dark:border-moss-800 dark:bg-moss-900">
+      <div className="kb-static sticky -bottom-4 z-10 -mx-4 -mb-4 flex gap-2 rounded-b-lg border-t border-gray-100 bg-white px-4 py-3 md:-bottom-8 dark:border-moss-800 dark:bg-moss-900">
         <button
           type="submit"
           disabled={submitting}

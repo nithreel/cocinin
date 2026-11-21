@@ -1,8 +1,9 @@
 import { useRef, useState } from 'react'
-import { leaveRow, prefersReducedMotion } from '../lib/motion'
+import { keepFocus } from '../lib/keepFocus'
+import { leaveRow, prefersReducedMotion, restoreIfStill } from '../lib/motion'
 
-/** Botón verde de añadir a la lista: círculo verde plano, el «+» gira al pasar el cursor y, al pulsar,
- *  se convierte en un ✓ que se dibuja con rebote y un anillo de pulso; la fila se desliza fuera y entonces se añade. */
+/** Botón + de añadir a la lista, sin fondo (como la ✕ de quitar): el «+» se pone verde y gira al pasar el cursor y, al pulsar,
+ *  hay un pop con anillo verde y el «+» se convierte en un ✓ que se dibuja; la fila se desliza fuera y entonces se añade. */
 export default function AddButton({
   onAdd,
   label,
@@ -20,13 +21,18 @@ export default function AddButton({
     busy.current = true
     // si la acción falla, el botón y la fila vuelven a su sitio (y el error sigue su camino hasta el aviso de errores)
     let leaving: Animation | null = null
+    const row = e.currentTarget.closest('li')
+    const reset = () => {
+      setDone(false)
+      busy.current = false
+    }
     const run = () =>
       Promise.resolve()
         .then(onAdd)
+        .then(() => restoreIfStill(row, leaving, reset))
         .catch((err) => {
           leaving?.cancel()
-          setDone(false)
-          busy.current = false
+          reset()
           throw err
         })
     if (prefersReducedMotion()) {
@@ -34,7 +40,6 @@ export default function AddButton({
       return
     }
     setDone(true)
-    const row = e.currentTarget.closest('li')
     window.setTimeout(() => (leaving = leaveRow(row)), 260)
     window.setTimeout(() => void run(), 520)
   }
@@ -42,15 +47,17 @@ export default function AddButton({
   return (
     <button
       type="button"
+      // no roba el foco a un campo de texto: así el teclado no se cierra al añadir varios seguidos
+      onMouseDown={keepFocus}
       onClick={handleClick}
       aria-label={label}
       title={title}
       className={
-        'add-btn ripple relative flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-white max-md:h-9 max-md:w-9' +
+        'add-btn ripple relative flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-gray-500 after:absolute after:-inset-2 after:content-[\'\'] dark:text-gray-400' +
         (done ? ' add-done' : '')
       }
     >
-      <svg viewBox="0 0 24 24" className="add-plus absolute h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" aria-hidden="true">
+      <svg viewBox="0 0 24 24" className="add-plus h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" aria-hidden="true">
         <path d="M12 5v14M5 12h14" />
       </svg>
       <svg viewBox="0 0 24 24" className="add-check absolute h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">

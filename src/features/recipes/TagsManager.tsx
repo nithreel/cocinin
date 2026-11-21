@@ -73,7 +73,7 @@ function TagRow({
     return (
       <li className="py-2">
         <form onSubmit={save} className="flex items-center gap-2">
-          <input autoFocus value={name} onChange={(e) => setName(e.target.value)} maxLength={30} className={inputClass} />
+          <input autoComplete="off" autoFocus value={name} onChange={(e) => setName(e.target.value)} maxLength={30} className={inputClass} />
           <button type="submit" disabled={busy} className={primaryButton}>
             Guardar
           </button>
@@ -189,7 +189,7 @@ export default function TagsManager({
         </button>
       </div>
       <form onSubmit={handleAdd} className="flex gap-2">
-        <input
+        <input autoComplete="off"
           value={name}
           onChange={(e) => setName(e.target.value)}
           maxLength={30}

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { keepFocus } from '../lib/keepFocus'
 
 /** Interruptor: indicador y botón a la vez (el color del propio interruptor dice el estado).
  *  El color nuevo entra con un barrido (con rebote). Encender/apagar sigue el sentido del pomo; entre estados encendidos,
@@ -82,6 +83,7 @@ export default function Switch({
     <button
       type="button"
       role="switch"
+      onMouseDown={keepFocus}
       aria-checked={checked}
       aria-label={label}
       disabled={disabled}

@@ -18,10 +18,13 @@ function Icon({ children }: { children: ReactNode }) {
   )
 }
 
-export function SortIcon() {
+/** Flechas ↑↓ de ordenar: al pasar el cursor se desplazan en sentidos opuestos y, con `active` (panel abierto), se
+ *  intercambian de altura con rebote. */
+export function SortIcon({ active = false }: { active?: boolean }) {
   return (
-    <svg viewBox="0 0 24 24" className="h-5 w-5 shrink-0" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M8 4v16M4.5 7.5 8 4l3.5 3.5M16 20V4M12.5 16.5 16 20l3.5-3.5" />
+    <svg viewBox="0 0 24 24" className={'sort-icon h-5 w-5 shrink-0 overflow-visible' + (active ? ' sort-active' : '')} fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path className="sort-up" d="M8 4v16M4.5 7.5 8 4l3.5 3.5" />
+      <path className="sort-down" d="M16 20V4M12.5 16.5 16 20l3.5-3.5" />
     </svg>
   )
 }

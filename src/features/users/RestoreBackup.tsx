@@ -49,7 +49,7 @@ export default function RestoreBackup() {
       <p className="mb-3 text-xs text-gray-500 dark:text-gray-400">
         Sube un archivo de «Descargar copia de seguridad». Los usuarios no se restauran.
       </p>
-      <input
+      <input autoComplete="off"
         ref={fileRef}
         type="file"
         accept="application/json,.json"
@@ -74,11 +74,11 @@ export default function RestoreBackup() {
             ))}
           </ul>
           <label className="mb-1 flex items-start gap-2 text-sm text-gray-900 dark:text-gray-100">
-            <input type="radio" checked={mode === 'merge'} onChange={() => setMode('merge')} className="mt-1" />
+            <input autoComplete="off" type="radio" checked={mode === 'merge'} onChange={() => setMode('merge')} className="mt-1" />
             <span>Fusionar: añade y sobrescribe lo de la copia; lo demás se queda.</span>
           </label>
           <label className="mb-3 flex items-start gap-2 text-sm text-gray-900 dark:text-gray-100">
-            <input type="radio" checked={mode === 'replace'} onChange={() => setMode('replace')} className="mt-1" />
+            <input autoComplete="off" type="radio" checked={mode === 'replace'} onChange={() => setMode('replace')} className="mt-1" />
             <span>
               Reemplazar: además borra lo que no esté en la copia. No es atómico: si se corta a mitad queda una mezcla,
               así que descarga una copia antes.

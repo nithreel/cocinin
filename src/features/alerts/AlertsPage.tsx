@@ -27,7 +27,9 @@ const KINDS: { key: keyof PushPrefs; label: string; hint: string }[] = [
 
 const MESSAGES: Partial<Record<PushState, string>> = {
   unsupported:
-    'Este navegador no admite avisos. En iPhone hay que añadir CocinIN a la pantalla de inicio (Compartir → Añadir a pantalla de inicio) y abrirla desde ahí.',
+    /iPhone|iPad/.test(navigator.userAgent)
+      ? 'Este navegador no admite avisos. En iPhone hay que añadir CocinIN a la pantalla de inicio (Compartir → Añadir a pantalla de inicio) y abrirla desde ahí.'
+      : 'Este navegador no admite avisos. Abre CocinIN desde la app instalada o con https.',
   unconfigured: 'Esta instalación no tiene configurada la clave VAPID (VITE_VAPID_PUBLIC_KEY).',
   denied: 'Los avisos están bloqueados para esta app. Actívalos en los ajustes del navegador o del sistema.',
 }

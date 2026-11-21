@@ -1,8 +1,8 @@
 @import "tailwindcss";
-@import "@fontsource/poppins/400.css";
-@import "@fontsource/poppins/500.css";
-@import "@fontsource/poppins/600.css";
-@import "@fontsource/poppins/700.css";
+@import "@fontsource/poppins/latin-400.css";
+@import "@fontsource/poppins/latin-500.css";
+@import "@fontsource/poppins/latin-600.css";
+@import "@fontsource/poppins/latin-700.css";
 
 @theme {
   --font-sans: 'Poppins', ui-sans-serif, system-ui, sans-serif;
@@ -50,6 +50,7 @@ body {
 /* Desplegables: alto suave + contenido que cae y rebota (ver Collapse) */
 .collapse-grid {
   display: grid;
+  grid-template-columns: minmax(0, 1fr); /* sin esto, un hijo con scroll horizontal ensancha toda la página */
   grid-template-rows: 0fr;
   opacity: 0;
   transition: grid-template-rows var(--collapse-ms, 340ms) cubic-bezier(0.3, 0.9, 0.3, 1), opacity 180ms ease-out;
@@ -74,9 +75,9 @@ body {
   animation: collapse-out 240ms ease-in forwards;
 }
 
-/* Avisos flotantes: suben con rebote y se van hacia abajo */
-@keyframes toast-in { from { opacity: 0; transform: translateY(24px) scale(0.94); } }
-@keyframes toast-out { to { opacity: 0; transform: translateY(16px) scale(0.96); } }
+/* Avisos flotantes (arriba): bajan con rebote y se van hacia arriba; también se quitan deslizándolos */
+@keyframes toast-in { from { opacity: 0; transform: translateY(-24px) scale(0.94); } }
+@keyframes toast-out { to { opacity: 0; transform: translateY(-16px) scale(0.96); } }
 .toast-in { animation: toast-in 420ms cubic-bezier(0.34, 1.56, 0.64, 1) backwards; }
 .toast-out { animation: toast-out 240ms ease-in forwards; }
 
@@ -93,7 +94,7 @@ body {
   place-content: center;
   flex-shrink: 0;
   cursor: pointer;
-  border: 2px solid #9ca3af;
+  border: 2px solid var(--color-gray-500);
   border-radius: 0.375rem;
   background-color: transparent;
   transition: background-color 200ms ease, border-color 200ms ease, transform 300ms cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -121,6 +122,8 @@ body {
 }
 .cb:checked::before { transform: rotate(45deg) scale(1); }
 .cb:active { transform: scale(0.8); }
+.cb:disabled { opacity: 0.5; cursor: not-allowed; }
+.cb:disabled:active { transform: none; }
 .cb:focus-visible { outline: 2px solid var(--color-emerald-500); outline-offset: 2px; }
 @keyframes cb-pop {
   0% { transform: scale(0.8); }
@@ -146,7 +149,7 @@ button[aria-checked='true']:active:not(:disabled) > .switch-knob {
 
 /* Menú de los tres puntos: aparece con rebote desde su esquina */
 @keyframes menu-pop {
-  from { opacity: 0; transform: scale(0.85) translateY(-4px); }
+  from { opacity: 0; transform: scale(0.85) translateY(-3px); }
   to { opacity: 1; transform: scale(1) translateY(0); }
 }
 .menu-pop {
@@ -257,24 +260,20 @@ button[aria-checked='true']:active:not(:disabled) > .switch-knob {
   to { box-shadow: 0 0 0 12px rgb(239 68 68 / 0); }
 }
 
-/* Botón verde de añadir (AddButton): plano y minimalista */
-.add-btn.ripple {
-  background-color: var(--color-emerald-600);
-  transition: transform 320ms cubic-bezier(0.34, 1.56, 0.64, 1), background-color 200ms ease;
-}
+/* Botón + de añadir (AddButton): como la ✕ de quitar, pero verde: gris en reposo; al pasar el cursor el + se pone
+   verde y gira; al pulsar, pop con anillo verde y la fila se desliza fuera */
+.add-btn.ripple { transition: transform 300ms cubic-bezier(0.34, 1.56, 0.64, 1), color 200ms ease; }
 .add-plus { transition: transform 420ms cubic-bezier(0.34, 1.56, 0.64, 1), opacity 200ms ease; }
 .add-check path { stroke-dasharray: 24; stroke-dashoffset: 24; }
 .add-check { opacity: 0; }
 @media (hover: hover) {
-  .add-btn:hover:not(:disabled) {
-    transform: scale(1.1);
-    background-color: var(--color-emerald-700);
-  }
+  .add-btn:hover:not(:disabled) { color: var(--color-emerald-500); }
   .add-btn:hover:not(:disabled) .add-plus { transform: rotate(90deg) scale(1.15); }
 }
-.add-btn:active:not(:disabled) { transform: scale(0.9); transition-duration: 90ms; }
+.add-btn:active:not(:disabled) { transform: scale(0.88); transition-duration: 90ms; }
 .add-btn.add-done {
-  animation: add-pop 440ms cubic-bezier(0.34, 1.56, 0.64, 1), add-ring 560ms ease-out;
+  color: var(--color-emerald-500);
+  animation: add-pop 420ms cubic-bezier(0.34, 1.56, 0.64, 1), add-ring 560ms ease-out;
 }
 .add-btn.add-done .add-plus { transform: rotate(180deg) scale(0); opacity: 0; }
 .add-btn.add-done .add-check { opacity: 1; }
@@ -394,3 +393,25 @@ html[data-nav-dir='down']::view-transition-new(page) { animation-name: pg-in-top
   ::view-transition-old(page),
   ::view-transition-new(page) { animation: none; }
 }
+
+/* Con el teclado abierto, las zonas fijas marcadas dejan de serlo: así el campo enfocado
+   no queda tapado en pantallas bajas (el pie de Guardar se alcanza haciendo scroll). */
+html[data-kb] .kb-static {
+  position: static !important;
+}
+
+/* Pastilla del SegmentedToggle: se desliza con rebote */
+.seg-thumb { transition: transform 420ms cubic-bezier(0.34, 1.56, 0.64, 1); }
+
+/* Icono de ordenar (SortIcon): las flechas se cruzan con rebote */
+.sort-up, .sort-down { transition: transform 460ms cubic-bezier(0.34, 1.56, 0.64, 1); }
+@media (hover: hover) {
+  button:hover:not(:disabled) .sort-up { transform: translateY(-2px); }
+  button:hover:not(:disabled) .sort-down { transform: translateY(2px); }
+}
+.sort-active .sort-up, button:hover:not(:disabled) .sort-active .sort-up { transform: translateY(3px); }
+.sort-active .sort-down, button:hover:not(:disabled) .sort-active .sort-down { transform: translateY(-3px); }
+
+/* Con el teclado abierto: fuera la barra de marca y las pestañas (liberan ~110 px); en horizontal, nada fijo */
+html[data-kb] .kb-hide { display: none !important; }
+html[data-kb-low] .sticky { position: static !important; }

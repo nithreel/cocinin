@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { thawAgo, soonMarkLabel, getExpiryInfo, localDateString, remainingLabel } from '../../src/lib/expiry'
+import { frozenWithWarning, groupBadgeCounts, thawAgo, soonMarkLabel, getExpiryInfo, localDateString, remainingLabel } from '../../src/lib/expiry'
 import type { Ingredient } from '../../src/lib/collections'
 
 function ingredient(over: Partial<Ingredient>): Ingredient {
@@ -92,5 +92,30 @@ describe('soonMarkLabel', () => {
     expect(soonMarkLabel(ingredient({ useSoonAt: new Date(2026, 10, 16, 23).getTime() }), now)).toBe('Marcado hace 1 día')
     expect(soonMarkLabel(ingredient({ useSoonAt: new Date(2026, 10, 12, 8).getTime() }), now)).toBe('Marcado hace 5 días')
     expect(soonMarkLabel(ingredient({ useSoon: true }), now)).toBe('Marcado')
+  })
+})
+
+describe('frozenWithWarning', () => {
+  it('solo si está en la despensa, congelado y con «gastar pronto»', () => {
+    expect(frozenWithWarning(ingredient({ frozen: true, useSoon: true }))).toBe(true)
+    expect(frozenWithWarning(ingredient({ frozen: true }))).toBe(false)
+    expect(frozenWithWarning(ingredient({ useSoon: true }))).toBe(false)
+    expect(frozenWithWarning(ingredient({ frozen: true, useSoon: true, inPantry: false }))).toBe(false)
+  })
+})
+
+describe('groupBadgeCounts', () => {
+  it('cuenta congelados, descongelando y avisos (congelado con aviso cuenta también en ⚠)', () => {
+    const items = [
+      ingredient({ id: 'a', frozen: true }),
+      ingredient({ id: 'b', frozen: true, useSoon: true }),
+      ingredient({ id: 'c', thawedAt: 1 }),
+      ingredient({ id: 'd', thawedAt: 1, useSoon: true }),
+      ingredient({ id: 'e', frozen: true, inPantry: false }),
+    ]
+    const c = groupBadgeCounts(items)
+    expect(c.frozenCount).toBe(2)
+    expect(c.thawCount).toBe(2)
+    expect(c.warnCount).toBeGreaterThanOrEqual(1)
   })
 })

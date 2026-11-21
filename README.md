@@ -224,7 +224,7 @@ Cada `push` y cada pull request pasan por GitHub Actions (`.github/workflows/ci.
 Para desarrollar **sin tocar datos reales** puedes usar los emuladores de Firebase (necesitan Java 21+; en Windows: `winget install EclipseAdoptium.Temurin.21.JDK`):
 
 ```sh
-npm run emulators                              # Auth :9099 y Firestore :8089, en otra terminal
+npm run emulators                              # Auth :9099 y Firestore :8089, en otra terminal (con `emulators:movil` quedan abiertos a toda la red: úsalo solo en una red de confianza)
 ```
 
 Y en otra terminal, arranca la app apuntando a ellos:

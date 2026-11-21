@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useGroups, useIngredients } from '../pantry/data'
 import { addRecipe, deleteRecipe, migrateLegacyTags, updateRecipe, useRecipes, useTags } from './data'
 import TagsManager from './TagsManager'
@@ -8,6 +8,8 @@ import { getExpiryInfo } from '../../lib/expiry'
 import { CartIcon, ChevronIcon } from '../../components/icons'
 import Collapse from '../../components/Collapse'
 import { prefersReducedMotion } from '../../lib/motion'
+import { keepFocus } from '../../lib/keepFocus'
+import SegmentedToggle from '../../components/SegmentedToggle'
 import SearchInput from '../../components/SearchInput'
 import ListSkeleton from '../../components/ListSkeleton'
 import { scrollMainToTop } from '../../lib/scroll'
@@ -61,6 +63,8 @@ function RecipeCard({
   groups,
   ingredientsById,
   tags,
+  onEditing,
+  onOpen,
 }: {
   recipe: Recipe
   status: RecipeStatus
@@ -68,9 +72,24 @@ function RecipeCard({
   groups: Group[]
   ingredientsById: Map<string, Ingredient>
   tags: Tag[]
+  /** avisa a la página de si esta receta está abierta en edición (para ocultar buscador y filtros) */
+  onEditing: (id: string, on: boolean) => void
+  /** avisa de si esta receta está desplegada (leyendo, se pliegan los filtros para dejar sitio) */
+  onOpen: (id: string, on: boolean) => void
 }) {
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState(false)
+  // borrador del título y las etiquetas mientras se edita: la cabecera de arriba los muestra en directo
+  const [draftTitle, setDraftTitle] = useState(recipe.title)
+  const [draftTagIds, setDraftTagIds] = useState<string[]>(recipe.tagIds ?? [])
+  useEffect(() => {
+    onEditing(recipe.id, open && editing)
+    return () => onEditing(recipe.id, false)
+  }, [open, editing, recipe.id, onEditing])
+  useEffect(() => {
+    onOpen(recipe.id, open)
+    return () => onOpen(recipe.id, false)
+  }, [open, recipe.id, onOpen])
   const toast = useToast()
   const { items: shoppingItems } = useShoppingList()
   // lo necesario que falta en la despensa y aún no está en la lista
@@ -84,6 +103,8 @@ function RecipeCard({
 
   // animación del carrito: se pone en verde con ✓ y se encoge antes de desaparecer; los ingredientes que faltan parpadean
   const [adding, setAdding] = useState(false)
+  // ids que se van a añadir, fijados al hacer clic (toBuy se vacía a los 320 ms, antes de que acabe el destello)
+  const [flashIds, setFlashIds] = useState<ReadonlySet<string>>(new Set())
   function handleAddMissing() {
     if (adding) return
     if (prefersReducedMotion()) {
@@ -91,8 +112,12 @@ function RecipeCard({
       return
     }
     setAdding(true)
+    setFlashIds(new Set(toBuy.map((i) => i.id)))
     window.setTimeout(addMissingToList, 320)
-    window.setTimeout(() => setAdding(false), 950)
+    window.setTimeout(() => {
+      setAdding(false)
+      setFlashIds(new Set())
+    }, 950)
   }
 
   function addMissingToList() {
@@ -104,10 +129,10 @@ function RecipeCard({
     })
   }
   const articleRef = useRef<HTMLElement>(null)
-  const titleRef = useRef<HTMLButtonElement>(null)
+  const titleRef = useRef<HTMLDivElement>(null)
   const recipeTags = useMemo(
-    () => sortTags(tags.filter((t) => recipe.tagIds?.includes(t.id))),
-    [tags, recipe.tagIds],
+    () => sortTags(tags.filter((t) => (editing ? draftTagIds : recipe.tagIds)?.includes(t.id))),
+    [tags, recipe.tagIds, editing, draftTagIds],
   )
 
   // alto real del nombre fijo (puede ocupar 2 líneas): las cabeceras de sección se pegan justo debajo
@@ -130,25 +155,42 @@ function RecipeCard({
         statusBorderClasses[status]
       }
     >
-      <button
+      <div
         ref={titleRef}
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        className={
-          'flex w-full items-center justify-between gap-3 bg-white p-4 text-left dark:bg-moss-900' +
-          (open ? ' sticky top-[var(--head-h)] z-20' : '')
-        }
+        className={'bg-white dark:bg-moss-900' + (open ? ' kb-static sticky top-[var(--head-h)] z-20' : '')}
       >
-        <div className="min-w-0">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{recipe.title}</h3>
-          {recipeTags.length > 0 && (
-            <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{recipeTags.map((t) => t.name).join(' · ')}</p>
-          )}
-        </div>
-        <span className="text-gray-500 dark:text-gray-400">
-          <ChevronIcon open={open} />
-        </span>
-      </button>
+        {editing && open ? (
+          // editando: el título se escribe aquí mismo, y las etiquetas de abajo se reflejan en directo
+          <div className="p-4">
+            <input autoComplete="off"
+              autoFocus
+              value={draftTitle}
+              onChange={(e) => setDraftTitle(e.target.value)}
+              aria-label="Título de la receta"
+              placeholder="Nombre de la receta"
+              className="w-full rounded-md border border-gray-300 px-2 py-0.5 text-lg font-semibold text-gray-900 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-moss-700 dark:bg-moss-800 dark:text-gray-100"
+            />
+            <p className="mt-1 min-h-4 text-xs text-gray-500 dark:text-gray-400">{recipeTags.map((t) => t.name).join(' · ')}</p>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onMouseDown={keepFocus}
+            onClick={() => setOpen((v) => !v)}
+            className="flex w-full items-center justify-between gap-3 p-4 text-left"
+          >
+            <div className="min-w-0">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{recipe.title}</h3>
+              {recipeTags.length > 0 && (
+                <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{recipeTags.map((t) => t.name).join(' · ')}</p>
+              )}
+            </div>
+            <span className="text-gray-500 dark:text-gray-400">
+              <ChevronIcon open={open} />
+            </span>
+          </button>
+        )}
+      </div>
 
       <Collapse open={open}>
         <div className={`border-t border-gray-100 px-4 pt-3 dark:border-moss-800 ${editing ? 'pb-4' : 'pb-0'}`}>
@@ -163,6 +205,9 @@ function RecipeCard({
                 ingredients: recipe.ingredients,
                 tagIds: recipe.tagIds ?? [],
               }}
+              title={draftTitle}
+              onTitleChange={setDraftTitle}
+              onTagsChange={setDraftTagIds}
               submitLabel="Guardar cambios"
               onSubmit={(values) =>
                 updateRecipe(recipe.id, values.title, values.instructions, values.ingredients, values.tagIds)
@@ -178,8 +223,8 @@ function RecipeCard({
                   <button
                     type="button"
                     onClick={handleAddMissing}
-                    aria-label={`Añadir a la lista de la compra lo que falta (${toBuy.length})`}
-                    title={`Añadir a la lista lo que falta (${toBuy.length})`}
+                    aria-label={`Añadir a la lista de la compra lo que falta (${adding ? flashIds.size : toBuy.length})`}
+                    title={`Añadir a la lista lo que falta (${adding ? flashIds.size : toBuy.length})`}
                     className={
                       'cart-btn ripple relative -my-1.5 flex h-8 w-8 items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-emerald-700 max-md:h-10 max-md:w-10 dark:text-gray-500 dark:hover:bg-moss-800 dark:hover:text-emerald-400' +
                       (adding ? ' cart-done' : '')
@@ -205,7 +250,7 @@ function RecipeCard({
                     <li
                       key={ri.ingredientId}
                       className={
-                        (adding && !have && !ri.optional ? 'row-flash ' : '') +
+                        (flashIds.has(ri.ingredientId) ? 'row-flash ' : '') +
                         (have
                           ? ''
                           : missingOptional
@@ -231,8 +276,16 @@ function RecipeCard({
               )}
 
               {/* Pie fijo: Editar y Eliminar siguen a la vista aunque la receta sea larga */}
-              <div className="sticky -bottom-4 z-10 -mx-4 mt-3 flex flex-wrap items-center justify-end gap-1 border-t border-gray-100 bg-white px-4 py-2 md:-bottom-8 dark:border-moss-800 dark:bg-moss-900">
-                <button type="button" onClick={() => setEditing(true)} className={cancelButton}>
+              <div className="kb-static sticky -bottom-4 z-10 -mx-4 mt-3 flex flex-wrap items-center justify-end gap-1 border-t border-gray-100 bg-white px-4 py-2 md:-bottom-8 dark:border-moss-800 dark:bg-moss-900">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDraftTitle(recipe.title)
+                    setDraftTagIds(recipe.tagIds ?? [])
+                    setEditing(true)
+                  }}
+                  className={cancelButton}
+                >
                   Editar
                 </button>
                 <DeleteButton
@@ -293,36 +346,53 @@ export default function RecipesPage() {
     [recipes, search, onlyReady, ingredientsById, effectiveTags],
   )
 
+  // con una receta en edición o creándose, el buscador y los filtros se ocultan para dejar espacio (sobre todo con el teclado)
+  const [editingIds, setEditingIds] = useState<ReadonlySet<string>>(new Set())
+  const handleEditing = useCallback((id: string, on: boolean) => {
+    setEditingIds((prev) => {
+      if (prev.has(id) === on) return prev
+      const next = new Set(prev)
+      if (on) next.add(id)
+      else next.delete(id)
+      return next
+    })
+  }, [])
+  const formActive = showForm || editingIds.size > 0
+  // con una receta desplegada, los filtros (Todas/Puedo hacerla y etiquetas) se pliegan; el buscador se queda
+  const [openIds, setOpenIds] = useState<ReadonlySet<string>>(new Set())
+  const handleOpen = useCallback((id: string, on: boolean) => {
+    setOpenIds((prev) => {
+      if (prev.has(id) === on) return prev
+      const next = new Set(prev)
+      if (on) next.add(id)
+      else next.delete(id)
+      return next
+    })
+  }, [])
+  const compact = openIds.size > 0
+
   return (
     <div>
       <StickyHeader
         title="Recetario"
         below={
           recipes.length > 0 && (
+            <Collapse open={!formActive && !compact}>
             <div className="space-y-2">
               <SearchInput value={search} onChange={setSearch} placeholder="Buscar receta o ingrediente…" className="" />
-              <div role="group" aria-label="Filtrar recetas" className="flex gap-2">
-                {(
-                  [
+              <div>
+                <div className="kb-hide space-y-2 pt-2">
+              <div className="flex items-center gap-2">
+                <SegmentedToggle
+                  value={onlyReady}
+                  onChange={setOnlyReady}
+                  label="Filtrar recetas"
+                  className="min-w-0 flex-1"
+                  options={[
                     [false, 'Todas'],
                     [true, 'Puedo hacerla'],
-                  ] as const
-                ).map(([ready, label]) => (
-                  <button
-                    key={label}
-                    type="button"
-                    aria-pressed={onlyReady === ready}
-                    onClick={() => setOnlyReady(ready)}
-                    className={
-                      'ripple relative rounded-full border px-3 py-1 text-sm ' +
-                      (onlyReady === ready
-                        ? 'border-emerald-700 bg-emerald-700 text-white'
-                        : 'border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-moss-700 dark:text-gray-300 dark:hover:bg-moss-800')
-                    }
-                  >
-                    {label}
-                  </button>
-                ))}
+                  ]}
+                />
                 <button
                   type="button"
                   aria-pressed={showTags}
@@ -331,7 +401,7 @@ export default function RecipesPage() {
                     scrollMainToTop()
                   }}
                   className={
-                    'ripple relative ml-auto rounded-full border px-3 py-1 text-sm ' +
+                    'ripple relative shrink-0 rounded-full border px-3 py-1 text-sm ' +
                     (showTags
                       ? 'border-emerald-700 bg-emerald-700 text-white'
                       : 'border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-moss-700 dark:text-gray-300 dark:hover:bg-moss-800')
@@ -345,7 +415,7 @@ export default function RecipesPage() {
                   <div
                     role="group"
                     aria-label="Filtrar por etiqueta"
-                    className="flex min-w-0 flex-1 items-center gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                    className="-mx-4 flex min-w-0 flex-1 items-center gap-2 overflow-x-auto px-4 pb-1 md:-mx-8 md:px-8 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
                   >
                   {tags.map((tag) => {
                     const on = effectiveTags.includes(tag.id)
@@ -371,7 +441,10 @@ export default function RecipesPage() {
                   </div>
                 </div>
               )}
+                </div>
+              </div>
             </div>
+            </Collapse>
           )
         }
       >
@@ -409,25 +482,29 @@ export default function RecipesPage() {
 
       {loading && <ListSkeleton />}
 
-      {!loading && recipes.length === 0 && (
+      {!loading && !formActive && recipes.length === 0 && (
         <p className="text-gray-500 dark:text-gray-400">Aún no hay recetas. Añade la primera con «+ Receta».</p>
       )}
 
-      {recipes.length > 0 && visibleRecipes.length === 0 && (
+      {!formActive && recipes.length > 0 && visibleRecipes.length === 0 && (
         <p className="text-gray-500 dark:text-gray-400">No hay recetas que coincidan {search.trim() ? `con «${search.trim()}»` : 'con los filtros elegidos'}.</p>
       )}
 
       <div className="space-y-4">
         {visibleRecipes.map((recipe) => (
+          // mientras se crea, edita o lee (desplegada) una receta, las demás se ocultan (siguen montadas: conservan si estaban abiertas)
+          <div key={recipe.id} className={(formActive || compact) && !editingIds.has(recipe.id) && !openIds.has(recipe.id) ? 'hidden' : ''}>
           <RecipeCard
-            key={recipe.id}
             recipe={recipe}
             status={getRecipeStatus(recipe, ingredientsById)}
             ingredients={ingredients}
             groups={groups}
             ingredientsById={ingredientsById}
             tags={tags}
+            onEditing={handleEditing}
+            onOpen={handleOpen}
           />
+          </div>
         ))}
       </div>
 

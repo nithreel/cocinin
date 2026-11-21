@@ -14,7 +14,7 @@ export default defineConfig({
     VitePWA({
       registerType: 'prompt',
       injectRegister: false,
-      workbox: { importScripts: ['/push-sw.js'] },
+      workbox: { importScripts: ['/push-sw.js'], globPatterns: ['**/*.{js,css,html,svg,png,webmanifest,woff2}'] },
       includeAssets: ['favicon.svg', 'icons/apple-touch-icon.png'],
       manifest: {
         name: 'CocinIN',

@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { leaveRow, prefersReducedMotion } from '../lib/motion'
+import { leaveRow, prefersReducedMotion, restoreIfStill } from '../lib/motion'
 
 /** Botón ✕ de quitar: gris en reposo; al pasar el cursor la cruz se pone roja y gira; al pulsar, pop con anillo rojo
  *  y la fila se desliza fuera antes de quitarse. Con `row={false}` no desliza la fila (p. ej. si abre una confirmación). */
@@ -9,7 +9,7 @@ export default function RemoveButton({
   title,
   row = true,
 }: {
-  onRemove: () => void
+  onRemove: () => void | Promise<void>
   label: string
   title?: string
   row?: boolean
@@ -20,9 +20,14 @@ export default function RemoveButton({
   function handleClick(e: React.MouseEvent<HTMLButtonElement>) {
     if (busy.current) return
     busy.current = true
-    if (prefersReducedMotion()) {
-      onRemove()
+    const reset = () => {
+      setDone(false)
       busy.current = false
+    }
+    if (prefersReducedMotion()) {
+      void Promise.resolve()
+        .then(onRemove)
+        .finally(() => (busy.current = false))
       return
     }
     setDone(true)
@@ -31,16 +36,15 @@ export default function RemoveButton({
     if (row) window.setTimeout(() => (leaving = leaveRow(li)), 240)
     window.setTimeout(
       () => {
-        try {
-          onRemove()
-        } catch (err) {
-          leaving?.cancel()
-          throw err
-        } finally {
-          // si la fila sigue (abre una confirmación o falla), el botón vuelve a su sitio
-          setDone(false)
-          busy.current = false
-        }
+        // si la fila sigue (abre una confirmación o falla), el botón y la fila vuelven a su sitio
+        void Promise.resolve()
+          .then(onRemove)
+          .then(() => (row ? restoreIfStill(li, leaving, reset) : reset()))
+          .catch((err) => {
+            leaving?.cancel()
+            reset()
+            throw err
+          })
       },
       row ? 500 : 280,
     )

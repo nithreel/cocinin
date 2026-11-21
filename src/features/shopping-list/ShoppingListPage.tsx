@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useGroups, useIngredients } from '../pantry/data'
 import {
   addToShoppingList,
@@ -11,6 +11,7 @@ import {
 } from './data'
 import type { Ingredient, PurchaseHistoryEntry, ShoppingItem } from '../../lib/collections'
 import { groupByPantryGroup } from '../../lib/groupByPantryGroup'
+import { keepFocus } from '../../lib/keepFocus'
 import AddButton from '../../components/AddButton'
 import RemoveButton from '../../components/RemoveButton'
 import { CaretIcon } from '../../components/icons'
@@ -77,6 +78,7 @@ function SectionHeader({
   return (
     <button
       type="button"
+      onMouseDown={keepFocus}
       onClick={onToggle}
       aria-expanded={!isCollapsed}
       className="mb-1 flex items-center gap-1.5 text-sm font-semibold uppercase tracking-wide text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
@@ -165,8 +167,14 @@ export default function ShoppingListPage() {
 
   // misma animación que el carrito de las recetas: ✓ verde con anillo y destello; lo tachado sale deslizándose
   const [confirmAnim, setConfirmAnim] = useState(false)
+  // la compra se confirma con los datos de después de la animación (otro miembro pudo cambiar la lista), pero solo lo que se vio tachado
+  const latest = useRef({ items, ingredientsById })
+  useEffect(() => {
+    latest.current = { items, ingredientsById }
+  })
   async function handleConfirmPurchase() {
     if (confirmAnim) return
+    const checkedIds = new Set(items.filter((i) => i.checked).map((i) => i.id))
     const reduce = prefersReducedMotion()
     if (!reduce) {
       setConfirmAnim(true)
@@ -174,7 +182,8 @@ export default function ShoppingListPage() {
     }
     setConfirming(true)
     try {
-      await confirmPurchase(items, ingredientsById)
+      const now = latest.current
+      await confirmPurchase(now.items.filter((i) => checkedIds.has(i.id)), now.ingredientsById)
     } finally {
       setConfirming(false)
       setConfirmAnim(false)
@@ -213,7 +222,7 @@ export default function ShoppingListPage() {
                           return (
                             <li key={item.id} className={'flex items-center gap-3 pl-4 pr-3' + (confirmAnim && item.checked ? ' row-confirm' : '')}>
                               <label className="flex min-h-10 flex-1 cursor-pointer items-center gap-3 py-2 max-md:min-h-11">
-                                <input
+                                <input autoComplete="off"
                                   type="checkbox"
                                   checked={item.checked}
                                   onChange={(e) => setShoppingItemChecked(item.id, e.target.checked)}

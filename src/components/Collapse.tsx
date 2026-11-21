@@ -18,7 +18,9 @@ export default function Collapse({ open, children }: { open: boolean; children: 
   if (open) last.current = children
 
   useEffect(() => {
-    if (open !== initial.current) setTouched(true)
+    // al montar (o mientras no haya cambiado nunca) no hay nada que animar
+    if (open === initial.current && !touched) return
+    setTouched(true)
     setSettled(false)
     if (open) {
       setMounted(true)
@@ -36,13 +38,14 @@ export default function Collapse({ open, children }: { open: boolean; children: 
     setGrown(false)
     const t = setTimeout(() => setMounted(false), COLLAPSE_MS)
     return () => clearTimeout(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open])
 
   if (!open && !mounted) return null
   const expanded = open && grown
   return (
     <div className={'collapse-grid ' + (expanded ? 'collapse-open' : '')} style={{ '--collapse-ms': COLLAPSE_MS + 'ms' } as CSSProperties}>
-      <div className={settled && open ? '' : 'overflow-clip'} style={{ minHeight: 0 }}>
+      <div className={settled && open ? '' : 'overflow-clip'} style={{ minHeight: 0, minWidth: 0 }}>
         <div className={touched ? (expanded ? 'collapse-in' : 'collapse-out') : ''}>{open ? children : last.current}</div>
       </div>
     </div>

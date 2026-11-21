@@ -33,7 +33,7 @@ function MemberRow({ m, isSelf }: { m: Member; isSelf: boolean }) {
     return (
       <li className="px-4 py-2">
         <form onSubmit={save} className="flex flex-wrap items-center gap-2">
-          <input
+          <input autoComplete="off"
             autoFocus
             value={alias}
             onChange={(e) => setAlias(e.target.value)}

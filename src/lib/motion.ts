@@ -19,6 +19,17 @@ export function leaveRow(el: Element | null | undefined, ms = 300): Animation | 
   )
 }
 
+/** Red de seguridad: si la fila sigue en el DOM pasado `ms` (la acción no la quitó), deshace el deslizamiento y avisa. */
+export function restoreIfStill(row: Element | null | undefined, anim: Animation | null, onRestore?: () => void, ms = 1200) {
+  if (!anim) return
+  window.setTimeout(() => {
+    if (row?.isConnected) {
+      anim.cancel()
+      onRestore?.()
+    }
+  }, ms)
+}
+
 /** Casillas `.cb`: el rebote solo al marcarlas/desmarcarlas (no al montarse ya marcadas). Un solo listener global. */
 export function initCheckboxPop() {
   document.addEventListener('change', (e) => {

@@ -62,7 +62,7 @@ export default function ChangePassword() {
         </button>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-2">
-          <input type="password" required autoComplete="current-password" value={current} onChange={(e) => setCurrent(e.target.value)} placeholder="Contraseña actual" aria-label="Contraseña actual" className={inputClasses} />
+          <input type="password" required autoFocus autoComplete="current-password" value={current} onChange={(e) => setCurrent(e.target.value)} placeholder="Contraseña actual" aria-label="Contraseña actual" className={inputClasses} />
           <input type="password" required minLength={6} autoComplete="new-password" value={next} onChange={(e) => setNext(e.target.value)} placeholder="Contraseña nueva (mínimo 6)" aria-label="Contraseña nueva" className={inputClasses} />
           {error && <p role="alert" className="text-sm text-red-600 dark:text-red-400">{error}</p>}
           <div className="flex items-center gap-2">

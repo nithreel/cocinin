@@ -100,6 +100,15 @@ export function frozenWithWarning(ingredient: Ingredient) {
   return ingredient.inPantry && !!ingredient.frozen && !!ingredient.useSoon
 }
 
+/** Contadores de las insignias de un grupo de la despensa: ⚠ avisos, ❄ congelados, ❄ tachado descongelando. */
+export function groupBadgeCounts(items: Ingredient[]) {
+  return {
+    warnCount: items.filter((i) => hasWarning(i) || frozenWithWarning(i)).length,
+    frozenCount: items.filter((i) => i.inPantry && i.frozen).length,
+    thawCount: items.filter((i) => i.inPantry && !i.frozen && typeof i.thawedAt === 'number').length,
+  }
+}
+
 export function expiryBadgeClasses(status: ExpiryStatus) {
   switch (status) {
     case 'expired':

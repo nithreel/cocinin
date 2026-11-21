@@ -44,8 +44,9 @@ async function subscriptionId(endpoint: string) {
 }
 
 async function currentSubscription() {
-  const reg = await navigator.serviceWorker.ready
-  return reg.pushManager.getSubscription()
+  // sin service worker (p. ej. servidor de desarrollo) no se queda esperando para siempre
+  const reg = await withTimeout(navigator.serviceWorker.ready, 3000)
+  return reg?.pushManager.getSubscription()
 }
 
 export async function getPushState(): Promise<{ state: PushState; prefs: PushPrefs }> {

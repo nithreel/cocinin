@@ -1,5 +1,5 @@
 import { useRef, useState, type CSSProperties } from 'react'
-import { leaveRow } from '../lib/motion'
+import { leaveRow, restoreIfStill } from '../lib/motion'
 import { cancelButton, dangerButton, dangerTextButton } from './buttonStyles'
 
 /** Confirmación de borrado común a toda la app: botón rojo definitivo y «No» en gris. */
@@ -39,7 +39,7 @@ export function ConfirmDelete({
       if (leaving) await new Promise((r) => setTimeout(r, 300))
       await onConfirm()
       // la fila debería haber desaparecido; si sigue ahí tras un momento, vuelve a verse
-      if (leaving) window.setTimeout(() => row?.isConnected && leaving.cancel(), 1200)
+      restoreIfStill(row, leaving)
     } catch (err) {
       leaving?.cancel()
       throw err

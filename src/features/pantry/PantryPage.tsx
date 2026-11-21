@@ -28,12 +28,13 @@ import ListSkeleton from '../../components/ListSkeleton'
 import { addToShoppingList, removeFromShoppingList, useShoppingList } from '../shopping-list/data'
 import { COLLAPSE_MS } from '../../lib/motion'
 import { scrollMainToTop, smoothBehavior } from '../../lib/scroll'
+import { keepFocus } from '../../lib/keepFocus'
 import { useCollapsedSet } from '../../lib/useCollapsedSet'
 import StickyHeader from '../../components/StickyHeader'
 import { cancelButton, dangerTextButton, outlineButton, primaryButton, rowIconButton } from '../../components/buttonStyles'
 import { matchesSearch, normalizeText } from '../../lib/search'
 import KebabMenu from '../../components/KebabMenu'
-import { expiryBadgeClasses, frozenWithWarning, getExpiryInfo, hasWarning, remainingLabel, soonMarkLabel } from '../../lib/expiry'
+import { expiryBadgeClasses, frozenWithWarning, getExpiryInfo, groupBadgeCounts, hasWarning, remainingLabel, soonMarkLabel } from '../../lib/expiry'
 import { NO_GROUP } from '../../lib/groupByPantryGroup'
 
 function ExpiryFields({
@@ -56,7 +57,7 @@ function ExpiryFields({
 }) {
   const dateInput =
     mode === 'date' || mode === 'sinceStocked' ? (
-      <input
+      <input autoComplete="off"
         type="date"
         value={date}
         onChange={(e) => onDateChange(e.target.value)}
@@ -75,7 +76,7 @@ function ExpiryFields({
     </select>
   )
   const quantityInput = (
-    <input
+    <input autoComplete="off"
       value={quantity}
       onChange={(e) => onQuantityChange(e.target.value)}
       placeholder="Cantidad (ej. 500 g)"
@@ -278,12 +279,12 @@ function IngredientRow({
     return (
       <li
         className={
-          'py-2 pl-3 pr-1'
+          'py-2 pl-3 pr-3'
         }
       >
         <form onSubmit={handleSave} className="flex flex-col gap-2">
           <div className="flex flex-wrap items-center gap-2">
-            <input
+            <input autoComplete="off"
               autoFocus
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -353,6 +354,7 @@ function IngredientRow({
         aria-pressed={onList}
         aria-label={`${ingredient.name}: ${onList ? 'está en la lista de la compra, pulsa para quitarlo' : 'pulsa para añadirlo a la lista de la compra'}`}
         title={onList ? 'En la lista (pulsa para quitar)' : 'Añadir a la lista de la compra'}
+        onMouseDown={keepFocus}
         onClick={toggleOnList}
         className={
           'ripple relative flex h-8 w-8 items-center justify-center rounded-full transition-colors max-md:h-10 max-md:w-10 ' +
@@ -373,6 +375,7 @@ function IngredientRow({
               : `${ingredient.name}: pulsa para marcarlo como congelado`
           }
           title={ingredient.frozen ? 'En el congelador: pulsa para descongelar' : 'Marcar como congelado'}
+          onMouseDown={keepFocus}
           onClick={toggleFrozen}
           disabled={busy}
           className={
@@ -421,6 +424,7 @@ function IngredientRow({
           role="button"
           tabIndex={0}
           aria-expanded={panelOpen}
+          onMouseDown={keepFocus}
           onClick={togglePanel}
           onKeyDown={(e) => {
             if (e.key === 'Enter' || e.key === ' ') {
@@ -527,7 +531,7 @@ function IsFoodCheckbox({
 }) {
   return (
     <label className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
-      <input
+      <input autoComplete="off"
         type="checkbox"
         checked={checked}
         onChange={(e) => onChange(e.target.checked)}
@@ -564,7 +568,7 @@ function AddGroupForm({ groups, onDone }: { groups: Group[]; onDone: () => void 
   return (
     <form onSubmit={handleSubmit} className="mb-4 flex flex-col gap-2 rounded-lg border border-gray-200 bg-white p-3 dark:border-moss-700 dark:bg-moss-900">
       <div className="flex gap-2">
-        <input
+        <input autoComplete="off"
           autoFocus
           value={name}
           onChange={(e) => setName(e.target.value)}
@@ -630,7 +634,7 @@ function AddIngredientForm({
   return (
     <form onSubmit={handleSubmit} className="mb-4 flex flex-col gap-2 rounded-lg border border-gray-200 bg-white p-3 dark:border-moss-700 dark:bg-moss-900">
       <div className="flex flex-wrap gap-2">
-        <input
+        <input autoComplete="off"
           autoFocus
           value={name}
           onChange={(e) => {
@@ -687,10 +691,8 @@ function GroupHeader({
   onToggleCollapsed: () => void
 }) {
   const settled = useSettled()
-  const warnCount = section.items.filter((i) => hasWarning(i) || frozenWithWarning(i)).length
   // congelados (❄) y descongelando (❄ tachado) van aparte; los descongelando con aviso cuentan también en el ámbar
-  const frozenCount = section.items.filter((i) => i.inPantry && i.frozen).length
-  const thawCount = section.items.filter((i) => i.inPantry && !i.frozen && typeof i.thawedAt === 'number').length
+  const { warnCount, frozenCount, thawCount } = groupBadgeCounts(section.items)
   const [editing, setEditing] = useState(false)
   const [confirmingDelete, setConfirmingDelete] = useState(false)
   const [deleting, setDeleting] = useState(false)
@@ -722,7 +724,7 @@ function GroupHeader({
   if (editing) {
     return (
       <form onSubmit={handleSave} className="mb-2 flex flex-col gap-2">
-        <input
+        <input autoComplete="off"
           autoFocus
           value={name}
           onChange={(e) => setName(e.target.value)}
@@ -753,6 +755,7 @@ function GroupHeader({
     <div className="sticky top-[var(--head-h)] z-10 mb-1 flex items-center justify-between gap-2 bg-white py-1 dark:bg-moss-950">
       <button
         type="button"
+        onMouseDown={keepFocus}
         onClick={onToggleCollapsed}
         aria-expanded={!isCollapsed}
         className="flex min-w-0 flex-1 items-center gap-1.5 text-sm font-semibold uppercase tracking-wide text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
@@ -921,7 +924,7 @@ export default function PantryPage() {
                   aria-pressed={showOrder}
                   className={rowIconButton}
                 >
-                  <SortIcon />
+                  <SortIcon active={showOrder} />
                 </button>
               )}
             </div>

@@ -237,6 +237,8 @@ export default function ImportRecipes({
         }}
         rows={5}
         placeholder="Pega aquí el JSON devuelto"
+        spellCheck={false}
+        autoComplete="off"
         className="mb-3 w-full rounded-md border border-gray-300 px-3 py-2 font-mono text-xs focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-moss-700 dark:bg-moss-800 dark:text-gray-100"
       />
 
@@ -249,7 +251,7 @@ export default function ImportRecipes({
             return (
               <li key={i} className="rounded-md border border-gray-200 p-3 text-sm dark:border-moss-700">
                 <label className="flex items-start gap-2 text-gray-900 dark:text-gray-100">
-                  <input
+                  <input autoComplete="off"
                     type="checkbox"
                     disabled={blocked}
                     checked={!blocked && isChecked(i)}
