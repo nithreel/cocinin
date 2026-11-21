@@ -57,7 +57,7 @@ export default function ReleaseNotice() {
   return (
     <div
       role="status"
-      className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-emerald-200 bg-emerald-50 px-4 py-2 text-sm text-emerald-900 md:px-8 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-100"
+      className="kb-hide flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-emerald-200 bg-emerald-50 px-4 py-2 text-sm text-emerald-900 md:px-8 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-100"
     >
       <span>
         Hay una versión nueva de CocinIN en GitHub: {latest.tag} (esta instalación es la v{__APP_VERSION__}). Para actualizar, ejecuta npm run actualizar en la carpeta del proyecto.

@@ -129,6 +129,12 @@ function RecipeCard({
     })
   }
   const articleRef = useRef<HTMLElement>(null)
+  // al plegar, las demás recetas reaparecen y el scroll quedaba arriba del todo: se vuelve a esta tarjeta
+  const wasOpen = useRef(false)
+  useEffect(() => {
+    if (wasOpen.current && !open) requestAnimationFrame(() => articleRef.current?.scrollIntoView({ block: 'nearest' }))
+    wasOpen.current = open
+  }, [open])
   const titleRef = useRef<HTMLDivElement>(null)
   const recipeTags = useMemo(
     () => sortTags(tags.filter((t) => (editing ? draftTagIds : recipe.tagIds)?.includes(t.id))),

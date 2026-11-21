@@ -204,10 +204,19 @@ export default function AppLayout() {
     const root = document.documentElement
     const isField = (el: Element | null) =>
       !!el && (el.tagName === 'TEXTAREA' || (el.tagName === 'INPUT' && !/^(checkbox|radio|button|submit|range)$/.test((el as HTMLInputElement).type)))
+    // solo en pantallas táctiles: en un PC con la ventana baja no hay teclado en pantalla
+    const coarse = window.matchMedia('(pointer: coarse)')
+    let wasKb = false
     const apply = () => {
       root.style.setProperty('--app-h', `${vv.height}px`)
+      const field = isField(document.activeElement)
       // teclado abierto = campo enfocado y pantalla visible mucho menor que la física
-      const kb = isField(document.activeElement) && vv.height < screen.height * 0.8
+      const small = coarse.matches && vv.height < screen.height * 0.8
+      const kb = field && small
+      // teclado cerrado con «Atrás»: el campo sigue enfocado y el siguiente toque lo reabriría (y la pantalla
+      // saltaría bajo el dedo), así que se le quita el foco
+      if (wasKb && field && !small) (document.activeElement as HTMLElement).blur()
+      wasKb = kb
       root.toggleAttribute('data-kb', kb)
       // pantalla muy baja (móvil en horizontal con teclado): nada fijo, para que quepa el campo
       root.toggleAttribute('data-kb-low', kb && vv.height < 300)
@@ -228,7 +237,13 @@ export default function AppLayout() {
       }, 350)
     }
     document.addEventListener('focusin', onFocus)
-    document.addEventListener('focusout', apply)
+    // con retardo: si no, al tocar un botón con el teclado abierto la pantalla se recoloca antes de soltar y el toque se pierde
+    let outTimer = 0
+    const onFocusOut = () => {
+      window.clearTimeout(outTimer)
+      outTimer = window.setTimeout(apply, 300)
+    }
+    document.addEventListener('focusout', onFocusOut)
     apply()
     vv.addEventListener('resize', apply)
     vv.addEventListener('scroll', apply)
@@ -236,7 +251,8 @@ export default function AppLayout() {
       vv.removeEventListener('resize', apply)
       vv.removeEventListener('scroll', apply)
       document.removeEventListener('focusin', onFocus)
-      document.removeEventListener('focusout', apply)
+      document.removeEventListener('focusout', onFocusOut)
+      window.clearTimeout(outTimer)
       root.removeAttribute('data-kb')
       root.removeAttribute('data-kb-low')
       root.style.removeProperty('--app-h')

@@ -415,3 +415,6 @@ html[data-kb] .kb-static {
 /* Con el teclado abierto: fuera la barra de marca y las pestañas (liberan ~110 px); en horizontal, nada fijo */
 html[data-kb] .kb-hide { display: none !important; }
 html[data-kb-low] .sticky { position: static !important; }
+
+/* Avisos con el teclado abierto: abajo (sobre el teclado), para no tapar el campo que se está escribiendo */
+html[data-kb] .toast-region { top: auto !important; bottom: 0.5rem; }

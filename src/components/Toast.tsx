@@ -77,8 +77,9 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       timer.current = window.setTimeout(hide, 2500)
     }
   }
-  // arriba (donde el título de cada pantalla), para no tapar lo que se está tocando abajo
-  const regionClasses = 'pointer-events-none fixed inset-x-4 top-[calc(3.25rem+env(safe-area-inset-top))] z-50 mx-auto max-w-md md:top-6'
+  // arriba (donde el título de cada pantalla), para no tapar lo que se está tocando abajo; con el teclado abierto, abajo
+  // (index.css), para no tapar el buscador mientras se escribe
+  const regionClasses = 'toast-region pointer-events-none fixed inset-x-4 top-[calc(3.25rem+env(safe-area-inset-top))] z-50 mx-auto max-w-md md:top-6'
   const card = toast && (
     <div
       key={seq}
@@ -86,7 +87,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       onPointerMove={onMove}
       onPointerUp={onUp}
       onPointerCancel={onUp}
-      style={drag.x !== 0 || drag.out ? { transform: `translateX(${drag.x}px)`, opacity: drag.out ? 0 : 1 - Math.min(Math.abs(drag.x) / 200, 0.6), transition: drag.active ? 'none' : 'transform 200ms ease-out, opacity 200ms ease-out', touchAction: 'pan-y' } : { touchAction: 'pan-y' }}
+      style={drag.x !== 0 || drag.out ? { transform: `translateX(${drag.x}px)`, opacity: drag.out ? 0 : 1 - Math.min(Math.abs(drag.x) / 200, 0.6), transition: drag.active ? 'none' : 'transform 200ms ease-out, opacity 200ms ease-out', touchAction: 'none' } : { touchAction: 'none' }}
       className={
         (leaving ? 'toast-out ' : 'toast-in ') +
         'pointer-events-auto flex items-center justify-between gap-3 rounded-lg px-4 py-3 text-sm text-white shadow-lg ' +
