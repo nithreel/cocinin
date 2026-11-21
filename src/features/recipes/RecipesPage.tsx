@@ -383,7 +383,7 @@ export default function RecipesPage() {
         title="Recetario"
         below={
           recipes.length > 0 && (
-            <Collapse open={!formActive && !compact}>
+            <Collapse open={!formActive && !compact && !showImport}>
             <div className="space-y-2">
               <SearchInput value={search} onChange={setSearch} placeholder="Buscar receta o ingrediente…" className="" />
               <div>
@@ -488,18 +488,18 @@ export default function RecipesPage() {
 
       {loading && <ListSkeleton />}
 
-      {!loading && !formActive && recipes.length === 0 && (
+      {!loading && !formActive && !showImport && recipes.length === 0 && (
         <p className="text-gray-500 dark:text-gray-400">Aún no hay recetas. Añade la primera con «+ Receta».</p>
       )}
 
-      {!formActive && recipes.length > 0 && visibleRecipes.length === 0 && (
+      {!formActive && !showImport && recipes.length > 0 && visibleRecipes.length === 0 && (
         <p className="text-gray-500 dark:text-gray-400">No hay recetas que coincidan {search.trim() ? `con «${search.trim()}»` : 'con los filtros elegidos'}.</p>
       )}
 
       <div className="space-y-4">
         {visibleRecipes.map((recipe) => (
           // mientras se crea, edita o lee (desplegada) una receta, las demás se ocultan (siguen montadas: conservan si estaban abiertas)
-          <div key={recipe.id} className={(formActive || compact) && !editingIds.has(recipe.id) && !openIds.has(recipe.id) ? 'hidden' : ''}>
+          <div key={recipe.id} className={(formActive || compact || showImport) && !editingIds.has(recipe.id) && !openIds.has(recipe.id) ? 'hidden' : ''}>
           <RecipeCard
             recipe={recipe}
             status={getRecipeStatus(recipe, ingredientsById)}
