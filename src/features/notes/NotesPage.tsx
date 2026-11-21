@@ -3,13 +3,15 @@ import Collapse from '../../components/Collapse'
 import { onSnapshot, orderBy, query } from 'firebase/firestore'
 import { useAuth } from '../../auth/AuthContext'
 import { ConfirmDelete } from '../../components/DeleteButton'
-import KebabMenu from '../../components/KebabMenu'
 import ListSkeleton from '../../components/ListSkeleton'
 import { scrollMainToTop } from '../../lib/scroll'
 import StickyHeader from '../../components/StickyHeader'
 import Switch from '../../components/Switch'
-import { BellIcon } from '../../components/icons'
-import { cancelButton, dangerTextButton, primaryButton } from '../../components/buttonStyles'
+import { cancelButton, dangerTextButton, primaryButton, rowIconButton } from '../../components/buttonStyles'
+import RemoveButton from '../../components/RemoveButton'
+import SwapLabelButton from '../../components/SwapLabelButton'
+import { BellIcon, PencilIcon } from '../../components/icons'
+import { useLongPress } from '../../lib/useLongPress'
 import { usersCol, type Member, type Note } from '../../lib/collections'
 import { isPushConfigured } from '../../lib/push'
 import { defaultRemindAt, formatRemind, joinDateTime, reminderChanged, splitDateTime } from '../../lib/noteTime'
@@ -146,7 +148,19 @@ function NoteForm({
   )
 }
 
-function NoteCard({ note, members }: { note: Note; members: Member[] }) {
+function NoteCard({
+  note,
+  members,
+  organizing,
+  onStartOrganize,
+}: {
+  note: Note
+  members: Member[]
+  /** modo «organizar» (pulsación larga en una nota): lápiz y ✕ en vez del menú */
+  organizing: boolean
+  onStartOrganize: () => void
+}) {
+  const longPress = useLongPress(onStartOrganize)
   const [editing, setEditing] = useState(false)
   const [confirmingDelete, setConfirmingDelete] = useState(false)
   const [deleting, setDeleting] = useState(false)
@@ -168,7 +182,15 @@ function NoteCard({ note, members }: { note: Note; members: Member[] }) {
   return (
     <li className="rounded-lg border border-gray-200 bg-white p-4 dark:border-moss-800 dark:bg-moss-900">
       <div className="flex items-start justify-between gap-2">
-        <label className="flex min-w-0 flex-1 cursor-pointer items-start gap-3">
+        <label
+          className="flex min-w-0 flex-1 cursor-pointer select-none items-start gap-3"
+          title={organizing ? undefined : 'Mantén pulsado para editar o eliminar'}
+          {...(organizing ? {} : longPress.handlers)}
+          // tras una pulsación larga, el clic que sigue no debe marcar la nota como hecha
+          onClick={(e) => {
+            if (longPress.consumeFired()) e.preventDefault()
+          }}
+        >
           <input autoComplete="off"
             type="checkbox"
             checked={!!note.done}
@@ -180,12 +202,14 @@ function NoteCard({ note, members }: { note: Note; members: Member[] }) {
             {note.text}
           </p>
         </label>
-        <KebabMenu
-          items={[
-            { label: 'Editar', onClick: () => setEditing(true) },
-            { label: 'Eliminar', onClick: () => setConfirmingDelete(true), danger: true },
-          ]}
-        />
+        {organizing && !confirmingDelete && (
+          <div className="icon-in flex shrink-0 items-center gap-4">
+            <button type="button" onClick={() => setEditing(true)} aria-label="Editar la nota" title="Editar la nota" className={rowIconButton}>
+              <PencilIcon />
+            </button>
+            <RemoveButton row={false} onRemove={() => setConfirmingDelete(true)} label="Eliminar la nota" title="Eliminar la nota" />
+          </div>
+        )}
       </div>
       {note.notify && note.remindAt && (
         <p
@@ -227,6 +251,8 @@ export default function NotesPage() {
   const { notes, loading } = useNotes()
   const members = useMembers()
   const [showForm, setShowForm] = useState(false)
+  // modo «organizar»: se entra manteniendo pulsada una nota; «Listo» sale
+  const [organizing, setOrganizing] = useState(false)
   const [confirmingDone, setConfirmingDone] = useState(false)
   const doneCount = notes.filter((n) => n.done).length
 
@@ -262,12 +288,19 @@ export default function NotesPage() {
             Eliminar
           </button>
         )}
-        <button type="button" onClick={() => {
-            setShowForm((v) => !v)
-            scrollMainToTop()
-          }} className={primaryButton}>
-          + Nota
-        </button>
+        <SwapLabelButton
+          labelA="+ Nota"
+          labelB="Listo"
+          showB={organizing}
+          onClick={
+            organizing
+              ? () => setOrganizing(false)
+              : () => {
+                  setShowForm((v) => !v)
+                  scrollMainToTop()
+                }
+          }
+        />
       </StickyHeader>
 
       <Collapse open={showForm}>
@@ -281,7 +314,16 @@ export default function NotesPage() {
 
       <ul className="space-y-3">
         {ordered.map((n) => (
-          <NoteCard key={n.id} note={n} members={members} />
+          <NoteCard
+            key={n.id}
+            note={n}
+            members={members}
+            organizing={organizing}
+            onStartOrganize={() => {
+              setShowForm(false)
+              setOrganizing(true)
+            }}
+          />
         ))}
       </ul>
     </div>

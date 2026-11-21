@@ -4,6 +4,7 @@ import {
   addIngredient,
   deleteGroup,
   deleteIngredient,
+  reorderGroups,
   setIngredientFrozen,
   setIngredientUseSoon,
   setIngredientInPantry,
@@ -17,8 +18,10 @@ import {
 } from './data'
 import type { ExpiryMode, Group, Ingredient } from '../../lib/collections'
 import { ConfirmDelete } from '../../components/DeleteButton'
-import GroupsOrder from './GroupsOrder'
-import { AlertIcon, CaretIcon, CartIcon, SnowflakeIcon, SortIcon } from '../../components/icons'
+import RemoveButton from '../../components/RemoveButton'
+import SwapLabelButton from '../../components/SwapLabelButton'
+import { useDragReorder } from '../../lib/useDragReorder'
+import { AlertIcon, CaretIcon, CartIcon, PencilIcon, SnowflakeIcon } from '../../components/icons'
 import SearchInput from '../../components/SearchInput'
 import Collapse from '../../components/Collapse'
 import Pop, { useSettled } from '../../components/Pop'
@@ -29,11 +32,11 @@ import { addToShoppingList, removeFromShoppingList, useShoppingList } from '../s
 import { COLLAPSE_MS } from '../../lib/motion'
 import { scrollMainToTop, smoothBehavior } from '../../lib/scroll'
 import { keepFocus } from '../../lib/keepFocus'
+import { useLongPress } from '../../lib/useLongPress'
 import { useCollapsedSet } from '../../lib/useCollapsedSet'
 import StickyHeader from '../../components/StickyHeader'
-import { cancelButton, dangerTextButton, outlineButton, primaryButton, rowIconButton } from '../../components/buttonStyles'
+import { cancelButton, primaryButton, rowIconButton } from '../../components/buttonStyles'
 import { matchesSearch, normalizeText } from '../../lib/search'
-import KebabMenu from '../../components/KebabMenu'
 import { expiryBadgeClasses, frozenWithWarning, getExpiryInfo, groupBadgeCounts, hasWarning, remainingLabel, soonMarkLabel } from '../../lib/expiry'
 import { NO_GROUP } from '../../lib/groupByPantryGroup'
 
@@ -285,7 +288,6 @@ function IngredientRow({
         <form onSubmit={handleSave} className="flex flex-col gap-2">
           <div className="flex flex-wrap items-center gap-2">
             <input autoComplete="off"
-              autoFocus
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="min-w-32 flex-1 rounded-md border border-gray-300 px-2 py-1 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-moss-700 dark:bg-moss-800 dark:text-gray-100"
@@ -434,7 +436,7 @@ function IngredientRow({
           }}
           className="flex min-w-0 flex-1 cursor-pointer select-none flex-col"
         >
-          <span className={ingredient.inPantry ? 'text-gray-900 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400'}>
+          <span className={'[overflow-wrap:anywhere] ' + (ingredient.inPantry ? 'text-gray-900 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400')}>
             {ingredient.name}
           </span>
           <Collapse open={!!(expiryInfo || ingredient.quantity || soonFlag)}>
@@ -449,6 +451,15 @@ function IngredientRow({
             </span>
           </Collapse>
         </div>
+        {/* panel abierto: editar y eliminar, con iconos, a la derecha del nombre (el nombre largo se parte en líneas) */}
+        {panelOpen && !confirmingDelete && (
+          <div className="icon-in flex shrink-0 items-center gap-4">
+            <button type="button" onClick={startEdit} aria-label={`Editar «${ingredient.name}»`} title="Editar el ingrediente" className={rowIconButton}>
+              <PencilIcon />
+            </button>
+            <RemoveButton row={false} onRemove={() => setConfirmingDelete(true)} label={`Eliminar «${ingredient.name}»`} title="Eliminar el ingrediente" />
+          </div>
+        )}
       </div>
 
       <Collapse open={panelOpen}>
@@ -491,30 +502,20 @@ function IngredientRow({
               />
             </>
           ) : (
-            <div className="flex items-center gap-2">
-              {ingredient.inPantry && (
-                <>
-                  <button
-                    type="submit"
-                    disabled={saving}
-                    className={primaryButton}
-                  >
-                    Guardar
-                  </button>
-                  <button type="button" onClick={closePanel} className={cancelButton}>
-                    Cancelar
-                  </button>
-                </>
-              )}
-              <div className="ml-auto flex items-center gap-1">
-                <button type="button" onClick={startEdit} className={cancelButton}>
-                  Editar
+            ingredient.inPantry && (
+              <div className="flex items-center gap-2">
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className={primaryButton}
+                >
+                  Guardar
                 </button>
-                <button type="button" onClick={() => setConfirmingDelete(true)} className={dangerTextButton}>
-                  Eliminar
+                <button type="button" onClick={closePanel} className={cancelButton}>
+                  Cancelar
                 </button>
               </div>
-            </div>
+            )
           )}
         </form>
       </Collapse>
@@ -681,36 +682,36 @@ function AddIngredientForm({
   )
 }
 
+type GroupDraft = { name: string; isFood: boolean }
+
 function GroupHeader({
   section,
   isCollapsed,
   onToggleCollapsed,
+  organizing,
+  onStartOrganize,
+  draft,
+  onDraftChange,
+  handle,
 }: {
   section: { id: string; name: string; items: Ingredient[]; deletable: boolean; isFood: boolean }
   isCollapsed: boolean
   onToggleCollapsed: () => void
+  /** modo «organizar grupos»: asa para mover, lápiz para renombrar y ✕ para eliminar */
+  organizing: boolean
+  onStartOrganize: () => void
+  /** borrador de nombre y «Es comida» mientras se edita en el sitio (undefined = no se está editando) */
+  draft: GroupDraft | undefined
+  onDraftChange: (draft: GroupDraft | null) => void
+  handle?: React.HTMLAttributes<HTMLButtonElement>
 }) {
   const settled = useSettled()
   // congelados (❄) y descongelando (❄ tachado) van aparte; los descongelando con aviso cuentan también en el ámbar
   const { warnCount, frozenCount, thawCount } = groupBadgeCounts(section.items)
-  const [editing, setEditing] = useState(false)
   const [confirmingDelete, setConfirmingDelete] = useState(false)
   const [deleting, setDeleting] = useState(false)
-  const [name, setName] = useState(section.name)
-  const [isFood, setIsFood] = useState(section.isFood)
-  const [saving, setSaving] = useState(false)
-
-  async function handleSave(e: FormEvent) {
-    e.preventDefault()
-    if (!name.trim()) return
-    setSaving(true)
-    try {
-      await updateGroup(section.id, name.trim(), isFood)
-      setEditing(false)
-    } finally {
-      setSaving(false)
-    }
-  }
+  const longPress = useLongPress(onStartOrganize)
+  const canOrganize = section.deletable
 
   async function handleDelete() {
     setDeleting(true)
@@ -721,114 +722,159 @@ function GroupHeader({
     }
   }
 
-  if (editing) {
-    return (
-      <form onSubmit={handleSave} className="mb-2 flex flex-col gap-2">
-        <input autoComplete="off"
-          autoFocus
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          className="flex-1 rounded-md border border-gray-300 px-2 py-1 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-moss-700 dark:bg-moss-800 dark:text-gray-100"
+  const badges = (
+    <>
+      <span className="shrink-0 font-normal normal-case text-gray-500 dark:text-gray-400">({section.items.length})</span>
+      {frozenCount > 0 && (
+        <Pop
+          animate={settled}
+          trigger={frozenCount}
+          title={`${frozenCount} congelado${frozenCount === 1 ? '' : 's'}`}
+          aria-label={`${frozenCount} ingrediente${frozenCount === 1 ? '' : 's'} congelado${frozenCount === 1 ? '' : 's'}`}
+          className="flex shrink-0 items-center gap-1 rounded-full bg-frost-100 px-2 text-xs font-semibold normal-case text-frost-700 dark:bg-frost-950 dark:text-frost-400"
+        >
+          <SnowflakeIcon className="h-3 w-3" /> {frozenCount}
+        </Pop>
+      )}
+      {thawCount > 0 && (
+        <Pop
+          animate={settled}
+          trigger={thawCount}
+          title={`${thawCount} descongelando`}
+          aria-label={`${thawCount} ingrediente${thawCount === 1 ? '' : 's'} descongelando`}
+          className="flex shrink-0 items-center gap-1 rounded-full bg-frost-100 px-2 text-xs font-semibold normal-case text-frost-700 dark:bg-frost-950 dark:text-frost-400"
+        >
+          <SnowflakeIcon className="h-3 w-3" crossed /> {thawCount}
+        </Pop>
+      )}
+      {warnCount > 0 && (
+        <Pop
+          animate={settled}
+          trigger={warnCount}
+          title={`${warnCount} con aviso`}
+          aria-label={`${warnCount} ingrediente${warnCount === 1 ? '' : 's'} con aviso`}
+          className="shrink-0 rounded-full bg-amber-100 px-2 text-xs font-semibold normal-case text-amber-700 dark:bg-amber-950 dark:text-amber-400"
+        >
+          ⚠ {warnCount}
+        </Pop>
+      )}
+    </>
+  )
+
+  // la flecha > se convierte en tres rayas (asa de arrastre) al organizar
+  const lead = (
+    <span className="relative flex h-6 w-6 shrink-0 items-center justify-center text-gray-500 dark:text-gray-400">
+      <span
+        aria-hidden="true"
+        className={'absolute transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] ' + (organizing ? 'scale-50 rotate-90 opacity-0' : 'opacity-100')}
+      >
+        <CaretIcon open={!isCollapsed} />
+      </span>
+      <svg
+        width="14"
+        height="14"
+        viewBox="0 0 14 14"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        aria-hidden="true"
+        className={'absolute transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] ' + (organizing && canOrganize ? 'opacity-100' : 'scale-50 -rotate-90 opacity-0')}
+      >
+        <path d="M2 3.5h10M2 7h10M2 10.5h10" />
+      </svg>
+      {organizing && canOrganize && handle && (
+        <button
+          type="button"
+          aria-label={`Mover «${section.name}» (arrastra, o usa ↑ ↓)`}
+          {...handle}
+          className="absolute -inset-2 cursor-grab touch-none active:cursor-grabbing"
         />
-        <IsFoodCheckbox checked={isFood} onChange={setIsFood} />
-        <div className="flex items-center gap-2">
-          <button
-            type="submit"
-            disabled={saving}
-            className={primaryButton}
-          >
-            Guardar
-          </button>
+      )}
+    </span>
+  )
+
+  const titleClasses = 'flex min-w-0 flex-1 items-center gap-1.5 text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400'
+  return (
+    <div className={organizing ? '' : 'sticky top-[var(--head-h)] z-10 mb-1 bg-white py-1 dark:bg-moss-950'}>
+      <div className={'flex items-center justify-between gap-2' + (organizing ? ' min-h-10' : '')}>
+        {organizing ? (
+          <div className="flex min-w-0 flex-1 items-center gap-1.5">
+            {lead}
+            {draft ? (
+              <input
+                autoComplete="off"
+                autoFocus
+                value={draft.name}
+                onChange={(e) => onDraftChange({ ...draft, name: e.target.value })}
+                aria-label="Nombre del grupo"
+                className="min-w-0 flex-1 rounded-md border border-gray-300 px-2 py-0.5 text-sm font-semibold focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-moss-700 dark:bg-moss-800 dark:text-gray-100"
+              />
+            ) : (
+              <div className={titleClasses}>
+                <span className="truncate">{section.name}</span>
+                {badges}
+              </div>
+            )}
+          </div>
+        ) : (
           <button
             type="button"
-            onClick={() => setEditing(false)}
-            className={cancelButton}
+            onMouseDown={keepFocus}
+            onClick={() => {
+              // tras una pulsación larga el clic que sigue no debe plegar ni desplegar
+              if (longPress.consumeFired()) return
+              onToggleCollapsed()
+            }}
+            {...(canOrganize ? longPress.handlers : {})}
+            title={canOrganize ? 'Mantén pulsado para organizar los grupos' : undefined}
+            aria-expanded={!isCollapsed}
+            className={titleClasses + ' select-none hover:text-gray-700 dark:hover:text-gray-200'}
           >
-            Cancelar
+            {lead}
+            <span className="truncate">{section.name}</span>
+            {badges}
           </button>
+        )}
+        {organizing && canOrganize && (
+          <div className="flex shrink-0 items-center gap-4">
+            {!confirmingDelete && (
+              <button
+                type="button"
+                onClick={() => onDraftChange(draft ? null : { name: section.name, isFood: section.isFood })}
+                aria-label={`Editar «${section.name}»`}
+                aria-pressed={!!draft}
+                title="Editar el grupo"
+                className={rowIconButton + (draft ? ' !text-emerald-600 dark:!text-emerald-400' : '')}
+              >
+                <PencilIcon />
+              </button>
+            )}
+            {!confirmingDelete && (
+              <RemoveButton row={false} onRemove={() => setConfirmingDelete(true)} label={`Eliminar «${section.name}»`} title="Eliminar el grupo" />
+            )}
+          </div>
+        )}
+      </div>
+      {organizing && canOrganize && confirmingDelete && (
+        <ConfirmDelete
+          question={
+            section.items.length > 0
+              ? `¿Eliminar «${section.name}»? Sus ${section.items.length} ingredientes pasan a Sin grupo.`
+              : `¿Eliminar «${section.name}»?`
+          }
+          questionClassName="w-full"
+          busy={deleting}
+          onConfirm={handleDelete}
+          onCancel={() => setConfirmingDelete(false)}
+          className="mt-1"
+        />
+      )}
+      <Collapse open={organizing && !!draft}>
+        <div className="pb-1 pl-7 pt-2">
+          <IsFoodCheckbox checked={draft?.isFood ?? section.isFood} onChange={(v) => draft && onDraftChange({ ...draft, isFood: v })} />
         </div>
-      </form>
-    )
-  }
-
-  return (
-    <div className="sticky top-[var(--head-h)] z-10 mb-1 flex items-center justify-between gap-2 bg-white py-1 dark:bg-moss-950">
-      <button
-        type="button"
-        onMouseDown={keepFocus}
-        onClick={onToggleCollapsed}
-        aria-expanded={!isCollapsed}
-        className="flex min-w-0 flex-1 items-center gap-1.5 text-sm font-semibold uppercase tracking-wide text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-      >
-        <span aria-hidden="true" className="shrink-0 text-gray-500 dark:text-gray-400">
-          <CaretIcon open={!isCollapsed} />
-        </span>
-        <span className="truncate">{section.name}</span>
-        <span className="shrink-0 font-normal normal-case text-gray-500 dark:text-gray-400">
-          ({section.items.length})
-        </span>
-        {frozenCount > 0 && (
-          <Pop
-            animate={settled}
-            trigger={frozenCount}
-            title={`${frozenCount} congelado${frozenCount === 1 ? '' : 's'}`}
-            aria-label={`${frozenCount} ingrediente${frozenCount === 1 ? '' : 's'} congelado${frozenCount === 1 ? '' : 's'}`}
-            className="flex shrink-0 items-center gap-1 rounded-full bg-frost-100 px-2 text-xs font-semibold normal-case text-frost-700 dark:bg-frost-950 dark:text-frost-400"
-          >
-            <SnowflakeIcon className="h-3 w-3" /> {frozenCount}
-          </Pop>
-        )}
-        {thawCount > 0 && (
-          <Pop
-            animate={settled}
-            trigger={thawCount}
-            title={`${thawCount} descongelando`}
-            aria-label={`${thawCount} ingrediente${thawCount === 1 ? '' : 's'} descongelando`}
-            className="flex shrink-0 items-center gap-1 rounded-full bg-frost-100 px-2 text-xs font-semibold normal-case text-frost-700 dark:bg-frost-950 dark:text-frost-400"
-          >
-            <SnowflakeIcon className="h-3 w-3" crossed /> {thawCount}
-          </Pop>
-        )}
-        {warnCount > 0 && (
-          <Pop
-            animate={settled}
-            trigger={warnCount}
-            title={`${warnCount} con aviso`}
-            aria-label={`${warnCount} ingrediente${warnCount === 1 ? '' : 's'} con aviso`}
-            className="shrink-0 rounded-full bg-amber-100 px-2 text-xs font-semibold normal-case text-amber-700 dark:bg-amber-950 dark:text-amber-400"
-          >
-            ⚠ {warnCount}
-          </Pop>
-        )}
-      </button>
-      {section.deletable &&
-        (confirmingDelete ? (
-          <ConfirmDelete
-            question={
-              section.items.length > 0
-                ? `¿Eliminar «${section.name}»? Sus ${section.items.length} ingredientes pasan a Sin grupo.`
-                : `¿Eliminar «${section.name}»?`
-            }
-            questionClassName="w-full"
-            busy={deleting}
-            onConfirm={handleDelete}
-            onCancel={() => setConfirmingDelete(false)}
-            className="shrink-0"
-          />
-        ) : (
-          <KebabMenu
-            items={[
-              {
-                label: 'Editar',
-                onClick: () => {
-                  setName(section.name)
-                  setEditing(true)
-                },
-              },
-              { label: 'Eliminar', onClick: () => setConfirmingDelete(true), danger: true },
-            ]}
-          />
-        ))}
+      </Collapse>
     </div>
   )
 }
@@ -838,7 +884,13 @@ export default function PantryPage() {
   const { ingredients, loading: loadingIngredients } = useIngredients()
   const { recipes } = useRecipes()
   const [showAddGroup, setShowAddGroup] = useState(false)
-  const [showOrder, setShowOrder] = useState(false)
+  // modo «organizar grupos» (se entra manteniendo pulsado un grupo): grupos plegados, asa para moverlos, lápiz y ✕
+  const [organizing, setOrganizing] = useState(false)
+  const [drafts, setDrafts] = useState<Record<string, GroupDraft>>({})
+  const [savingGroups, setSavingGroups] = useState(false)
+  const reorder = useDragReorder(groups, (ids) => void reorderGroups(ids))
+  // orden de los grupos al entrar, para que «Cancelar» lo restaure
+  const orderOnEnter = useRef<string[]>([])
   const [showAddIngredient, setShowAddIngredient] = useState(false)
   const { collapsed, toggle: toggleCollapsed, expand } = useCollapsedSet('despensa')
   const [search, setSearch] = useState('')
@@ -852,6 +904,34 @@ export default function PantryPage() {
     }
     return map
   }, [recipes])
+
+  function startOrganize() {
+    if (organizing) return
+    setShowAddGroup(false)
+    setShowAddIngredient(false)
+    orderOnEnter.current = groups.map((g) => g.id)
+    setOrganizing(true)
+  }
+
+  // «Guardar»: aplica los nombres y «Es comida» editados y sale del modo (el orden ya se guardó al soltar cada grupo)
+  async function saveOrganize() {
+    setSavingGroups(true)
+    try {
+      await Promise.all(
+        Object.entries(drafts).map(([id, d]) => {
+          const g = groups.find((x) => x.id === id)
+          const name = d.name.trim()
+          if (!g || !name || (name === g.name && d.isFood === (g.isFood ?? true))) return undefined
+          return updateGroup(id, name, d.isFood)
+        }),
+      )
+      setDrafts({})
+      setOrganizing(false)
+    } finally {
+      setSavingGroups(false)
+    }
+  }
+  const draftsInvalid = Object.values(drafts).some((d) => !d.name.trim())
 
   function handleIngredientAdded(id?: string, groupId?: string | null) {
     setShowAddIngredient(false)
@@ -900,6 +980,15 @@ export default function PantryPage() {
 
   const loading = loadingGroups || loadingIngredients
 
+  // al organizar se ven todos los grupos (sin filtro de búsqueda), en el orden que se está arrastrando, y «Sin grupo» al final
+  const displaySections = useMemo(() => {
+    if (!organizing) return visibleSections
+    const byId = new Map(sections.map((x) => [x.id, x]))
+    const ordered = reorder.shown.map((g) => byId.get(g.id)).filter((x): x is (typeof sections)[number] => !!x)
+    const noGroup = byId.get(NO_GROUP)
+    return noGroup ? [...ordered, noGroup] : ordered
+  }, [organizing, visibleSections, sections, reorder.shown])
+
   // Los formularios se abren arriba del todo: si se pulsa con la página desplazada, se vuelve a la cima para verlos.
   function openForm(toggle: (fn: (v: boolean) => boolean) => void) {
     toggle((v) => !v)
@@ -913,35 +1002,42 @@ export default function PantryPage() {
         title="Despensa"
         below={
           (ingredients.length > 0 || search) && (
-            <div className="flex items-center gap-2">
-              <SearchInput value={search} onChange={setSearch} className="min-w-0 flex-1" />
-              {groups.length > 1 && (
-                <button
-                  type="button"
-                  onClick={() => openForm(setShowOrder)}
-                  aria-label="Ordenar los grupos"
-                  title="Ordenar los grupos"
-                  aria-pressed={showOrder}
-                  className={rowIconButton}
-                >
-                  <SortIcon active={showOrder} />
-                </button>
-              )}
-            </div>
+            <Collapse open={!organizing}>
+              <SearchInput value={search} onChange={setSearch} className="" />
+            </Collapse>
           )
         }
       >
-        <button type="button" onClick={() => openForm(setShowAddGroup)} className={outlineButton}>
-          + Grupo
-        </button>
-        <button type="button" onClick={() => openForm(setShowAddIngredient)} className={primaryButton}>
-          + Ingrediente
-        </button>
+        <SwapLabelButton
+          variant="outline"
+          labelA="+ Grupo"
+          labelB="Cancelar"
+          showB={organizing}
+          disabled={organizing && savingGroups}
+          onClick={
+            organizing
+              ? () => {
+                  // sale sin aplicar los nombres editados y devuelve los grupos al orden con el que se entró
+                  // (los grupos eliminados no se recuperan)
+                  const existing = new Set(groups.map((g) => g.id))
+                  const before = orderOnEnter.current.filter((id) => existing.has(id))
+                  const now = groups.map((g) => g.id).filter((id) => before.includes(id))
+                  if (before.join() !== now.join()) void reorderGroups(before)
+                  setDrafts({})
+                  setOrganizing(false)
+                }
+              : () => openForm(setShowAddGroup)
+          }
+        />
+        <SwapLabelButton
+          labelA="+ Ingrediente"
+          labelB="Guardar"
+          showB={organizing}
+          disabled={organizing && (savingGroups || draftsInvalid)}
+          onClick={organizing ? () => void saveOrganize() : () => openForm(setShowAddIngredient)}
+        />
       </StickyHeader>
 
-      <Collapse open={showOrder}>
-        <GroupsOrder groups={groups} onClose={() => setShowOrder(false)} />
-      </Collapse>
       <Collapse open={showAddGroup}>
         <AddGroupForm groups={groups} onDone={() => setShowAddGroup(false)} />
       </Collapse>
@@ -961,15 +1057,33 @@ export default function PantryPage() {
         <p className="text-gray-500 dark:text-gray-400">No hay ingredientes que coincidan con «{search.trim()}».</p>
       )}
 
-      <div className="space-y-6">
-        {visibleSections.map((section) => {
-          const isCollapsed = !searchActive && collapsed.has(section.id)
+      <div className={organizing ? 'divide-y divide-gray-100 dark:divide-moss-800' : 'space-y-6'}>
+        {displaySections.map((section) => {
+          const isCollapsed = organizing || (!searchActive && collapsed.has(section.id))
+          const movable = organizing && section.id !== NO_GROUP
           return (
-            <section key={section.id}>
+            <section
+              key={section.id}
+              ref={movable ? reorder.rowRef(section.id) : undefined}
+              style={movable ? reorder.rowStyle(section.id) : undefined}
+              className={organizing ? 'bg-white py-3 dark:bg-moss-950' + (reorder.draggingId === section.id ? ' relative z-10 rounded-md shadow-md' : '') : undefined}
+            >
               <GroupHeader
                 section={section}
                 isCollapsed={isCollapsed}
                 onToggleCollapsed={() => toggleCollapsed(section.id)}
+                organizing={organizing}
+                onStartOrganize={startOrganize}
+                draft={drafts[section.id]}
+                onDraftChange={(d) =>
+                  setDrafts((prev) => {
+                    const next = { ...prev }
+                    if (d) next[section.id] = d
+                    else delete next[section.id]
+                    return next
+                  })
+                }
+                handle={movable ? reorder.handleFor(section.id) : undefined}
               />
               <Collapse open={!isCollapsed}>
                 {section.items.length === 0 ? (

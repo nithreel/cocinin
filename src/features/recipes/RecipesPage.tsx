@@ -18,8 +18,10 @@ import { addToShoppingList, removeFromShoppingList, useShoppingList } from '../s
 import { useToast } from '../../components/Toast'
 import StickyHeader from '../../components/StickyHeader'
 import ImportRecipes from './ImportRecipes'
-import DeleteButton from '../../components/DeleteButton'
-import { cancelButton, outlineButton, primaryButton } from '../../components/buttonStyles'
+import { ConfirmDelete } from '../../components/DeleteButton'
+import RemoveButton from '../../components/RemoveButton'
+import { PencilIcon } from '../../components/icons'
+import { outlineButton, primaryButton, rowIconButton } from '../../components/buttonStyles'
 import type { Group, Ingredient, Recipe, Tag } from '../../lib/collections'
 
 type RecipeStatus = 'full' | 'partial' | 'missing'
@@ -79,6 +81,7 @@ function RecipeCard({
 }) {
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState(false)
+  const [confirmingDelete, setConfirmingDelete] = useState(false)
   // borrador del título y las etiquetas mientras se edita: la cabecera de arriba los muestra en directo
   const [draftTitle, setDraftTitle] = useState(recipe.title)
   const [draftTagIds, setDraftTagIds] = useState<string[]>(recipe.tagIds ?? [])
@@ -179,22 +182,59 @@ function RecipeCard({
             <p className="mt-1 min-h-4 text-xs text-gray-500 dark:text-gray-400">{recipeTags.map((t) => t.name).join(' · ')}</p>
           </div>
         ) : (
-          <button
-            type="button"
-            onMouseDown={keepFocus}
-            onClick={() => setOpen((v) => !v)}
-            className="flex w-full items-center justify-between gap-3 p-4 text-left"
-          >
-            <div className="min-w-0">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{recipe.title}</h3>
-              {recipeTags.length > 0 && (
-                <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{recipeTags.map((t) => t.name).join(' · ')}</p>
+          <>
+            <div className="flex items-center">
+              <button
+                type="button"
+                onMouseDown={keepFocus}
+                onClick={() => setOpen((v) => !v)}
+                aria-expanded={open}
+                className="min-w-0 flex-1 p-4 text-left"
+              >
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{recipe.title}</h3>
+                {recipeTags.length > 0 && (
+                  <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{recipeTags.map((t) => t.name).join(' · ')}</p>
+                )}
+              </button>
+              {/* abierta: editar y eliminar, con iconos, a la derecha del título */}
+              {open && !confirmingDelete && (
+                <div className="icon-in flex shrink-0 items-center gap-4">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDraftTitle(recipe.title)
+                      setDraftTagIds(recipe.tagIds ?? [])
+                      setEditing(true)
+                    }}
+                    aria-label={`Editar «${recipe.title}»`}
+                    title="Editar la receta"
+                    className={rowIconButton}
+                  >
+                    <PencilIcon />
+                  </button>
+                  <RemoveButton row={false} onRemove={() => setConfirmingDelete(true)} label={`Eliminar «${recipe.title}»`} title="Eliminar la receta" />
+                </div>
               )}
+              <button
+                type="button"
+                onMouseDown={keepFocus}
+                onClick={() => setOpen((v) => !v)}
+                aria-label={open ? 'Plegar la receta' : 'Desplegar la receta'}
+                className="p-4 pl-3 text-gray-500 dark:text-gray-400"
+              >
+                <ChevronIcon open={open} />
+              </button>
             </div>
-            <span className="text-gray-500 dark:text-gray-400">
-              <ChevronIcon open={open} />
-            </span>
-          </button>
+            {open && confirmingDelete && (
+              <ConfirmDelete
+                question={`¿Eliminar la receta «${recipe.title}»?`}
+                questionClassName="w-full"
+                onConfirm={() => deleteRecipe(recipe.id)}
+                onCancel={() => setConfirmingDelete(false)}
+                className="px-4 pb-3"
+              />
+            )}
+          </>
         )}
       </div>
 
@@ -281,26 +321,6 @@ function RecipeCard({
                 </section>
               )}
 
-              {/* Pie fijo: Editar y Eliminar siguen a la vista aunque la receta sea larga */}
-              <div className="kb-static sticky -bottom-4 z-10 -mx-4 mt-3 flex flex-wrap items-center justify-end gap-1 border-t border-gray-100 bg-white px-4 py-2 md:-bottom-8 dark:border-moss-800 dark:bg-moss-900">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setDraftTitle(recipe.title)
-                    setDraftTagIds(recipe.tagIds ?? [])
-                    setEditing(true)
-                  }}
-                  className={cancelButton}
-                >
-                  Editar
-                </button>
-                <DeleteButton
-                  onConfirm={() => deleteRecipe(recipe.id)}
-                  label="Eliminar"
-                  question={`¿Eliminar la receta «${recipe.title}»?`}
-                  confirmClassName="w-full basis-full justify-end"
-                />
-              </div>
             </>
           )}
         </div>
