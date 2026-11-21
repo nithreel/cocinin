@@ -51,7 +51,6 @@ Es una **PWA**: puedes usarla desde el navegador del ordenador o del móvil, o *
   <img src="docs/screenshots/movil-recetario.png" alt="Recetario con el selector Todas / Puedo hacerla y etiquetas" width="19%">
   <img src="docs/screenshots/movil-receta.png" alt="Receta abierta con etiquetas, ingrediente que falta en rojo, y lápiz y ✕ en la cabecera" width="19%">
   <img src="docs/screenshots/movil-notas.png" alt="Notas con aviso" width="19%">
-  <img src="docs/screenshots/movil-ajustes.png" alt="Pantalla de Ajustes: animaciones, pantalla, cuenta, copia de seguridad y versión" width="19%">
 </p>
 
 *Los datos de las capturas son de ejemplo.*
