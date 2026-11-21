@@ -16,7 +16,7 @@ export function smoothBehavior(): ScrollBehavior {
 export function scrollToWhileOpening(el: HTMLElement | null, ms = 420) {
   const main = el?.closest('main')
   if (!el || !main) return
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  if (prefersReducedMotion()) {
     el.scrollIntoView({ block: 'start' })
     return
   }

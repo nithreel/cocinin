@@ -25,3 +25,16 @@ export async function fetchLatestRelease(repo: string): Promise<LatestRelease | 
   const data = (await res.json()) as { tag_name?: string; html_url?: string }
   return data.tag_name && data.html_url ? { tag: data.tag_name, url: data.html_url } : null
 }
+
+/** Clave de localStorage donde ReleaseNotice guarda la última consulta a GitHub (una al día, solo el admin). */
+export const RELEASE_STORE_KEY = 'cocinin:release'
+
+/** Última release que se consultó (sin volver a preguntar a GitHub); null si nunca se consultó o no se puede leer. */
+export function cachedLatestRelease(): LatestRelease | null {
+  try {
+    const data = JSON.parse(localStorage.getItem(RELEASE_STORE_KEY) ?? '{}') as { latest?: LatestRelease | null }
+    return data.latest?.tag ? data.latest : null
+  } catch {
+    return null
+  }
+}

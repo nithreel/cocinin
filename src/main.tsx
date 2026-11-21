@@ -5,7 +5,10 @@ import './index.css'
 import App from './App.tsx'
 import { initRipple } from './lib/ripple'
 import { initCheckboxPop } from './lib/motion'
+import { initSettings } from './lib/settings'
 
+// antes del primer render: las animaciones reducidas (ajuste del dispositivo) valen desde el primer fotograma
+initSettings()
 initRipple()
 initCheckboxPop()
 

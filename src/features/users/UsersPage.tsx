@@ -9,8 +9,6 @@ import { memberName } from '../../lib/members'
 import { createAccount } from '../../firebase'
 import StickyHeader from '../../components/StickyHeader'
 import { cancelButton, primaryButton } from '../../components/buttonStyles'
-import RestoreBackup from './RestoreBackup'
-import ChangePassword from './ChangePassword'
 
 function MemberRow({ m, isSelf }: { m: Member; isSelf: boolean }) {
   const [editing, setEditing] = useState(false)
@@ -112,8 +110,10 @@ function errorMessage(err: unknown) {
 const inputClasses =
   'w-full rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-moss-700 dark:bg-moss-800 dark:text-gray-100'
 
+/** Gestión de usuarios (solo admin: App.tsx manda a Despensa a los demás). Cambiar contraseña y restaurar copia
+ *  están en Ajustes. */
 export default function UsersPage() {
-  const { user, isAdmin } = useAuth()
+  const { user } = useAuth()
   const [members, setMembers] = useState<Member[]>([])
   const [loading, setLoading] = useState(true)
   const [email, setEmail] = useState('')
@@ -127,16 +127,6 @@ export default function UsersPage() {
       setLoading(false)
     })
   }, [])
-
-  // quien no es admin solo ve su propio cambio de contraseña
-  if (!isAdmin) {
-    return (
-      <div>
-        <StickyHeader title="Usuarios" />
-        <ChangePassword />
-      </div>
-    )
-  }
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
@@ -209,10 +199,6 @@ export default function UsersPage() {
           la consola de Firebase Authentication.
         </p>
       </form>
-
-      <RestoreBackup />
-
-      <ChangePassword />
     </div>
   )
 }

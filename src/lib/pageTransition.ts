@@ -1,8 +1,8 @@
 import { flushSync } from 'react-dom'
 import { prefersReducedMotion } from './motion'
-/** Dirección de la transición entre páginas: Usuarios y Avisos (iconos de arriba) entran de arriba a abajo;
+/** Dirección de la transición entre páginas: Usuarios, Avisos y Ajustes (iconos de arriba) entran de arriba a abajo;
  *  Despensa, Lista, Recetario y Notas entran de abajo a arriba, vengas de donde vengas. */
-const TOP_PAGES = ['/usuarios', '/avisos']
+const TOP_PAGES = ['/usuarios', '/avisos', '/ajustes']
 
 /** Se llama al pulsar un enlace de navegación, justo antes de que se inicie la transición. */
 export function markNavDirection(to: string) {

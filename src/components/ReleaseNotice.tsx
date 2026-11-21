@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '../auth/AuthContext'
 import { cancelButton, linkButton } from './buttonStyles'
-import { compareVersions, fetchLatestRelease, type LatestRelease } from '../lib/releases'
+import { compareVersions, fetchLatestRelease, RELEASE_STORE_KEY, type LatestRelease } from '../lib/releases'
 
 const REPO = import.meta.env.VITE_UPDATE_REPO || 'nithreel/cocinin'
 const DISABLED = import.meta.env.VITE_DISABLE_UPDATE_CHECK === 'true'
-const KEY = 'cocinin:release'
+const KEY = RELEASE_STORE_KEY
 const DAY = 24 * 60 * 60 * 1000
 
 function readStore(): { checkedAt?: number; latest?: LatestRelease | null; dismissed?: string } {

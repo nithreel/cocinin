@@ -1,4 +1,5 @@
 import { useRef, type MouseEvent, type PointerEvent } from 'react'
+import { vibrate } from './settings'
 
 /** Pulsación larga (mantener ~0,5 s sin mover el dedo) o clic derecho / tecla de menú: entra en el modo «organizar grupos». */
 export function useLongPress(onLongPress: () => void) {
@@ -21,7 +22,7 @@ export function useLongPress(onLongPress: () => void) {
         cancel()
         timer.current = window.setTimeout(() => {
           fired.current = true
-          navigator.vibrate?.(15)
+          vibrate(15)
           onLongPress()
         }, 500)
       },

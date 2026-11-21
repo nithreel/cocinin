@@ -1,6 +1,7 @@
-/** ¿El sistema pide «reducir movimiento»? */
+/** ¿Animaciones reducidas? Por el sistema (`prefers-reduced-motion`) o por el ajuste del dispositivo: `settings.ts`
+ *  lo resuelve y lo deja en `data-reduce-motion` de <html>, la misma marca que usa el CSS. */
 export function prefersReducedMotion() {
-  return window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  return document.documentElement.hasAttribute('data-reduce-motion')
 }
 
 /** Duración (ms) del desplegable `Collapse`: la usan su CSS (--collapse-ms), su desmontaje y los scroll que esperan a que termine. */

@@ -339,18 +339,20 @@ button[aria-checked='true']:active:not(:disabled) > .switch-knob {
 .ripple:active:not(:disabled)::before { --rr: 46px; opacity: 0.2; transition: opacity 120ms ease-out, --rr 220ms ease-out; }
 
 
-/* Reducir movimiento: todo salta al estado final (se aplica a cualquier regla, sea cual sea su especificidad) */
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: 1ms !important;
-    animation-delay: 0s !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 1ms !important;
-    transition-delay: 0s !important;
-    scroll-behavior: auto !important;
-  }
-  .ripple-dot { display: none; }
+/* Animaciones reducidas: todo salta al estado final (se aplica a cualquier regla, sea cual sea su especificidad).
+   `data-reduce-motion` lo pone settings.ts: el sistema pide reducir movimiento (si el ajuste sigue al sistema) o el
+   ajuste del dispositivo dice «Reducidas». Con «Completas» no se pone aunque el sistema lo pida. */
+html[data-reduce-motion] *,
+html[data-reduce-motion] *::before,
+html[data-reduce-motion] *::after {
+  animation-duration: 1ms !important;
+  animation-delay: 0s !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 1ms !important;
+  transition-delay: 0s !important;
+  scroll-behavior: auto !important;
 }
+html[data-reduce-motion] .ripple-dot { display: none; }
 
 /* Transición entre páginas (View Transitions): el contenido se desliza con parallax; la navegación queda fija.
    Pestañas principales: entran de abajo a arriba; Usuarios y Avisos: de arriba a abajo. */
@@ -389,10 +391,8 @@ html:not([data-nav-dir='down'])::view-transition-new(page) { animation-name: pg-
 html[data-nav-dir='down']::view-transition-old(page) { animation-name: pg-out-down; }
 html[data-nav-dir='down']::view-transition-new(page) { animation-name: pg-in-top; z-index: 2; }
 
-@media (prefers-reduced-motion: reduce) {
-  ::view-transition-old(page),
-  ::view-transition-new(page) { animation: none; }
-}
+html[data-reduce-motion]::view-transition-old(page),
+html[data-reduce-motion]::view-transition-new(page) { animation: none; }
 
 /* Con el teclado abierto, las zonas fijas marcadas dejan de serlo: así el campo enfocado
    no queda tapado en pantallas bajas (el pie de Guardar se alcanza haciendo scroll). */
@@ -416,3 +416,17 @@ html[data-kb] .toast-region { top: auto !important; bottom: 0.5rem; }
 .icon-in { animation: icon-in 320ms cubic-bezier(0.34, 1.56, 0.64, 1) backwards; }
 .icon-out { animation: icon-out 220ms ease-in forwards; pointer-events: none; }
 @keyframes icon-out { to { opacity: 0; transform: scale(0.5); } }
+
+/* Barra de ajustes (⚙): la rueda gira con rebote y los iconos salen de detrás de ella hacia la izquierda, uno tras otro
+   (primero el más cercano); al plegarse vuelven a la rueda en orden inverso. --d = distancia (en iconos) a la rueda. */
+.gear-btn svg { transition: rotate 520ms cubic-bezier(0.34, 1.56, 0.64, 1); }
+.gear-btn[aria-expanded='true'] svg { rotate: 120deg; }
+@keyframes bar-in { from { opacity: 0; transform: translateX(calc(var(--d) * var(--step, 36px))) scale(0.4) rotate(90deg); } }
+@keyframes bar-out { to { opacity: 0; transform: translateX(calc(var(--d) * var(--step, 36px))) scale(0.4) rotate(90deg); } }
+.bar-in > * { animation: bar-in 460ms cubic-bezier(0.34, 1.56, 0.64, 1) backwards; animation-delay: calc((var(--d) - 1) * 45ms); }
+.bar-out > * { animation: bar-out 220ms ease-in forwards; animation-delay: calc((var(--n) - var(--d)) * 30ms); }
+/* En la barra lateral (escritorio) se despliegan hacia arriba, como lista con texto: caen desde la rueda */
+@keyframes bar-up-in { from { opacity: 0; transform: translateY(calc(var(--d) * 12px)) scale(0.85); } }
+@keyframes bar-up-out { to { opacity: 0; transform: translateY(calc(var(--d) * 12px)) scale(0.85); } }
+.bar-up.bar-in > * { animation-name: bar-up-in; }
+.bar-up.bar-out > * { animation-name: bar-up-out; }

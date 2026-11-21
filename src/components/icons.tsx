@@ -173,3 +173,25 @@ export function AlertIcon({ className = 'h-5 w-5' }: { className?: string }) {
     </svg>
   )
 }
+
+/** Rueda de ajustes (barra superior): gira al desplegar los iconos. */
+export function GearIcon() {
+  return (
+    <Icon>
+      {/* 8 dientes generados alrededor de (12, 12): centrada, para que el giro no cabecee */}
+      <path d="M9.81 4.93 L10.38 2.54 L13.62 2.54 L14.19 4.93 L15.45 5.45 L17.54 4.16 L19.84 6.46 L18.55 8.55 L19.07 9.81 L21.46 10.38 L21.46 13.62 L19.07 14.19 L18.55 15.45 L19.84 17.54 L17.54 19.84 L15.45 18.55 L14.19 19.07 L13.62 21.46 L10.38 21.46 L9.81 19.07 L8.55 18.55 L6.46 19.84 L4.16 17.54 L5.45 15.45 L4.93 14.19 L2.54 13.62 L2.54 10.38 L4.93 9.81 L5.45 8.55 L4.16 6.46 L6.46 4.16 L8.55 5.45Z" />
+      <circle cx="12" cy="12" r="2.8" />
+    </Icon>
+  )
+}
+
+/** Deslizadores: «Ajustes adicionales» (distinto de la rueda, para no ver dos iguales). */
+export function SlidersIcon() {
+  return (
+    <Icon>
+      <path d="M4 7h9M17 7h3M4 17h3M11 17h9" />
+      <circle cx="15" cy="7" r="2" />
+      <circle cx="9" cy="17" r="2" />
+    </Icon>
+  )
+}

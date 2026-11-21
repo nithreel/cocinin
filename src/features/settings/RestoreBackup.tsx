@@ -44,10 +44,10 @@ export default function RestoreBackup() {
   }
 
   return (
-    <section className="mt-6 max-w-sm rounded-lg border border-gray-200 bg-white p-4 dark:border-moss-700 dark:bg-moss-900">
-      <h3 className="mb-1 text-lg font-semibold text-gray-900 dark:text-gray-100">Restaurar copia</h3>
+    <div className="px-4 py-3">
+      <p className="text-sm text-gray-900 dark:text-gray-100">Restaurar copia</p>
       <p className="mb-3 text-xs text-gray-500 dark:text-gray-400">
-        Sube un archivo de «Descargar copia de seguridad». Los usuarios no se restauran.
+        Sube un archivo de «Descargar copia». Los usuarios no se restauran.
       </p>
       <input autoComplete="off"
         ref={fileRef}
@@ -99,6 +99,6 @@ export default function RestoreBackup() {
           {message.text}
         </p>
       )}
-    </section>
+    </div>
   )
 }
