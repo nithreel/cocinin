@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
-import { onSnapshot, orderBy, query } from 'firebase/firestore'
+import { onSnapshot, orderBy, query, type Query } from 'firebase/firestore'
 import {
   groupsCol,
   ingredientsCol,
@@ -40,78 +40,53 @@ function sortGroups(groups: Group[]) {
   return sortByText(groups, (g) => g.name).sort((a, b) => (a.order ?? Infinity) - (b.order ?? Infinity))
 }
 
-export function AppDataProvider({ children }: { children: ReactNode }) {
-  const [groups, setGroups] = useState<Group[]>([])
-  const [groupsLoading, setGroupsLoading] = useState(true)
-  const [ingredients, setIngredients] = useState<Ingredient[]>([])
-  const [ingredientsLoading, setIngredientsLoading] = useState(true)
-  const [shoppingItems, setShoppingItems] = useState<ShoppingItem[]>([])
-  const [shoppingItemsLoading, setShoppingItemsLoading] = useState(true)
-  const [recipes, setRecipes] = useState<Recipe[]>([])
-  const [recipesLoading, setRecipesLoading] = useState(true)
-  const [tags, setTags] = useState<Tag[]>([])
-  const [tagsLoading, setTagsLoading] = useState(true)
-  const [notes, setNotes] = useState<Note[]>([])
-  const [notesLoading, setNotesLoading] = useState(true)
-  const [dataError, setDataError] = useState<string | null>(null)
-
-  function handleError(stopLoading: () => void) {
-    return (err: Error) => {
+/**
+ * Escucha una consulta de Firestore mientras la app está abierta. Un fallo (p. ej. permission-denied) se publica en
+ * `dataError` y deja de «cargar»; `clearsError`: una lectura correcta lo borra (solo grupos e ingredientes, como
+ * siempre). Devuelve también el setter, para el repintado de cada minuto.
+ */
+function useLiveQuery<T>(
+  makeQuery: () => Query,
+  setDataError: (message: string | null) => void,
+  { sort, clearsError = false }: { sort?: (items: T[]) => T[]; clearsError?: boolean } = {},
+) {
+  const [items, setItems] = useState<T[]>([])
+  const [loading, setLoading] = useState(true)
+  useEffect(() => {
+    return onSnapshot(makeQuery(), (snap) => {
+      if (clearsError) setDataError(null)
+      const docs = snap.docs.map((d) => ({ id: d.id, ...d.data() }) as T)
+      setItems(sort ? sort(docs) : docs)
+      setLoading(false)
+    }, (err: Error) => {
       console.error(err)
       setDataError(err.message)
-      stopLoading()
-    }
-  }
-
-  useEffect(() => {
-    const q = query(groupsCol, orderBy('name'))
-    return onSnapshot(q, (snap) => {
-      setDataError(null)
-      setGroups(sortGroups(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Group)))
-      setGroupsLoading(false)
-    }, handleError(() => setGroupsLoading(false)))
+      setLoading(false)
+    })
+    // la consulta y las opciones son fijas en cada llamada: se escucha una sola vez
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+  return [items, loading, setItems] as const
+}
 
-  useEffect(() => {
-    const q = query(ingredientsCol, orderBy('name'))
-    return onSnapshot(q, (snap) => {
-      setDataError(null)
-      setIngredients(sortByText(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Ingredient), (i) => i.name))
-      setIngredientsLoading(false)
-    }, handleError(() => setIngredientsLoading(false)))
-  }, [])
+export function AppDataProvider({ children }: { children: ReactNode }) {
+  const [dataError, setDataError] = useState<string | null>(null)
 
-  useEffect(() => {
-    const q = query(shoppingListCol, orderBy('addedAt'))
-    return onSnapshot(q, (snap) => {
-      setShoppingItems(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as ShoppingItem))
-      setShoppingItemsLoading(false)
-    }, handleError(() => setShoppingItemsLoading(false)))
-  }, [])
-
-  useEffect(() => {
-    const q = query(recipesCol, orderBy('title'))
-    return onSnapshot(q, (snap) => {
-      setRecipes(sortByText(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Recipe), (r) => r.title))
-      setRecipesLoading(false)
-    }, handleError(() => setRecipesLoading(false)))
-  }, [])
-
-  useEffect(() => {
-    const q = query(tagsCol, orderBy('name'))
-    return onSnapshot(q, (snap) => {
-      setTags(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Tag))
-      setTagsLoading(false)
-    }, handleError(() => setTagsLoading(false)))
-  }, [])
-
-  useEffect(() => {
-    const q = query(notesCol, orderBy('createdAt', 'desc'))
-    return onSnapshot(q, (snap) => {
-      setNotes(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Note))
-      setNotesLoading(false)
-    }, handleError(() => setNotesLoading(false)))
-  }, [])
+  const [groups, groupsLoading] = useLiveQuery<Group>(() => query(groupsCol, orderBy('name')), setDataError, {
+    sort: sortGroups,
+    clearsError: true,
+  })
+  const [ingredients, ingredientsLoading, setIngredients] = useLiveQuery<Ingredient>(
+    () => query(ingredientsCol, orderBy('name')),
+    setDataError,
+    { sort: (items) => sortByText(items, (i) => i.name), clearsError: true },
+  )
+  const [shoppingItems, shoppingItemsLoading] = useLiveQuery<ShoppingItem>(() => query(shoppingListCol, orderBy('addedAt')), setDataError)
+  const [recipes, recipesLoading, setRecipes] = useLiveQuery<Recipe>(() => query(recipesCol, orderBy('title')), setDataError, {
+    sort: (items) => sortByText(items, (r) => r.title),
+  })
+  const [tags, tagsLoading] = useLiveQuery<Tag>(() => query(tagsCol, orderBy('name')), setDataError)
+  const [notes, notesLoading] = useLiveQuery<Note>(() => query(notesCol, orderBy('createdAt', 'desc')), setDataError)
 
   // Los estados de caducidad y descongelado dependen de la hora: cada minuto se vuelve a pintar con la app abierta.
   useEffect(() => {
@@ -120,7 +95,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       setRecipes((prev) => [...prev])
     }, 60_000)
     return () => clearInterval(timer)
-  }, [])
+    // los setters de useState son estables: el reloj se arranca una sola vez
+  }, [setIngredients, setRecipes])
 
   return (
     <AppDataContext.Provider
