@@ -71,8 +71,8 @@ página (búsqueda, animación de confirmar): se quedan.
 **NotesPage.tsx (330 l.).** `NoteForm` (115 l.) es un formulario autónomo; `useMembers` duplica el listener de
 `users` de `UsersPage`; el orden de las notas y los nombres de destinatarios son lógica pura sin tests.
 **Merece**: `NoteForm.tsx`, `lib/useMembers.ts` compartido (sin añadir manejo de errores: sería un cambio) y
-`lib/noteOrder.ts` con tests. Ojo: los destinatarios se muestran con el correo **cortado en la @**, distinto de
-`memberName` (correo completo): se conserva tal cual.
+`lib/noteOrder.ts` con tests. Ojo: los destinatarios se mostraban con el correo **cortado en la @**, distinto de
+`memberName` (correo completo); el refactor lo conservó y después se unificó con `memberName` (fallo 5, corregido).
 
 **AppDataContext.tsx (186 l., 13 `useState`, 7 `useEffect`).** Seis listeners casi idénticos. Un hook genérico
 ahorraría unas 50 líneas, pero hay dos asimetrías que hay que respetar (solo `groups` e `ingredients` limpian
@@ -93,7 +93,7 @@ la norma de la skill (todo botón con esos estilos).
 | `UsersPage.tsx` (204 l.) | Solo cambia el listener de `users` (pasa a `useMembers`). |
 | `SettingsPage`, `AlertsPage`, `LoginPage` | Menos de 200 líneas, una responsabilidad, ya divididos en subcomponentes pequeños. |
 | `icons.tsx` (197 l.) | Catálogo de iconos: el tamaño es el número de iconos. |
-| Clases de los campos de texto (23 copias del anillo de foco) | Varían en relleno, ancho y tamaño de letra por sitio; unificarlas obliga a tocar 10 ficheros para un ahorro estético y con riesgo de cambiar una clase efectiva. No merece en esta versión. |
+| Clases de los campos de texto (23 copias del anillo de foco) | Se dejó en el refactor por tocar muchos ficheros. **Hecho después** a petición de nith: `components/inputStyles.ts` (`inputBase`, `inputField`, `inputCompact`), con el mismo CSS generado. |
 | Cierre al tocar fuera (fila de Despensa y «Cerrar sesión») | Parecidos pero no iguales (uno comprueba una sola referencia y no cierra si es nula; el otro dos). Unificarlos cambia un caso límite: se deja. |
 
 ## Plan priorizado
@@ -105,16 +105,16 @@ la norma de la skill (todo botón con esos estilos).
 | 3 | RecipesPage: `lib/recipeStatus.ts` + tests, `useIdSet`, `RecipeCard.tsx` | Alto | Bajo-medio | Callbacks estables. |
 | 4 | ShoppingList: `lib/purchaseHistory.ts` + tests, `PurchaseHistory.tsx`, `SectionHeader.tsx` | Medio | Bajo | `now` inyectable en `formatRelativeDate` para testear. |
 | 5 | AppLayout: `SettingsBar.tsx`, `useKeyboardViewport`, `NavItems` | Medio | Bajo | |
-| 6 | Notas/usuarios: `useMembers`, `lib/noteOrder.ts` + tests, `NoteForm.tsx` | Medio | Bajo | Conservar el corte en la @. |
+| 6 | Notas/usuarios: `useMembers`, `lib/noteOrder.ts` + tests, `NoteForm.tsx` | Medio | Bajo | Conservar el corte en la @ (luego se quitó: fallo 5). |
 | 7 | (Opcional) `AppDataContext`: hook genérico de listener | Medio-bajo | Medio | Solo si respeta las dos asimetrías sin rodeos. |
 | 8 | (Opcional) estilo pastilla en `buttonStyles.ts` | Bajo | Bajo | Con extras por sitio (RecipeForm no lleva `shrink-0 whitespace-nowrap`). |
 
 Los fallos o rarezas encontrados por el camino **no se corrigen aquí**: van a `docs/refactor-1.7.0-bugs.md` con su
 propuesta.
 
-## Resultado
+## Resultado del refactor (antes de corregir fallos)
 
-Hechos los 8 pasos. En cada uno: `tsc -b` sin errores, oxlint con los mismos 5 avisos, tests en verde, build
+Cifras al acabar el refactor; las actuales están en «Estado final». Hechos los 8 pasos. En cada uno: `tsc -b` sin errores, oxlint con los mismos 5 avisos, tests en verde, build
 correcto, **mismo CSS** (`index-D2foGLR7.css`) y **mismo conjunto de literales** (0 textos/clases perdidos o nuevos).
 Tests: de 89 a 115 (26 nuevos en `pantrySections`, `recipeStatus`, `purchaseHistory` y `noteOrder`).
 
@@ -140,7 +140,27 @@ Tests: de 89 a 115 (26 nuevos en `pantrySections`, `recipeStatus`, `purchaseHist
 | `AppDataContext.tsx` (13 `useState`, 7 `useEffect`) | 186 | `AppDataContext.tsx` (hook `useLiveQuery`) | 162 |
 | `RecipeForm.tsx` | 303 | `RecipeForm.tsx` (usa `pillButton`) | 298 |
 
-Ningún fichero tocado pasa ya de 320 líneas; el mayor de `src/` es `ImportRecipes.tsx` (330), que se deja por ser un solo flujo. `src/` crece de 8558 a 8746 líneas en total (cabeceras de import y
-comentarios de los ficheros nuevos).
+Ningún fichero tocado pasaba de 320 líneas; el mayor de `src/` era `ImportRecipes.tsx` (330), que se deja por ser
+un solo flujo. `src/` creció de 8558 a 8746 líneas (cabeceras de import y comentarios de los ficheros nuevos).
 
-Los fallos encontrados por el camino están en `docs/refactor-1.7.0-bugs.md` (sin aplicar).
+Los fallos encontrados por el camino se anotaron en `docs/refactor-1.7.0-bugs.md`; después nith decidió cuáles
+corregir (ver «Estado final»).
+
+## Estado final
+
+Después del refactor, en la misma rama y en commits aparte:
+
+- **Fallos** (`docs/refactor-1.7.0-bugs.md`): corregidos el 1 (historial vacío), el 2 (aviso de datos), el 4 («Crear
+  los que faltan», con un segundo arreglo para no perder el bloqueo contra la doble pulsación) y el 5 (nombres de
+  destinatarios con `memberName`). El 3 no se corrige (decisión de nith); el 6 (más `try/catch` muertos, en
+  etiquetas e importación) queda anotado para que lo decida nith.
+- **Convención de código** escrita en `docs/convencion-codigo.md` y aplicada: tests un fichero por módulo, sin `any`,
+  imports de paquetes primero, las 205 funciones exportadas documentadas con `/** */`, campos con
+  `components/inputStyles.ts` y `nextOrder` común para grupos y etiquetas (`lib/order.ts`).
+- **Cifras actuales:** 129 tests en 20 ficheros (89 en v1.6.3). Ficheros mayores de `src/`: `ImportRecipes.tsx` 336,
+  `IngredientRow.tsx` 320, `RecipeCard.tsx` 302, `RecipeForm.tsx` 301 (excepciones aceptadas por nith). Páginas:
+  Despensa 217, Lista 279, Recetario 200, Notas 193; `AppLayout` 111; `AppDataContext` 175. `src/` suma 8898 líneas
+  (8558 en v1.6.3), por los comentarios de documentación y las cabeceras de los ficheros nuevos.
+- **Comprobaciones** en cada commit: `tsc -b` sin errores, oxlint con los 5 avisos de siempre, tests y build en
+  verde y el mismo CSS generado (`index-D2foGLR7.css`). Los literales solo cambian donde un fallo corregido cambia un
+  texto (el mensaje inalcanzable del 4 y el corte en la @ del 5).
