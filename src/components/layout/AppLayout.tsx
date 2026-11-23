@@ -32,17 +32,17 @@ function NavItems() {
   const navigate = useNavigate()
   return (
     <>
-        {NAV_ITEMS.map((item) => (
-          <NavLink
-            key={item.to}
-            to={item.to}
-            onClick={transitionClick(navigate, item.to)}
-            className={({ isActive }) => navLinkClasses(isActive)}
-          >
-            <item.Icon />
-            <span>{item.label}</span>
-          </NavLink>
-        ))}
+      {NAV_ITEMS.map((item) => (
+        <NavLink
+          key={item.to}
+          to={item.to}
+          onClick={transitionClick(navigate, item.to)}
+          className={({ isActive }) => navLinkClasses(isActive)}
+        >
+          <item.Icon />
+          <span>{item.label}</span>
+        </NavLink>
+      ))}
     </>
   )
 }

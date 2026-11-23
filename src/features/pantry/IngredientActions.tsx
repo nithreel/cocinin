@@ -23,23 +23,23 @@ export default function IngredientActions({
   return (
     <>
       {ingredient.inPantry && (
-              <button
-                type="button"
-                aria-pressed={!!ingredient.useSoon}
-                aria-label={`${ingredient.name}: ${ingredient.useSoon ? 'marcado para gastar pronto, pulsa para quitarlo' : 'pulsa para marcarlo como «gastar pronto»'}`}
-                title={ingredient.useSoon ? 'Gastar pronto (pulsa para quitar)' : 'Marcar como «gastar pronto»'}
-                onClick={onToggleUseSoon}
-                disabled={busy}
-                className={
-                  'ripple relative flex h-8 w-8 items-center justify-center rounded-full transition-colors disabled:opacity-50 max-md:h-10 max-md:w-10 ' +
-                  (ingredient.useSoon
-                    ? 'bg-amber-100 text-amber-600 dark:bg-amber-950 dark:text-amber-400'
-                    : 'text-gray-400 hover:bg-gray-100 hover:text-amber-600 dark:text-gray-500 dark:hover:bg-moss-800 dark:hover:text-amber-400')
-                }
-              >
-                <AlertIcon />
-              </button>
-            )}
+        <button
+          type="button"
+          aria-pressed={!!ingredient.useSoon}
+          aria-label={`${ingredient.name}: ${ingredient.useSoon ? 'marcado para gastar pronto, pulsa para quitarlo' : 'pulsa para marcarlo como «gastar pronto»'}`}
+          title={ingredient.useSoon ? 'Gastar pronto (pulsa para quitar)' : 'Marcar como «gastar pronto»'}
+          onClick={onToggleUseSoon}
+          disabled={busy}
+          className={
+            'ripple relative flex h-8 w-8 items-center justify-center rounded-full transition-colors disabled:opacity-50 max-md:h-10 max-md:w-10 ' +
+            (ingredient.useSoon
+              ? 'bg-amber-100 text-amber-600 dark:bg-amber-950 dark:text-amber-400'
+              : 'text-gray-400 hover:bg-gray-100 hover:text-amber-600 dark:text-gray-500 dark:hover:bg-moss-800 dark:hover:text-amber-400')
+          }
+        >
+          <AlertIcon />
+        </button>
+      )}
       <button
         type="button"
         aria-pressed={onList}
@@ -79,6 +79,6 @@ export default function IngredientActions({
           <SnowflakeIcon />
         </button>
       )}
-          </>
+    </>
   )
 }

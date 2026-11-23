@@ -200,26 +200,26 @@ export default function IngredientRow({
       }
     >
       <div className="flex items-center gap-3 max-md:min-h-7">
-          <Switch
-            checked={ingredient.inPantry}
-            onChange={toggle}
-            disabled={busy}
-            tone={
-              ingredient.frozen
-                ? 'frost'
-                : hasWarning(ingredient)
-                  ? 'amber'
-                  : 'emerald'
-            }
-            // congelado + aviso, en cualquier orden: azul con remate amarillo
-            capTone={frozenWithWarning(ingredient) ? 'amber' : undefined}
-            offTone="red"
-            label={
-              ingredient.inPantry
-                ? `${ingredient.name}: ${ingredient.frozen ? 'congelado' : 'disponible'}, pulsa para marcar como agotado`
-                : `${ingredient.name}: agotado, pulsa para marcar como disponible`
-            }
-          />
+        <Switch
+          checked={ingredient.inPantry}
+          onChange={toggle}
+          disabled={busy}
+          tone={
+            ingredient.frozen
+              ? 'frost'
+              : hasWarning(ingredient)
+                ? 'amber'
+                : 'emerald'
+          }
+          // congelado + aviso, en cualquier orden: azul con remate amarillo
+          capTone={frozenWithWarning(ingredient) ? 'amber' : undefined}
+          offTone="red"
+          label={
+            ingredient.inPantry
+              ? `${ingredient.name}: ${ingredient.frozen ? 'congelado' : 'disponible'}, pulsa para marcar como agotado`
+              : `${ingredient.name}: agotado, pulsa para marcar como disponible`
+          }
+        />
         <div
           role="button"
           tabIndex={0}

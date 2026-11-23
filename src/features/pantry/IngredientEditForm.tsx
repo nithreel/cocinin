@@ -37,11 +37,7 @@ export default function IngredientEditForm({
   }
 
   return (
-    <li
-      className={
-        'py-2 pl-3 pr-3'
-      }
-    >
+    <li className="py-2 pl-3 pr-3">
       <form onSubmit={handleSave} className="flex flex-col gap-2">
         <div className="flex flex-wrap items-center gap-2">
           <input autoComplete="off"
