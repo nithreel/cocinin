@@ -4,15 +4,13 @@ import {
   setIngredientFrozen,
   setIngredientUseSoon,
   setIngredientInPantry,
-  updateIngredient,
   updateIngredientExpiry,
-  type ExpiryInput,
 } from './data'
 import type { ExpiryMode, Group, Ingredient } from '../../lib/collections'
 import { ConfirmDelete } from '../../components/DeleteButton'
 import RemoveButton from '../../components/RemoveButton'
 import IconsReveal from '../../components/IconsReveal'
-import { AlertIcon, CartIcon, PencilIcon, SnowflakeIcon } from '../../components/icons'
+import { PencilIcon } from '../../components/icons'
 import Collapse from '../../components/Collapse'
 import Pop, { useSettled } from '../../components/Pop'
 import Switch from '../../components/Switch'
@@ -23,8 +21,9 @@ import { smoothBehavior } from '../../lib/scroll'
 import { keepFocus } from '../../lib/keepFocus'
 import { cancelButton, primaryButton, rowIconButton } from '../../components/buttonStyles'
 import { expiryBadgeClasses, frozenWithWarning, getExpiryInfo, hasWarning, remainingLabel, soonMarkLabel } from '../../lib/expiry'
-import { NO_GROUP } from '../../lib/groupByPantryGroup'
 import ExpiryFields from './ExpiryFields'
+import IngredientEditForm from './IngredientEditForm'
+import IngredientActions from './IngredientActions'
 
 export default function IngredientRow({
   ingredient,
@@ -51,8 +50,6 @@ export default function IngredientRow({
   const [editing, setEditing] = useState(false)
   const [confirmingDelete, setConfirmingDelete] = useState(false)
   const [deleting, setDeleting] = useState(false)
-  const [name, setName] = useState(ingredient.name)
-  const [groupId, setGroupId] = useState(ingredient.groupId ?? NO_GROUP)
   const [expiryMode, setExpiryMode] = useState<ExpiryMode>(ingredient.expiryMode ?? 'none')
   const [expiryDate, setExpiryDate] = useState(ingredient.expiryDate ?? ingredient.stockedDate ?? '')
   const [quantity, setQuantity] = useState(ingredient.quantity ?? '')
@@ -170,141 +167,26 @@ export default function IngredientRow({
   }
 
   function startEdit() {
-    setName(ingredient.name)
-    setGroupId(ingredient.groupId ?? NO_GROUP)
-    setExpiryMode(ingredient.expiryMode ?? 'none')
-    setExpiryDate(ingredient.expiryDate ?? ingredient.stockedDate ?? '')
-    setQuantity(ingredient.quantity ?? '')
     closePanel()
     setEditing(true)
   }
 
-  async function handleSave(e: FormEvent) {
-    e.preventDefault()
-    if (!name.trim()) return
-    setSaving(true)
-    try {
-      const expiry: ExpiryInput = { mode: expiryMode, date: expiryDate || null, quantity }
-      await updateIngredient(ingredient.id, name.trim(), groupId === NO_GROUP ? null : groupId, expiry)
-      setEditing(false)
-    } finally {
-      setSaving(false)
-    }
-  }
-
   if (editing) {
-    return (
-      <li
-        className={
-          'py-2 pl-3 pr-3'
-        }
-      >
-        <form onSubmit={handleSave} className="flex flex-col gap-2">
-          <div className="flex flex-wrap items-center gap-2">
-            <input autoComplete="off"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="min-w-32 flex-1 rounded-md border border-gray-300 px-2 py-1 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-moss-700 dark:bg-moss-800 dark:text-gray-100"
-            />
-            <select
-              value={groupId}
-              onChange={(e) => setGroupId(e.target.value)}
-              className="rounded-md border border-gray-300 px-2 py-1 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-moss-700 dark:bg-moss-800 dark:text-gray-100"
-            >
-              <option value={NO_GROUP}>Sin grupo</option>
-              {groups.map((g) => (
-                <option key={g.id} value={g.id}>
-                  {g.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <ExpiryFields mode={expiryMode} date={expiryDate} onModeChange={setExpiryMode} onDateChange={setExpiryDate} quantity={quantity} onQuantityChange={setQuantity} />
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              type="submit"
-              disabled={saving}
-              className={primaryButton}
-            >
-              Guardar
-            </button>
-            <button
-              type="button"
-              onClick={() => setEditing(false)}
-              className={cancelButton}
-            >
-              Cancelar
-            </button>
-          </div>
-        </form>
-      </li>
-    )
+    return <IngredientEditForm ingredient={ingredient} groups={groups} onDone={() => setEditing(false)} />
   }
 
   const expiryInfo = getExpiryInfo(ingredient)
   const soonFlag = !!ingredient.useSoon && ingredient.inPantry
   const actionButtons = (
-    <>
-      {ingredient.inPantry && (
-              <button
-                type="button"
-                aria-pressed={!!ingredient.useSoon}
-                aria-label={`${ingredient.name}: ${ingredient.useSoon ? 'marcado para gastar pronto, pulsa para quitarlo' : 'pulsa para marcarlo como «gastar pronto»'}`}
-                title={ingredient.useSoon ? 'Gastar pronto (pulsa para quitar)' : 'Marcar como «gastar pronto»'}
-                onClick={toggleUseSoon}
-                disabled={busy}
-                className={
-                  'ripple relative flex h-8 w-8 items-center justify-center rounded-full transition-colors disabled:opacity-50 max-md:h-10 max-md:w-10 ' +
-                  (ingredient.useSoon
-                    ? 'bg-amber-100 text-amber-600 dark:bg-amber-950 dark:text-amber-400'
-                    : 'text-gray-400 hover:bg-gray-100 hover:text-amber-600 dark:text-gray-500 dark:hover:bg-moss-800 dark:hover:text-amber-400')
-                }
-              >
-                <AlertIcon />
-              </button>
-            )}
-      <button
-        type="button"
-        aria-pressed={onList}
-        aria-label={`${ingredient.name}: ${onList ? 'está en la lista de la compra, pulsa para quitarlo' : 'pulsa para añadirlo a la lista de la compra'}`}
-        title={onList ? 'En la lista (pulsa para quitar)' : 'Añadir a la lista de la compra'}
-        onMouseDown={keepFocus}
-        onClick={toggleOnList}
-        className={
-          'ripple relative flex h-8 w-8 items-center justify-center rounded-full transition-colors max-md:h-10 max-md:w-10 ' +
-          (onList
-            ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400'
-            : 'text-gray-400 hover:bg-gray-100 hover:text-emerald-700 dark:text-gray-500 dark:hover:bg-moss-800 dark:hover:text-emerald-400')
-        }
-      >
-        <CartIcon />
-      </button>
-      {(canFreeze || ingredient.frozen) && (
-        <button
-          type="button"
-          aria-pressed={!!ingredient.frozen}
-          aria-label={
-            ingredient.frozen
-              ? `${ingredient.name}: en el congelador, pulsa para descongelar (en nevera)`
-              : `${ingredient.name}: pulsa para marcarlo como congelado`
-          }
-          title={ingredient.frozen ? 'En el congelador: pulsa para descongelar' : 'Marcar como congelado'}
-          onMouseDown={keepFocus}
-          onClick={toggleFrozen}
-          disabled={busy}
-          className={
-            'ripple relative flex h-8 w-8 items-center justify-center rounded-full transition-colors disabled:opacity-50 max-md:h-10 max-md:w-10 ' +
-            (ingredient.frozen
-              ? 'bg-frost-100 text-frost-700 dark:bg-frost-950 dark:text-frost-400'
-              : 'text-gray-400 hover:bg-gray-100 hover:text-frost-700 dark:text-gray-500 dark:hover:bg-moss-800 dark:hover:text-frost-400')
-          }
-        >
-          <SnowflakeIcon />
-        </button>
-      )}
-          </>
+    <IngredientActions
+      ingredient={ingredient}
+      onList={onList}
+      canFreeze={canFreeze}
+      busy={busy}
+      onToggleUseSoon={toggleUseSoon}
+      onToggleOnList={toggleOnList}
+      onToggleFrozen={toggleFrozen}
+    />
   )
 
   return (
