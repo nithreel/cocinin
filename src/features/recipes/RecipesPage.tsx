@@ -17,6 +17,8 @@ import { outlineButton, pillButton, primaryButton } from '../../components/butto
 import { filterRecipes, getRecipeStatus } from '../../lib/recipeStatus'
 import { useIdSet } from '../../lib/useIdSet'
 
+/** Recetario: búsqueda, filtros («Puedo hacerla» y etiquetas), alta, importación y gestión de etiquetas. Con una
+ *  receta abierta o en edición, las demás se pliegan. */
 export default function RecipesPage() {
   const { ingredients } = useIngredients()
   const { groups } = useGroups()

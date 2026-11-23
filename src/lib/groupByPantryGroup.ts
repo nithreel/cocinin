@@ -8,6 +8,9 @@ export interface Section<T> {
   items: T[]
 }
 
+/** Agrupa elementos por el grupo de su ingrediente, en el orden de `groups`, sin grupos vacíos y con «Sin grupo» al
+ *  final (también para ingredientes borrados). Para la Despensa, que sí muestra los vacíos, ver
+ *  `buildPantrySections`. */
 export function groupByPantryGroup<T>(
   items: T[],
   getIngredientId: (item: T) => string,

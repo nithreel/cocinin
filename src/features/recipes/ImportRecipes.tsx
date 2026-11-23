@@ -94,6 +94,8 @@ function CheckIcon() {
   )
 }
 
+/** Importar recetas desde el JSON que devuelve Claude: vista previa, ingredientes que faltan, etiquetas nuevas y
+ *  deshacer el último lote. */
 export default function ImportRecipes({
   ingredients,
   groups,

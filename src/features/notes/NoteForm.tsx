@@ -10,6 +10,8 @@ import type { NoteValues } from './data'
 
 const inputClasses =
   'rounded-md border border-gray-300 px-2 py-1.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-moss-700 dark:bg-moss-800 dark:text-gray-100'
+/** Crear o editar una nota (`initial`). Con aviso exige hora, fecha y destinatarios; la hora debe ser futura salvo
+ *  que no se toque al editar. */
 export default function NoteForm({
   members,
   initial,

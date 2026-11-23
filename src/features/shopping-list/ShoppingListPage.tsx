@@ -32,6 +32,8 @@ function stockBorderClass(i: Ingredient) {
   return hasWarning(i) ? 'border-l-amber-500' : 'border-l-emerald-500'
 }
 
+/** Lista de la compra: lo que hay que comprar por grupos, confirmar la compra, añadir lo que falta (o crearlo) y el
+ *  historial. */
 export default function ShoppingListPage() {
   const { groups } = useGroups()
   const { ingredients, loading: loadingIngredients } = useIngredients()

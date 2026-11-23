@@ -1,5 +1,7 @@
 import type { ExpiryMode } from '../../lib/collections'
 
+/** Tipo de fecha, fecha y cantidad. Con `trailing` (panel de la fila) se pinta en dos filas con eso a la derecha de
+ *  la cantidad; sin él, en línea. */
 export default function ExpiryFields({
   mode,
   date,

@@ -30,6 +30,7 @@ function errorMessage(err: unknown) {
   return 'No se pudo completar la operación. Inténtalo de nuevo.'
 }
 
+/** Entrar, recuperar contraseña o, si aún no hay ningún usuario (`needsSetup`), crear el administrador. */
 export default function LoginPage() {
   const { user, isMember, needsSetup, signIn, resetPassword, createFirstUser } = useAuth()
   const location = useLocation()

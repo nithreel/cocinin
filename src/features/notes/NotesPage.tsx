@@ -111,6 +111,7 @@ function NoteCard({
   )
 }
 
+/** Notas del hogar: crear, marcar como hechas, borrar las hechas y, con pulsación larga, editar o eliminar una. */
 export default function NotesPage() {
   const { notes, loading } = useNotes()
   const { members } = useMembers()

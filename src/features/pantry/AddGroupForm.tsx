@@ -5,6 +5,7 @@ import { cancelButton, primaryButton } from '../../components/buttonStyles'
 import { nextGroupOrder } from '../../lib/pantrySections'
 import IsFoodCheckbox from './IsFoodCheckbox'
 
+/** Formulario de grupo nuevo; si ya hay orden manual, el grupo va al final. */
 export default function AddGroupForm({ groups, onDone }: { groups: Group[]; onDone: () => void }) {
   const [name, setName] = useState('')
   const [isFood, setIsFood] = useState(true)

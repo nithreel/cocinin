@@ -3,6 +3,8 @@ import { Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from './AuthContext'
 import { primaryButton } from '../components/buttonStyles'
 
+/** Deja pasar solo a miembros: sin sesión manda al login (recordando a dónde iba); con sesión pero sin acceso, lo
+ *  explica y ofrece salir. */
 export default function ProtectedRoute({ children }: { children: ReactNode }) {
   const { user, isMember, loading, signOut } = useAuth()
   const location = useLocation()

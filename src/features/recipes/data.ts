@@ -18,6 +18,7 @@ export async function addRecipe(
   void setDoc(doc(recipesCol), { title, instructions, ingredients, tagIds, createdAt: Date.now(), by: currentUid() })
 }
 
+/** Sustituye título, preparación, ingredientes y etiquetas; conserva `createdAt` y el lote de importación. */
 export async function updateRecipe(
   id: string,
   title: string,
@@ -28,6 +29,7 @@ export async function updateRecipe(
   void updateDoc(doc(recipesCol, id), { title, instructions, ingredients, tagIds })
 }
 
+/** Borra la receta; sus ingredientes y etiquetas no se tocan. */
 export async function deleteRecipe(id: string) {
   void deleteDoc(doc(recipesCol, id))
 }
@@ -67,6 +69,7 @@ export async function reorderTags(ids: string[]) {
   void batch.commit()
 }
 
+/** Renombra la etiqueta; las recetas la guardan por id, así que no hay que tocarlas. */
 export async function renameTag(id: string, name: string) {
   void updateDoc(doc(tagsCol, id), { name })
 }

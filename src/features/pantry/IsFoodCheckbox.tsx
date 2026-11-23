@@ -1,3 +1,4 @@
+/** Casilla «Es comida»: decide si los ingredientes del grupo salen en las recetas y se pueden congelar. */
 export default function IsFoodCheckbox({
   checked,
   onChange,

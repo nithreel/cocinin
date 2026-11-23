@@ -10,6 +10,7 @@ export function isUsable(ing: Ingredient | undefined) {
   return ing?.inPantry === true && getExpiryInfo(ing)?.status !== 'expired'
 }
 
+/** Estado de la receta para el color de su borde. Un ingrediente borrado cuenta como que falta. */
 export function getRecipeStatus(recipe: Recipe, ingredientsById: Map<string, Ingredient>): RecipeStatus {
   let missingOptional = false
   for (const ri of recipe.ingredients) {

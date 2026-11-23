@@ -37,6 +37,7 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null)
 
+/** Sesión de Firebase y membresía (`users/{uid}`, rol y alias). `loading` sigue en true hasta saber las dos cosas. */
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [authLoading, setAuthLoading] = useState(true)
@@ -139,6 +140,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   )
 }
 
+/** Sesión actual; lanza un error si se usa fuera de `AuthProvider`. */
 export function useAuth() {
   const ctx = useContext(AuthContext)
   if (!ctx) throw new Error('useAuth must be used within an AuthProvider')

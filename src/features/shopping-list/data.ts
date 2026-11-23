@@ -45,14 +45,19 @@ export function addToShoppingList(ingredientId: string) {
   return ref.id
 }
 
+/** Quita el artículo de la lista; el ingrediente no cambia. */
 export async function removeFromShoppingList(itemId: string) {
   void deleteDoc(doc(shoppingListCol, itemId))
 }
 
+/** Tacha o destacha un artículo; el ingrediente no cambia hasta confirmar la compra. */
 export async function setShoppingItemChecked(itemId: string, checked: boolean) {
   void updateDoc(doc(shoppingListCol, itemId), { checked })
 }
 
+/** Confirma lo tachado de `items`: lo quita de la lista, lo repone como «Comprado hoy» (sin cantidad ni estados
+ *  anteriores) y lo anota en el historial con un mismo `purchasedAt`. Los ingredientes ya borrados solo salen de la
+ *  lista. */
 export async function confirmPurchase(items: ShoppingItem[], ingredientsById: Map<string, Ingredient>) {
   const checkedItems = items.filter((item) => item.checked)
   const batch = writeBatch(db)
@@ -81,6 +86,7 @@ export async function confirmPurchase(items: ShoppingItem[], ingredientsById: Ma
   void batch.commit()
 }
 
+/** Borra todo el historial de compras, en lotes de 500 (límite de Firestore por lote). */
 export async function clearPurchaseHistory() {
   const snap = await getDocs(purchaseHistoryCol)
   const docs = snap.docs

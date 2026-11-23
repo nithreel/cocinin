@@ -26,6 +26,8 @@ const statusBorderClasses: Record<RecipeStatus, string> = {
 const sectionHead =
   'sticky top-[calc(var(--head-h)+var(--card-h,0px))] z-10 -mx-4 mb-2 bg-white px-4 py-1.5 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:bg-moss-900 dark:text-gray-400'
 
+/** Tarjeta de receta: se despliega con ingredientes (lo que falta en rojo, añadible a la lista) y preparación, y se
+ *  edita en el sitio. Avisa a la página de si está abierta o en edición. */
 export default function RecipeCard({
   recipe,
   status,

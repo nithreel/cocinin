@@ -25,6 +25,8 @@ import ExpiryFields from './ExpiryFields'
 import IngredientEditForm from './IngredientEditForm'
 import IngredientActions from './IngredientActions'
 
+/** Fila de ingrediente: interruptor de existencias y, al tocar el nombre, un panel con fecha, cantidad, «gastar
+ *  pronto», carrito, congelar, editar y eliminar. */
 export default function IngredientRow({
   ingredient,
   groups,

@@ -13,6 +13,8 @@ import { groupBadgeCounts } from '../../lib/expiry'
 import type { GroupDraft, PantrySection } from '../../lib/pantrySections'
 import IsFoodCheckbox from './IsFoodCheckbox'
 
+/** Cabecera de un grupo: pliega y despliega con insignias de congelados, descongelando y avisos; la pulsación larga
+ *  entra en «organizar», donde se mueve, renombra o elimina. */
 export default function GroupHeader({
   section,
   isCollapsed,

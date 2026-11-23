@@ -20,6 +20,8 @@ export interface RecipeFormValues {
   tagIds: string[]
 }
 
+/** Crear o editar una receta. Solo ofrece ingredientes de grupos de comida (y los que ya tenga); descarta los que
+ *  ya no existen. `onSubmit` recibe los valores ya recortados. */
 export default function RecipeForm({
   ingredients,
   groups,

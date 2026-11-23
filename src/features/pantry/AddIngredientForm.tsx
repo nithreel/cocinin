@@ -6,6 +6,8 @@ import { normalizeText } from '../../lib/search'
 import { NO_GROUP } from '../../lib/groupByPantryGroup'
 import ExpiryFields from './ExpiryFields'
 
+/** Formulario de ingrediente nuevo. Avisa si el nombre ya existe (sin tildes ni mayúsculas); pulsar «Añadir» otra
+ *  vez lo crea igualmente. `onDone` recibe el id y el grupo para resaltarlo. */
 export default function AddIngredientForm({
   groups,
   existingNames,

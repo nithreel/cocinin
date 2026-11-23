@@ -56,6 +56,8 @@ function Brand({ size }: { size: string }) {
   )
 }
 
+/** Esqueleto de las pantallas con sesión: barra lateral (escritorio) o cabecera y pestañas (móvil), avisos de
+ *  versión y error de datos, y la página en `<main>`. */
 export default function AppLayout() {
   const dataError = useDataError()
   // «Mantener la pantalla encendida» (ajuste del dispositivo) vale en toda la app

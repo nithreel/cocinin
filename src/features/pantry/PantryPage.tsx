@@ -24,6 +24,8 @@ import AddGroupForm from './AddGroupForm'
 import AddIngredientForm from './AddIngredientForm'
 import GroupHeader from './GroupHeader'
 
+/** Despensa: grupos con sus ingredientes, búsqueda, alta de grupos e ingredientes y modo «organizar» (orden, nombre
+ *  y «Es comida» de los grupos). */
 export default function PantryPage() {
   const { groups, loading: loadingGroups } = useGroups()
   const { ingredients, loading: loadingIngredients } = useIngredients()

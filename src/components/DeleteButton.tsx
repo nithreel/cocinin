@@ -62,6 +62,7 @@ export function ConfirmDelete({
   )
 }
 
+/** Botón «Eliminar» que pide confirmación en el sitio («¿Eliminar…? Sí / No») antes de llamar a `onConfirm`. */
 export default function DeleteButton({
   onConfirm,
   label = 'Eliminar',

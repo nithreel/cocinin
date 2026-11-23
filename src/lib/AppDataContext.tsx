@@ -71,6 +71,8 @@ function useLiveQuery<T>(
   return [items, loading, setItems] as const
 }
 
+/** Listeners de todas las colecciones compartidas, abiertos mientras dura la sesión; cada pantalla lee de aquí con
+ *  los hooks de abajo. */
 export function AppDataProvider({ children }: { children: ReactNode }) {
   const [errors, setErrors] = useState<DataErrors>({})
   const dataError = firstDataError(errors)
@@ -131,36 +133,43 @@ function useAppData() {
   return ctx
 }
 
+/** Grupos: primero los de orden manual, luego alfabéticos. */
 export function useGroups() {
   const { groups, groupsLoading } = useAppData()
   return { groups, loading: groupsLoading }
 }
 
+/** Ingredientes en orden alfabético; se repintan cada minuto (caducidades y descongelado dependen de la hora). */
 export function useIngredients() {
   const { ingredients, ingredientsLoading } = useAppData()
   return { ingredients, loading: ingredientsLoading }
 }
 
+/** Artículos de la lista, por orden de llegada. */
 export function useShoppingList() {
   const { shoppingItems, shoppingItemsLoading } = useAppData()
   return { items: shoppingItems, loading: shoppingItemsLoading }
 }
 
+/** Recetas en orden alfabético; se repintan cada minuto, como los ingredientes. */
 export function useRecipes() {
   const { recipes, recipesLoading } = useAppData()
   return { recipes, loading: recipesLoading }
 }
 
+/** Etiquetas en el orden de Firestore (por nombre); para pintarlas se ordenan con `sortTags` (orden manual). */
 export function useTags() {
   const { tags, tagsLoading } = useAppData()
   return { tags, loading: tagsLoading }
 }
 
+/** Notas, la más nueva primero; el orden de pantalla lo da `orderNotes`. */
 export function useNotes() {
   const { notes, notesLoading } = useAppData()
   return { notes, loading: notesLoading }
 }
 
+/** Mensaje del primer listener caído, o null si todos leen bien. */
 export function useDataError() {
   return useAppData().dataError
 }
