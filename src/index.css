@@ -1,4 +1,7 @@
 @import "tailwindcss";
+
+/* Tema por dispositivo: `data-theme` en <html> (lo pone settings.ts); sustituye al prefers-color-scheme de Tailwind */
+@custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
 @import "@fontsource/poppins/latin-400.css";
 @import "@fontsource/poppins/latin-500.css";
 @import "@fontsource/poppins/latin-600.css";
@@ -40,12 +43,10 @@ body {
   color: #111827;
 }
 
-@media (prefers-color-scheme: dark) {
-  body {
+  html[data-theme='dark'] body {
     background-color: var(--color-moss-950);
     color: #f3f4f6;
   }
-}
 
 /* Desplegables: alto suave + contenido que cae y rebota (ver Collapse) */
 .collapse-grid {
@@ -114,9 +115,7 @@ body {
   background-color: transparent;
   transition: background-color 200ms ease, border-color 200ms ease, transform 300ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
-@media (prefers-color-scheme: dark) {
-  .cb { border-color: var(--color-moss-600); }
-}
+  html[data-theme='dark'] .cb { border-color: var(--color-moss-600); }
 .cb::before {
   content: '';
   width: 6px;
@@ -132,9 +131,7 @@ body {
   border-color: var(--color-emerald-700);
 }
 .cb.cb-anim:checked { animation: cb-pop 380ms cubic-bezier(0.34, 1.56, 0.64, 1); }
-@media (prefers-color-scheme: dark) {
-  .cb:checked { background-color: var(--color-emerald-500); border-color: var(--color-emerald-500); }
-}
+  html[data-theme='dark'] .cb:checked { background-color: var(--color-emerald-500); border-color: var(--color-emerald-500); }
 .cb:checked::before { transform: rotate(45deg) scale(1); }
 .cb:active { transform: scale(0.8); }
 .cb:disabled { opacity: 0.5; cursor: not-allowed; }
@@ -378,9 +375,7 @@ html[data-reduce-motion] .ripple-dot { display: none; }
   /* fondo opaco: si no, la página anterior se transparenta durante el deslizamiento */
   background-color: #fff;
 }
-@media (prefers-color-scheme: dark) {
-  .page-view { background-color: var(--color-moss-950); }
-}
+  html[data-theme='dark'] .page-view { background-color: var(--color-moss-950); }
 ::view-transition-group(root) {
   animation: none;
 }

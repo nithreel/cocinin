@@ -5,7 +5,7 @@ import Switch from '../../components/Switch'
 import { outlineButton } from '../../components/buttonStyles'
 import { downloadBackup } from '../../lib/backup'
 import { cachedLatestRelease, compareVersions } from '../../lib/releases'
-import { updateSettings, useSettings, type MotionMode } from '../../lib/settings'
+import { updateSettings, useSettings, type MotionMode, type ThemeMode } from '../../lib/settings'
 import { wakeLockSupported } from '../../lib/wakeLock'
 import ChangePassword from './ChangePassword'
 import RestoreBackup from './RestoreBackup'
@@ -22,6 +22,12 @@ const MOTION_OPTIONS: { value: MotionMode; label: string; hint: (system: boolean
   { value: 'system', label: 'Como el sistema', hint: (system) => `Ahora: ${system ? 'reducidas' : 'completas'} (lo decide el ajuste de accesibilidad del móvil o del PC)` },
   { value: 'reduce', label: 'Reducidas', hint: () => 'Sin desplazamientos, rebotes ni transiciones. Para móviles que van lentos' },
   { value: 'full', label: 'Completas', hint: () => 'Todas las animaciones, aunque el sistema pida reducirlas' },
+]
+
+const THEME_OPTIONS: { value: ThemeMode; label: string; hint: string }[] = [
+  { value: 'system', label: 'Como el sistema', hint: 'Sigue el modo claro u oscuro del móvil o del PC' },
+  { value: 'light', label: 'Claro', hint: 'Fondo blanco' },
+  { value: 'dark', label: 'Oscuro', hint: 'Fondo verde oscuro' },
 ]
 
 const rowText = 'block text-sm text-gray-900 dark:text-gray-100'
@@ -97,6 +103,26 @@ export default function SettingsPage() {
   return (
     <div>
       <StickyHeader title="Ajustes" />
+
+      <Section title="Tema" note="Se guarda en este dispositivo.">
+        <div role="radiogroup" aria-label="Tema" className="divide-y divide-gray-100 dark:divide-moss-800">
+          {THEME_OPTIONS.map((o) => (
+            <label key={o.value} className="flex cursor-pointer items-center gap-3 px-4 py-3">
+              <input
+                type="radio"
+                name="theme"
+                checked={settings.theme === o.value}
+                onChange={() => updateSettings({ theme: o.value })}
+                className="h-4 w-4 shrink-0 accent-emerald-600 dark:[color-scheme:dark]"
+              />
+              <span className="min-w-0">
+                <span className={rowText}>{o.label}</span>
+                <span className={rowHint}>{o.hint}</span>
+              </span>
+            </label>
+          ))}
+        </div>
+      </Section>
 
       <Section title="Animaciones" note="Se guarda en este dispositivo.">
         <div role="radiogroup" aria-label="Animaciones" className="divide-y divide-gray-100 dark:divide-moss-800">

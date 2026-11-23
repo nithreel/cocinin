@@ -15,6 +15,7 @@ import { useDataError } from '../../lib/AppDataContext'
 import { transitionClick } from '../../lib/pageTransition'
 import { prefersReducedMotion } from '../../lib/motion'
 import { smoothBehavior } from '../../lib/scroll'
+import { greeting } from '../../lib/greeting'
 import { useSettings } from '../../lib/settings'
 import { useWakeLock } from '../../lib/wakeLock'
 
@@ -196,7 +197,7 @@ function LogoutButton({ up, labeled, onOpenChange }: { up: boolean; labeled: boo
  *  escritorio (200 px, no caben seis iconos en fila) se despliegan hacia arriba como lista con texto.
  *  Siempre empieza plegada; se pliega con la ⚙, Escape, al navegar o al tocar fuera (no con «¿Cerrar sesión?» abierto). */
 function SettingsBar({ up = false }: { up?: boolean }) {
-  const { user, isAdmin } = useAuth()
+  const { isAdmin, alias } = useAuth()
   const { pathname } = useLocation()
   const [open, setOpen] = useState(false)
   // sigue montada mientras los iconos vuelven a la rueda
@@ -293,7 +294,17 @@ function SettingsBar({ up = false }: { up?: boolean }) {
       <div ref={rootRef}>
         {group}
         <div className="flex items-center gap-2">
-          <p className="min-w-0 flex-1 truncate px-2 text-xs text-gray-500 dark:text-gray-400">{user?.email}</p>
+          <p className="min-w-0 flex-1 truncate px-2 text-xs text-gray-500 dark:text-gray-400">{(() => {
+              const g = greeting(alias)
+              return (
+                <>
+                  {g.before}
+                  {g.name && <strong className="font-bold text-emerald-900 dark:text-white">{g.name}</strong>}
+                  {g.after}
+                </>
+              )
+            })()}
+          </p>
           {gear}
         </div>
       </div>

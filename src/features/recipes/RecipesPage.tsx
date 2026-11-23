@@ -8,6 +8,7 @@ import { getExpiryInfo } from '../../lib/expiry'
 import { CartIcon, ChevronIcon } from '../../components/icons'
 import Collapse from '../../components/Collapse'
 import { prefersReducedMotion, tallCollapseMs } from '../../lib/motion'
+import { dragScrollProps, wheelScrollX } from '../../lib/dragScroll'
 import { keepFocus } from '../../lib/keepFocus'
 import { scrollToWhileOpening } from '../../lib/scroll'
 import SegmentedToggle from '../../components/SegmentedToggle'
@@ -447,6 +448,8 @@ export default function RecipesPage() {
                   <div
                     role="group"
                     aria-label="Filtrar por etiqueta"
+                    ref={wheelScrollX}
+                    {...dragScrollProps}
                     className="-mx-4 flex min-w-0 flex-1 items-center gap-2 overflow-x-auto px-4 pb-1 md:-mx-8 md:px-8 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
                   >
                   {tags.map((tag) => {

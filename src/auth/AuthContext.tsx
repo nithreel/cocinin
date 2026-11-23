@@ -24,6 +24,8 @@ interface AuthContextValue {
   isMember: boolean
   /** true si es el administrador: único que gestiona usuarios */
   isAdmin: boolean
+  /** alias del usuario actual (vacío si no tiene) */
+  alias: string
   loading: boolean
   /** null mientras se comprueba; true si aún no existe ningún usuario */
   needsSetup: boolean | null
@@ -40,6 +42,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [authLoading, setAuthLoading] = useState(true)
   const [isMember, setIsMember] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
+  const [alias, setAlias] = useState('')
   const [memberLoading, setMemberLoading] = useState(false)
   const [needsSetup, setNeedsSetup] = useState<boolean | null>(null)
 
@@ -56,6 +59,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!user) {
       setIsMember(false)
       setIsAdmin(false)
+      setAlias('')
       return
     }
     return onSnapshot(
@@ -63,11 +67,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       (snap) => {
         setIsMember(snap.exists())
         setIsAdmin(snap.data()?.role === 'admin')
+        setAlias(String(snap.data()?.alias ?? '').trim())
         setMemberLoading(false)
       },
       () => {
         setIsMember(false)
         setIsAdmin(false)
+        setAlias('')
         setMemberLoading(false)
       },
     )
@@ -127,7 +133,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const loading = authLoading || memberLoading
 
   return (
-    <AuthContext.Provider value={{ user, isMember, isAdmin, loading, needsSetup, signIn, resetPassword, createFirstUser, signOut }}>
+    <AuthContext.Provider value={{ user, isMember, isAdmin, alias, loading, needsSetup, signIn, resetPassword, createFirstUser, signOut }}>
       {children}
     </AuthContext.Provider>
   )

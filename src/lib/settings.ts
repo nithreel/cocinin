@@ -3,7 +3,11 @@ import { useSyncExternalStore } from 'react'
 /** Ajustes de ESTE dispositivo (localStorage, nunca Firestore): cada móvil o PC elige los suyos. */
 export type MotionMode = 'system' | 'reduce' | 'full'
 
+export type ThemeMode = 'system' | 'light' | 'dark'
+
 export interface DeviceSettings {
+  /** tema: seguir al sistema (por defecto), claro u oscuro */
+  theme: ThemeMode
   /** animaciones: seguir al sistema (por defecto), reducidas o completas */
   motion: MotionMode
   /** mantener la pantalla encendida mientras la app está abierta (Screen Wake Lock) */
@@ -14,8 +18,9 @@ export interface DeviceSettings {
 
 export const SETTINGS_KEY = 'cocinin:ajustes'
 
-export const DEFAULT_SETTINGS: DeviceSettings = { motion: 'system', wakeLock: false, vibration: true }
+export const DEFAULT_SETTINGS: DeviceSettings = { theme: 'system', motion: 'system', wakeLock: false, vibration: true }
 
+const THEME_MODES: readonly ThemeMode[] = ['system', 'light', 'dark']
 const MOTION_MODES: readonly MotionMode[] = ['system', 'reduce', 'full']
 
 /** Lee el JSON guardado; lo ausente, corrupto o de otro tipo vuelve a su valor por defecto. */
@@ -28,6 +33,7 @@ export function parseSettings(raw: string | null | undefined): DeviceSettings {
   }
   const obj = data && typeof data === 'object' && !Array.isArray(data) ? (data as Record<string, unknown>) : {}
   return {
+    theme: THEME_MODES.includes(obj.theme as ThemeMode) ? (obj.theme as ThemeMode) : DEFAULT_SETTINGS.theme,
     motion: MOTION_MODES.includes(obj.motion as MotionMode) ? (obj.motion as MotionMode) : DEFAULT_SETTINGS.motion,
     wakeLock: typeof obj.wakeLock === 'boolean' ? obj.wakeLock : DEFAULT_SETTINGS.wakeLock,
     vibration: typeof obj.vibration === 'boolean' ? obj.vibration : DEFAULT_SETTINGS.vibration,
@@ -86,6 +92,7 @@ export function updateSettings(patch: Partial<DeviceSettings>) {
   current = { ...getSettings(), ...patch }
   writeSettings(browserStorage(), current)
   applyMotion()
+  applyTheme()
   listeners.forEach((l) => l())
 }
 
@@ -96,6 +103,18 @@ function subscribe(listener: () => void) {
 
 export function useSettings() {
   return useSyncExternalStore(subscribe, getSettings, getSettings)
+}
+
+const DARK_QUERY = '(prefers-color-scheme: dark)'
+
+/** Pone `data-theme` (light|dark) y `color-scheme` en <html>; «sistema» sigue a prefers-color-scheme. */
+function applyTheme() {
+  const mode = getSettings().theme
+  const dark = mode === 'dark' || (mode === 'system' && typeof matchMedia === 'function' && matchMedia(DARK_QUERY).matches)
+  const root = document.documentElement
+  root.dataset.theme = dark ? 'dark' : 'light'
+  root.style.colorScheme = dark ? 'dark' : 'light'
+  document.querySelectorAll('meta[name="theme-color"]').forEach((m) => m.setAttribute('content', dark ? '#052e16' : '#166534'))
 }
 
 const REDUCE_QUERY = '(prefers-reduced-motion: reduce)'
@@ -110,11 +129,14 @@ function applyMotion() {
  *  y los de otra pestaña de la app abierta en el mismo dispositivo. */
 export function initSettings() {
   applyMotion()
+  applyTheme()
+  if (typeof matchMedia === 'function') matchMedia(DARK_QUERY).addEventListener('change', applyTheme)
   if (typeof matchMedia === 'function') matchMedia(REDUCE_QUERY).addEventListener('change', applyMotion)
   window.addEventListener('storage', (e) => {
     if (e.key !== SETTINGS_KEY) return
     current = parseSettings(e.newValue)
     applyMotion()
+    applyTheme()
     listeners.forEach((l) => l())
   })
 }

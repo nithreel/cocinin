@@ -17,7 +17,7 @@ function memoryStorage(initial: Record<string, string> = {}): SettingsStorage & 
 
 describe('ajustes del dispositivo', () => {
   it('sin nada guardado: valores por defecto (animaciones como el sistema, pantalla normal, vibración sí)', () => {
-    expect(parseSettings(null)).toEqual({ motion: 'system', wakeLock: false, vibration: true })
+    expect(parseSettings(null)).toEqual({ theme: 'system', motion: 'system', wakeLock: false, vibration: true })
     expect(readSettings(memoryStorage())).toEqual(DEFAULT_SETTINGS)
     expect(readSettings(null)).toEqual(DEFAULT_SETTINGS)
   })
@@ -27,19 +27,20 @@ describe('ajustes del dispositivo', () => {
   })
 
   it('campos inválidos se descartan uno a uno; los válidos se conservan', () => {
-    expect(parseSettings(JSON.stringify({ motion: 'rápido', wakeLock: 'sí', vibration: false }))).toEqual({
+    expect(parseSettings(JSON.stringify({ theme: 'verde', motion: 'rápido', wakeLock: 'sí', vibration: false }))).toEqual({
+      theme: 'system',
       motion: 'system',
       wakeLock: false,
       vibration: false,
     })
-    expect(parseSettings(JSON.stringify({ motion: 'reduce', wakeLock: true }))).toEqual({ motion: 'reduce', wakeLock: true, vibration: true })
+    expect(parseSettings(JSON.stringify({ theme: 'dark', motion: 'reduce', wakeLock: true }))).toEqual({ theme: 'dark', motion: 'reduce', wakeLock: true, vibration: true })
   })
 
   it('guarda y vuelve a leer lo mismo', () => {
     const st = memoryStorage()
-    writeSettings(st, { motion: 'full', wakeLock: true, vibration: false })
-    expect(JSON.parse(st.data[SETTINGS_KEY])).toEqual({ motion: 'full', wakeLock: true, vibration: false })
-    expect(readSettings(st)).toEqual({ motion: 'full', wakeLock: true, vibration: false })
+    writeSettings(st, { theme: 'light', motion: 'full', wakeLock: true, vibration: false })
+    expect(JSON.parse(st.data[SETTINGS_KEY])).toEqual({ theme: 'light', motion: 'full', wakeLock: true, vibration: false })
+    expect(readSettings(st)).toEqual({ theme: 'light', motion: 'full', wakeLock: true, vibration: false })
   })
 
   it('almacenamiento que lanza (modo privado, bloqueado): no rompe', () => {
