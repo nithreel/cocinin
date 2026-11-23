@@ -28,21 +28,15 @@ function CreateMissing({ names, groups }: { names: string[]; groups: Group[] }) 
   const [open, setOpen] = useState(false)
   const [picked, setPicked] = useState<Record<string, string>>({})
   const [busy, setBusy] = useState(false)
-  const [error, setError] = useState<string | null>(null)
   const foodGroups = groups.filter((g) => g.isFood !== false)
   const ready = names.every((n) => picked[n])
 
-  async function create() {
+  function create() {
     setBusy(true)
-    setError(null)
-    try {
-      // Sin existencias: son cosas que no tienes; así la receta no sale como «completa» por error.
-      for (const n of names) await addIngredient(n, picked[n], { mode: 'none', date: null, quantity: '' }, false)
-    } catch (e) {
-      console.error(e)
-      setError('No se pudieron crear los ingredientes. Inténtalo de nuevo.')
-      setBusy(false)
-    }
+    // Sin existencias: son cosas que no tienes; así la receta no sale como «completa» por error.
+    // Las escrituras no esperan al servidor: un fallo llega al aviso global de escrituras, no aquí.
+    for (const n of names) addIngredient(n, picked[n], { mode: 'none', date: null, quantity: '' }, false)
+    setBusy(false)
   }
 
   if (!open) {
@@ -71,7 +65,6 @@ function CreateMissing({ names, groups }: { names: string[]; groups: Group[] }) 
           </select>
         </div>
       ))}
-      {error && <p className="text-red-600 dark:text-red-400">{error}</p>}
       <div className="flex gap-2">
         <button type="button" disabled={!ready || busy} onClick={create} className={primaryButton}>
           {busy ? 'Creando…' : `Crear ${names.length}`}
