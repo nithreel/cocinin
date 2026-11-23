@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react'
 import { onSnapshot, orderBy, query, type Query } from 'firebase/firestore'
 import {
   groupsCol,
@@ -15,6 +15,7 @@ import {
   type Tag,
 } from './collections'
 import { sortByText } from './search'
+import { firstDataError, setDataErrorFor, type DataErrors } from './dataErrors'
 
 interface AppDataValue {
   groups: Group[]
@@ -41,26 +42,27 @@ function sortGroups(groups: Group[]) {
 }
 
 /**
- * Escucha una consulta de Firestore mientras la app está abierta. Un fallo (p. ej. permission-denied) se publica en
- * `dataError` y deja de «cargar»; `clearsError`: una lectura correcta lo borra (solo grupos e ingredientes, como
- * siempre). Devuelve también el setter, para el repintado de cada minuto.
+ * Escucha una consulta de Firestore mientras la app está abierta. Un fallo (p. ej. permission-denied) se anota con
+ * la clave de este listener y deja de «cargar»; una lectura correcta solo borra el error propio, así el aviso sigue
+ * mientras quede algún listener caído. Devuelve también el setter, para el repintado de cada minuto.
  */
 function useLiveQuery<T>(
+  key: string,
   makeQuery: () => Query,
-  setDataError: (message: string | null) => void,
-  { sort, clearsError = false }: { sort?: (items: T[]) => T[]; clearsError?: boolean } = {},
+  reportError: (key: string, message: string | null) => void,
+  { sort }: { sort?: (items: T[]) => T[] } = {},
 ) {
   const [items, setItems] = useState<T[]>([])
   const [loading, setLoading] = useState(true)
   useEffect(() => {
     return onSnapshot(makeQuery(), (snap) => {
-      if (clearsError) setDataError(null)
+      reportError(key, null)
       const docs = snap.docs.map((d) => ({ id: d.id, ...d.data() }) as T)
       setItems(sort ? sort(docs) : docs)
       setLoading(false)
     }, (err: Error) => {
       console.error(err)
-      setDataError(err.message)
+      reportError(key, err.message)
       setLoading(false)
     })
     // la consulta y las opciones son fijas en cada llamada: se escucha una sola vez
@@ -70,23 +72,25 @@ function useLiveQuery<T>(
 }
 
 export function AppDataProvider({ children }: { children: ReactNode }) {
-  const [dataError, setDataError] = useState<string | null>(null)
+  const [errors, setErrors] = useState<DataErrors>({})
+  const dataError = firstDataError(errors)
+  const reportError = useCallback((key: string, message: string | null) => setErrors((prev) => setDataErrorFor(prev, key, message)), [])
 
-  const [groups, groupsLoading] = useLiveQuery<Group>(() => query(groupsCol, orderBy('name')), setDataError, {
+  const [groups, groupsLoading] = useLiveQuery<Group>('groups', () => query(groupsCol, orderBy('name')), reportError, {
     sort: sortGroups,
-    clearsError: true,
   })
   const [ingredients, ingredientsLoading, setIngredients] = useLiveQuery<Ingredient>(
+    'ingredients',
     () => query(ingredientsCol, orderBy('name')),
-    setDataError,
-    { sort: (items) => sortByText(items, (i) => i.name), clearsError: true },
+    reportError,
+    { sort: (items) => sortByText(items, (i) => i.name) },
   )
-  const [shoppingItems, shoppingItemsLoading] = useLiveQuery<ShoppingItem>(() => query(shoppingListCol, orderBy('addedAt')), setDataError)
-  const [recipes, recipesLoading, setRecipes] = useLiveQuery<Recipe>(() => query(recipesCol, orderBy('title')), setDataError, {
+  const [shoppingItems, shoppingItemsLoading] = useLiveQuery<ShoppingItem>('shoppingList', () => query(shoppingListCol, orderBy('addedAt')), reportError)
+  const [recipes, recipesLoading, setRecipes] = useLiveQuery<Recipe>('recipes', () => query(recipesCol, orderBy('title')), reportError, {
     sort: (items) => sortByText(items, (r) => r.title),
   })
-  const [tags, tagsLoading] = useLiveQuery<Tag>(() => query(tagsCol, orderBy('name')), setDataError)
-  const [notes, notesLoading] = useLiveQuery<Note>(() => query(notesCol, orderBy('createdAt', 'desc')), setDataError)
+  const [tags, tagsLoading] = useLiveQuery<Tag>('tags', () => query(tagsCol, orderBy('name')), reportError)
+  const [notes, notesLoading] = useLiveQuery<Note>('notes', () => query(notesCol, orderBy('createdAt', 'desc')), reportError)
 
   // Los estados de caducidad y descongelado dependen de la hora: cada minuto se vuelve a pintar con la app abierta.
   useEffect(() => {
