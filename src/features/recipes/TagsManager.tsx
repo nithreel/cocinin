@@ -6,6 +6,7 @@ import { XIcon } from '../../components/icons'
 import type { Recipe, Tag } from '../../lib/collections'
 import { findTag, sortTags } from '../../lib/tags'
 import { useDragReorder } from '../../lib/useDragReorder'
+import { nextOrder } from '../../lib/order'
 import DragHandle from '../../components/DragHandle'
 import { addTag, deleteTag, renameTag, reorderTags } from './data'
 import { inputField } from '../../components/inputStyles'
@@ -160,7 +161,7 @@ export default function TagsManager({
     }
     setBusy(true)
     try {
-      await addTag(n, tags.some((t) => t.order !== undefined) ? Math.max(...tags.map((t) => t.order ?? -1)) + 1 : undefined)
+      await addTag(n, nextOrder(tags))
       setName('')
       setError(null)
     } catch (err) {

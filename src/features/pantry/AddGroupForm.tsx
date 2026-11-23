@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { addGroup } from './data'
 import type { Group } from '../../lib/collections'
 import { cancelButton, primaryButton } from '../../components/buttonStyles'
-import { nextGroupOrder } from '../../lib/pantrySections'
+import { nextOrder } from '../../lib/order'
 import IsFoodCheckbox from './IsFoodCheckbox'
 import { inputField } from '../../components/inputStyles'
 
@@ -18,7 +18,7 @@ export default function AddGroupForm({ groups, onDone }: { groups: Group[]; onDo
     setSubmitting(true)
     try {
       // si ya hay un orden elegido a mano, el grupo nuevo va al final
-      await addGroup(name.trim(), isFood, nextGroupOrder(groups))
+      await addGroup(name.trim(), isFood, nextOrder(groups))
       onDone()
     } finally {
       setSubmitting(false)

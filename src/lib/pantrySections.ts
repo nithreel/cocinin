@@ -69,11 +69,6 @@ export function recipeTitlesByIngredient(recipes: Recipe[]): Map<string, string[
   return map
 }
 
-/** `order` de un grupo nuevo: si ya hay un orden elegido a mano, va al final; si no, ninguno (orden alfabético). */
-export function nextGroupOrder(groups: Group[]): number | undefined {
-  return groups.some((g) => g.order !== undefined) ? Math.max(...groups.map((g) => g.order ?? -1)) + 1 : undefined
-}
-
 /** Borradores que de verdad cambian algo (grupo existente, nombre no vacío y distinto nombre o «Es comida»). */
 export function changedGroupDrafts(drafts: Record<string, GroupDraft>, groups: Group[]): { id: string; name: string; isFood: boolean }[] {
   const changes: { id: string; name: string; isFood: boolean }[] = []

@@ -4,7 +4,6 @@ import {
   changedGroupDrafts,
   filterPantrySections,
   hasInvalidDraft,
-  nextGroupOrder,
   organizeSections,
   orderToRestore,
   recipeTitlesByIngredient,
@@ -67,16 +66,6 @@ describe('recipeTitlesByIngredient', () => {
     expect(m.get('huevo')).toEqual(['Tortilla', 'Flan'])
     expect(m.get('patata')).toEqual(['Tortilla'])
     expect(m.get('sal')).toBeUndefined()
-  })
-})
-
-describe('nextGroupOrder', () => {
-  it('sin orden manual no pone ninguno', () => {
-    expect(nextGroupOrder([group('a', 'A')])).toBeUndefined()
-    expect(nextGroupOrder([])).toBeUndefined()
-  })
-  it('con orden manual va detrás del mayor', () => {
-    expect(nextGroupOrder([group('a', 'A', { order: 0 }), group('b', 'B', { order: 4 }), group('c', 'C')])).toBe(5)
   })
 })
 
