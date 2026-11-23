@@ -31,7 +31,7 @@ Solo se anotan; **no se ha tocado `src/`**. Los tests que los rozan siguen en ve
 
 ## 2. Comentario desactualizado en el Recetario (nota, no es un fallo)
 
-- **Dónde:** `src/features/recipes/RecipesPage.tsx:394`: «con una receta desplegada, los filtros (Todas/Puedo hacerla y
+- **(Corregido en 1.7.0)** **Dónde:** `src/features/recipes/RecipesPage.tsx:394`: «con una receta desplegada, los filtros (Todas/Puedo hacerla y
   etiquetas) se pliegan; **el buscador se queda**».
 - **Qué pasa:** el código pliega también el buscador (todo `below` va dentro de `<Collapse open={!formActive && !compact …}>`;
   coherente con el comentario de la línea 138, «la cabecera recupera el buscador y las etiquetas»). El test describe el

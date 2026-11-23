@@ -26,14 +26,29 @@ test.describe('Recetario: leer', () => {
     await expect(c.getByText('Tomate — 2 uds')).toBeVisible()
     await expect(c.getByText('Cebolla — 1 ud')).toBeVisible()
     await expect(c.getByText('Trocear el tomate y la cebolla.')).toBeVisible()
-    // con una receta abierta, el buscador y los filtros se pliegan (el comentario de RecipesPage.tsx:394 dice que el
-    // buscador se queda, pero el código lo pliega con ellos: ver BUGS.md, nota 2)
+    // con una receta abierta, el buscador y los filtros se pliegan
     await expect(page.getByRole('button', { name: 'Puedo hacerla' })).toHaveCount(0)
     await expect(page.getByPlaceholder('Buscar receta o ingrediente…')).toHaveCount(0)
     await c.getByRole('button', { name: 'Plegar la receta' }).click()
     await expect(c.getByText('Tomate — 2 uds')).toHaveCount(0)
     await expect(page.getByRole('button', { name: 'Puedo hacerla' })).toBeVisible()
     await expect(page.getByPlaceholder('Buscar receta o ingrediente…')).toBeVisible()
+  })
+
+  test('compartir una receta copia al portapapeles el texto con formato de WhatsApp (sin menú de compartir en escritorio)', async ({ page, context }) => {
+    await context.grantPermissions(['clipboard-read', 'clipboard-write'])
+    const c = card(page, 'Ensalada de tomate')
+    await expect(c.getByRole('button', { name: 'Compartir «Ensalada de tomate»' })).toHaveCount(0)
+    await titleBtn(page, 'Ensalada de tomate').click()
+    await c.getByRole('button', { name: 'Compartir «Ensalada de tomate»' }).click()
+    await expect(page.getByText('Receta copiada: pégala en WhatsApp')).toBeVisible()
+    const text = await page.evaluate(() => navigator.clipboard.readText())
+    expect(text).toContain('*Ensalada de tomate*')
+    expect(text).toContain('_Fría · Rápida_')
+    expect(text).toContain('*Ingredientes*')
+    expect(text).toContain('• Tomate — 2 uds')
+    expect(text).toContain('*Preparación*')
+    expect(text).toContain('Trocear el tomate y la cebolla.')
   })
 
   test('el título también cierra la receta y las demás se ocultan mientras hay una abierta', async ({ page }) => {

@@ -1,11 +1,11 @@
 import type { ReactNode } from 'react'
 
 // Iconos de la navegación: trazo redondeado grueso, en la línea del icono de la app.
-function Icon({ children }: { children: ReactNode }) {
+function Icon({ children, className = 'h-6 w-6' }: { children: ReactNode; className?: string }) {
   return (
     <svg
       viewBox="0 0 24 24"
-      className="h-6 w-6 shrink-0"
+      className={className + ' shrink-0'}
       fill="none"
       stroke="currentColor"
       strokeWidth={2}
@@ -18,11 +18,23 @@ function Icon({ children }: { children: ReactNode }) {
   )
 }
 
-/** Lápiz de «Editar» (16 px), en los botones de fila. */
+/** Lápiz de «Editar» (20 px, como el resto de iconos de acción), en los botones de fila. */
 export function PencilIcon() {
   return (
-    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16v4ZM13.5 6.5l4 4" />
+    </svg>
+  )
+}
+
+/** Compartir (tres nodos unidos). */
+export function ShareIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="18" cy="5" r="3" />
+      <circle cx="6" cy="12" r="3" />
+      <circle cx="18" cy="19" r="3" />
+      <path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4" />
     </svg>
   )
 }
@@ -38,10 +50,10 @@ export function PantryIcon() {
   )
 }
 
-/** Carrito: pestaña Lista y botones de añadir a la lista. */
-export function CartIcon() {
+/** Carrito: pestaña Lista (24 px) y botones de añadir a la lista (`className="h-5 w-5"`, 20 px). */
+export function CartIcon({ className }: { className?: string }) {
   return (
-    <Icon>
+    <Icon className={className}>
       <path d="M3 4h2.2l2.1 10.5h10.2l2-7.5H6" />
       <circle cx="9.5" cy="19" r="1.3" />
       <circle cx="16.5" cy="19" r="1.3" />

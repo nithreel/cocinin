@@ -1,13 +1,14 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { deleteRecipe, updateRecipe } from './data'
 import { sortTags } from '../../lib/tags'
 import RecipeForm from './RecipeForm'
-import { CartIcon, ChevronIcon, PencilIcon } from '../../components/icons'
+import { CartIcon, ChevronIcon, PencilIcon, ShareIcon } from '../../components/icons'
 import Collapse from '../../components/Collapse'
 import { prefersReducedMotion, tallCollapseMs } from '../../lib/motion'
 import { keepFocus } from '../../lib/keepFocus'
 import { scrollToWhileOpening } from '../../lib/scroll'
 import { addToShoppingList, removeFromShoppingList, useShoppingList } from '../shopping-list/data'
+import { recipeToShareText, shareText } from '../../lib/shareRecipe'
 import { useToast } from '../../components/Toast'
 import { ConfirmDelete } from '../../components/DeleteButton'
 import RemoveButton from '../../components/RemoveButton'
@@ -26,6 +27,20 @@ const statusBorderClasses: Record<RecipeStatus, string> = {
 /** Cabecera de sección de una receta abierta: se queda pegada bajo el nombre mientras se recorre su sección. */
 const sectionHead =
   'sticky top-[calc(var(--head-h)+var(--card-h,0px))] z-10 -mx-4 mb-2 bg-white px-4 py-1.5 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:bg-moss-900 dark:text-gray-400'
+
+/** Nombres de etiqueta separados por « · »; cada uno es una unidad sin partir («🌶️ Picante» no se separa del emoji),
+ *  con el punto pegado al nombre anterior para que no empiece línea. */
+function TagNames({ tags }: { tags: Tag[] }) {
+  return tags.map((t, i) => (
+    <Fragment key={t.id}>
+      {i > 0 && ' '}
+      <span className="whitespace-nowrap">
+        {t.name}
+        {i < tags.length - 1 && ' ·'}
+      </span>
+    </Fragment>
+  ))
+}
 
 /** Tarjeta de receta: se despliega con ingredientes (lo que falta en rojo, añadible a la lista) y preparación, y se
  *  edita en el sitio. Avisa a la página de si está abierta o en edición. */
@@ -65,6 +80,14 @@ export default function RecipeCard({
     return () => onOpen(recipe.id, false)
   }, [open, recipe.id, onOpen])
   const toast = useToast()
+  async function handleShare() {
+    try {
+      const result = await shareText(recipe.title, recipeToShareText(recipe, ingredientsById, tags))
+      if (result === 'copied') toast({ message: 'Receta copiada: pégala en WhatsApp' })
+    } catch {
+      toast({ message: 'No se pudo compartir la receta', kind: 'error' })
+    }
+  }
   const { items: shoppingItems } = useShoppingList()
   // lo necesario que falta en la despensa y aún no está en la lista
   const toBuy = useMemo(
@@ -153,46 +176,30 @@ export default function RecipeCard({
               placeholder="Nombre de la receta"
               className={inputBase + ' w-full px-2 py-0.5 text-lg font-semibold text-gray-900'}
             />
-            <p className="mt-1 min-h-4 text-xs text-gray-500 dark:text-gray-400">{recipeTags.map((t) => t.name).join(' · ')}</p>
+            <p className="mt-1 min-h-4 text-xs text-gray-500 dark:text-gray-400"><TagNames tags={recipeTags} /></p>
           </div>
         ) : (
           <>
-            <div className="flex items-center">
+            {/* la flecha va superpuesta arriba a la derecha: el título la esquiva (pr-7) y las etiquetas usan todo el ancho */}
+            <div className="relative">
               <button
                 type="button"
                 onMouseDown={keepFocus}
                 onClick={() => setOpen((v) => !v)}
                 aria-expanded={open}
-                className="min-w-0 flex-1 p-4 text-left"
+                className="block w-full p-4 text-left"
               >
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{recipe.title}</h3>
+                <h3 className="pr-7 text-lg font-semibold text-gray-900 dark:text-gray-100">{recipe.title}</h3>
                 {recipeTags.length > 0 && (
-                  <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{recipeTags.map((t) => t.name).join(' · ')}</p>
+                  <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400"><TagNames tags={recipeTags} /></p>
                 )}
               </button>
-              {/* abierta: editar y eliminar, con iconos, a la derecha del título */}
-              <IconsReveal show={open && !confirmingDelete} className="flex shrink-0 items-center gap-4">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setDraftTitle(recipe.title)
-                      setDraftTagIds(recipe.tagIds ?? [])
-                      setEditing(true)
-                    }}
-                    aria-label={`Editar «${recipe.title}»`}
-                    title="Editar la receta"
-                    className={rowIconButton}
-                  >
-                    <PencilIcon />
-                  </button>
-                  <RemoveButton trash row={false} onRemove={() => setConfirmingDelete(true)} label={`Eliminar «${recipe.title}»`} title="Eliminar la receta" />
-              </IconsReveal>
               <button
                 type="button"
                 onMouseDown={keepFocus}
                 onClick={() => setOpen((v) => !v)}
                 aria-label={open ? 'Plegar la receta' : 'Desplegar la receta'}
-                className="p-4 pl-3 text-gray-500 dark:text-gray-400"
+                className="absolute right-0 top-0 pb-3 pl-3 pr-4 pt-[22px] text-gray-500 dark:text-gray-400"
               >
                 <ChevronIcon open={open} />
               </button>
@@ -234,9 +241,9 @@ export default function RecipeCard({
             />
           ) : (
             <>
-              <section>
-              <h4 className={sectionHead + ' flex items-center justify-between'}>
-                Ingredientes
+              {/* acciones de la receta en su fila, sobre «Ingredientes»: a la izquierda añadir lo que falta a la lista y a la derecha compartir, editar y eliminar; así el título y las etiquetas usan todo el ancho de la cabecera */}
+              <div className="flex items-center justify-between pb-2">
+              <div className="flex items-center">
                 {(toBuy.length > 0 || adding) && (
                   <button
                     type="button"
@@ -244,19 +251,47 @@ export default function RecipeCard({
                     aria-label={`Añadir a la lista de la compra lo que falta (${adding ? flashIds.size : toBuy.length})`}
                     title={`Añadir a la lista lo que falta (${adding ? flashIds.size : toBuy.length})`}
                     className={
-                      'cart-btn ripple relative -my-1.5 flex h-8 w-8 items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-emerald-700 max-md:h-10 max-md:w-10 dark:text-gray-500 dark:hover:bg-moss-800 dark:hover:text-emerald-400' +
+                      'cart-btn ripple relative flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-gray-500 hover:bg-gray-100 hover:text-emerald-700 after:absolute after:-inset-2 after:content-[\'\'] dark:text-gray-400 dark:hover:bg-moss-800 dark:hover:text-emerald-400' +
                       (adding ? ' cart-done' : '')
                     }
                   >
                     <span className="cart-ico">
-                      <CartIcon />
+                      <CartIcon className="h-5 w-5" />
                     </span>
                     <svg viewBox="0 0 24 24" className="add-check absolute h-4 w-4" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                       <path d="M5 12.5l4.5 4.5L19 7" />
                     </svg>
                   </button>
                 )}
-              </h4>
+              </div>
+              <IconsReveal show={!confirmingDelete} className="flex items-center gap-4">
+                  <button
+                    type="button"
+                    onClick={handleShare}
+                    aria-label={`Compartir «${recipe.title}»`}
+                    title="Compartir la receta (WhatsApp)"
+                    className={rowIconButton}
+                  >
+                    <ShareIcon />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDraftTitle(recipe.title)
+                      setDraftTagIds(recipe.tagIds ?? [])
+                      setEditing(true)
+                    }}
+                    aria-label={`Editar «${recipe.title}»`}
+                    title="Editar la receta"
+                    className={rowIconButton}
+                  >
+                    <PencilIcon />
+                  </button>
+                  <RemoveButton trash row={false} onRemove={() => setConfirmingDelete(true)} label={`Eliminar «${recipe.title}»`} title="Eliminar la receta" />
+              </IconsReveal>
+              </div>
+              <section>
+              <h4 className={sectionHead}>Ingredientes</h4>
               {/* pb-8 (≥ alto del título fijo): al acabar la sección el título queda sobre espacio vacío y no a medias sobre la última fila */}
               <ul className="space-y-1 pb-8 text-sm text-gray-600 dark:text-gray-300">
                 {recipe.ingredients.map((ri) => {

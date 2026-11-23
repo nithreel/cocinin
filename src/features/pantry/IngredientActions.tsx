@@ -54,7 +54,7 @@ export default function IngredientActions({
             : 'text-gray-400 hover:bg-gray-100 hover:text-emerald-700 dark:text-gray-500 dark:hover:bg-moss-800 dark:hover:text-emerald-400')
         }
       >
-        <CartIcon />
+        <CartIcon className="h-5 w-5" />
       </button>
       {(canFreeze || ingredient.frozen) && (
         <button
