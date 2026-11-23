@@ -114,4 +114,33 @@ propuesta.
 
 ## Resultado
 
-(Se completa al terminar.)
+Hechos los 8 pasos. En cada uno: `tsc -b` sin errores, oxlint con los mismos 5 avisos, tests en verde, build
+correcto, **mismo CSS** (`index-D2foGLR7.css`) y **mismo conjunto de literales** (0 textos/clases perdidos o nuevos).
+Tests: de 89 a 115 (26 nuevos en `pantrySections`, `recipeStatus`, `purchaseHistory` y `noteOrder`).
+
+| Antes (v1.6.3) | Líneas | Después | Líneas |
+|---|---:|---|---:|
+| `PantryPage.tsx` (7 componentes, 30 `useState`) | 1112 | `PantryPage.tsx` (7 `useState`) | 215 |
+| | | `IngredientRow.tsx` (9 `useState`, antes 11) | 318 |
+| | | `GroupHeader.tsx` | 203 |
+| | | `AddIngredientForm.tsx` / `IngredientEditForm.tsx` / `IngredientActions.tsx` | 95 / 86 / 84 |
+| | | `ExpiryFields.tsx` / `AddGroupForm.tsx` / `IsFoodCheckbox.tsx` | 73 / 52 / 24 |
+| | | `lib/pantrySections.ts` (puro, 13 tests) | 101 |
+| `RecipesPage.tsx` | 553 | `RecipesPage.tsx` | 198 |
+| | | `RecipeCard.tsx` | 299 |
+| | | `lib/recipeStatus.ts` (puro, 6 tests) / `lib/useIdSet.ts` | 57 / 20 |
+| `AppLayout.tsx` | 461 | `AppLayout.tsx` | 109 |
+| | | `SettingsBar.tsx` / `lib/useKeyboardViewport.ts` | 295 / 70 |
+| `ShoppingListPage.tsx` | 410 | `ShoppingListPage.tsx` | 277 |
+| | | `PurchaseHistory.tsx` / `SectionHeader.tsx` | 92 / 31 |
+| | | `lib/purchaseHistory.ts` (puro, 4 tests) | 31 |
+| `NotesPage.tsx` | 330 | `NotesPage.tsx` / `NoteForm.tsx` | 192 / 126 |
+| `UsersPage.tsx` | 204 | `UsersPage.tsx` | 197 |
+| | | `lib/useMembers.ts` / `lib/noteOrder.ts` (puro, 3 tests) | 16 / 16 |
+| `AppDataContext.tsx` (13 `useState`, 7 `useEffect`) | 186 | `AppDataContext.tsx` (hook `useLiveQuery`) | 162 |
+| `RecipeForm.tsx` | 303 | `RecipeForm.tsx` (usa `pillButton`) | 298 |
+
+Ningún fichero de `src/` pasa ya de 320 líneas. `src/` crece de 8558 a 8746 líneas en total (cabeceras de import y
+comentarios de los ficheros nuevos).
+
+Los fallos encontrados por el camino están en `docs/refactor-1.7.0-bugs.md` (sin aplicar).
