@@ -30,7 +30,7 @@ export async function updateGroup(id: string, name: string, isFood: boolean) {
   void updateDoc(doc(groupsCol, id), { name, isFood })
 }
 
-// Un ingrediente nuevo nace disponible (ON): quien lo añade es porque lo tiene.
+/** Un ingrediente nuevo nace disponible (ON): quien lo añade es porque lo tiene. Devuelve su id. */
 export function addIngredient(name: string, groupId: string | null, expiry: ExpiryInput, inPantry = true) {
   const ref = doc(ingredientsCol)
   void setDoc(ref, {

@@ -32,13 +32,13 @@ export const auth = getAuth(app)
 auth.languageCode = 'es'
 /** Quién hace la escritura: los avisos push no se mandan a quien provoca el cambio. */
 export const currentUid = () => auth.currentUser?.uid ?? null
-// Caché local persistente: la app abre al instante y sigue mostrando datos sin cobertura
-// (en el súper), y las aperturas siguientes solo descargan los cambios, no todo de nuevo.
+/** Caché local persistente: la app abre al instante y sigue mostrando datos sin cobertura
+ *  (en el súper), y las aperturas siguientes solo descargan los cambios, no todo de nuevo. */
 export const db = initializeFirestore(app, {
   localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
 })
 
-// en el móvil, los emuladores están en el PC: se usa el nombre/IP con que se abrió la web
+/** En el móvil, los emuladores están en el PC: se usa el nombre/IP con que se abrió la web. */
 const EMU_HOST = typeof location !== 'undefined' && location.hostname ? location.hostname : '127.0.0.1'
 
 // Desarrollo local sin tocar datos reales: `npm run emulators` + VITE_USE_EMULATORS=true
