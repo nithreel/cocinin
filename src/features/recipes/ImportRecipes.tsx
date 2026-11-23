@@ -33,11 +33,14 @@ function CreateMissing({ names, groups }: { names: string[]; groups: Group[] }) 
   const ready = names.every((n) => picked[n])
 
   function create() {
+    if (busy) return
+    // `busy` no vuelve a false: en cuanto la caché local tiene los ingredientes nuevos, la receta deja de tener
+    // `missing` y este bloque se desmonta. Así una segunda pulsación no puede crearlos dos veces. Si algo lo dejara
+    // montado (p. ej. una escritura rechazada), «Cancelar» lo restablece.
     setBusy(true)
     // Sin existencias: son cosas que no tienes; así la receta no sale como «completa» por error.
     // Las escrituras no esperan al servidor: un fallo llega al aviso global de escrituras, no aquí.
     for (const n of names) addIngredient(n, picked[n], { mode: 'none', date: null, quantity: '' }, false)
-    setBusy(false)
   }
 
   if (!open) {
@@ -70,7 +73,14 @@ function CreateMissing({ names, groups }: { names: string[]; groups: Group[] }) 
         <button type="button" disabled={!ready || busy} onClick={create} className={primaryButton}>
           {busy ? 'Creando…' : `Crear ${names.length}`}
         </button>
-        <button type="button" onClick={() => setOpen(false)} className={cancelButton}>
+        <button
+          type="button"
+          onClick={() => {
+            setOpen(false)
+            setBusy(false)
+          }}
+          className={cancelButton}
+        >
           Cancelar
         </button>
       </div>
