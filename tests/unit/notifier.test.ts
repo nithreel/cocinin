@@ -143,16 +143,18 @@ describe('notas', () => {
 describe('descongelado', () => {
   const H = 3600000
   const t = (hours: number, extra = {}) => ({ name: 'Pollo', inPantry: true, thawedAt: NOW.getTime() - hours * H, ...extra })
+  /** lo que devuelve `newlyThawed` (notifier/lib.mjs no tiene tipos) */
+  type Thawed = { id: string; name: string; hours: number; stage: number; keys: string[] }
   it('fase 1 a las 24 h y fase 2 a las 48 h, una vez cada una', async () => {
     const { newlyThawed, thawMessage } = await import('../../notifier/lib.mjs')
-    const map = new Map<string, any>([['a', t(25)], ['b', t(10)], ['c', t(30, { frozen: true })], ['d', t(49)]])
+    const map = new Map<string, ReturnType<typeof t>>([['a', t(25)], ['b', t(10)], ['c', t(30, { frozen: true })], ['d', t(49)]])
     const first = newlyThawed(map, new Set(), NOW.getTime())
-    expect(first.map((i: any) => [i.id, i.stage])).toEqual([['d', 2], ['a', 1]])
-    const done = new Set(first.flatMap((i: any) => i.keys))
+    expect(first.map((i: Thawed) => [i.id, i.stage])).toEqual([['d', 2], ['a', 1]])
+    const done = new Set(first.flatMap((i: Thawed) => i.keys))
     expect(newlyThawed(map, done, NOW.getTime())).toEqual([])
     // 24 h después, «a» pasa a fase 2
     const later = newlyThawed(map, done, NOW.getTime() + 24 * H)
-    expect(later.map((i: any) => [i.id, i.stage])).toEqual([['a', 2], ['b', 1]])
+    expect(later.map((i: Thawed) => [i.id, i.stage])).toEqual([['a', 2], ['b', 1]])
     expect(thawMessage([later[0]]).body).toBe('Pollo: mejor no lo uses')
     expect(thawMessage([first[1]]).body).toContain('úsalo hoy')
   })
