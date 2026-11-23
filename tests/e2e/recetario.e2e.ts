@@ -46,6 +46,21 @@ test.describe('Recetario: leer', () => {
     await expect(inert('Ensalada de tomate')).toHaveCount(0)
   })
 
+  test('abrir una receta del final de la lista no deja hueco arriba: queda a la misma altura que la primera', async ({ page }) => {
+    const top = async (i: number) => {
+      const art = page.getByRole('article').nth(i)
+      await art.getByRole('heading').click()
+      await page.waitForTimeout(1200) // acaban de plegarse las demás
+      const y = (await art.boundingBox())!.y
+      await art.getByRole('button', { name: 'Plegar la receta', exact: true }).click()
+      await page.waitForTimeout(1200)
+      return y
+    }
+    const first = await top(0)
+    const last = await top(14)
+    expect(Math.abs(last - first)).toBeLessThan(4)
+  })
+
   test('lo que falta se marca en la receta y el carrito lo añade a la lista', async ({ page }) => {
     await titleBtn(page, 'Lechuga con yogur').click()
     const c = card(page, 'Lechuga con yogur')

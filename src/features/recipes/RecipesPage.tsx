@@ -178,7 +178,9 @@ export default function RecipesPage() {
           const hide = (formActive || compact || showImport) && !editingIds.has(recipe.id) && !openIds.has(recipe.id)
           return (
           <div key={recipe.id} className={'recipe-wrap' + (hide ? ' recipe-wrap-hidden' : '')} inert={hide}>
-          <div className={'pb-4' + (openIds.has(recipe.id) || editingIds.has(recipe.id) ? '' : ' overflow-clip')} style={{ minHeight: 0 }}>
+          {/* el hueco entre tarjetas (pb-4) va DENTRO del recorte: si estuviera en este div, la receta plegada dejaría 16 px cada una y las de arriba empujarían a la abierta hacia abajo */}
+          <div className={openIds.has(recipe.id) || editingIds.has(recipe.id) ? '' : 'overflow-clip'} style={{ minHeight: 0 }}>
+          <div className="pb-4">
           <RecipeCard
             recipe={recipe}
             status={getRecipeStatus(recipe, ingredientsById)}
@@ -189,6 +191,7 @@ export default function RecipesPage() {
             onEditing={handleEditing}
             onOpen={handleOpen}
           />
+          </div>
           </div>
           </div>
           )
