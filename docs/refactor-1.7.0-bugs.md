@@ -8,8 +8,9 @@ valoró y se corrigieron en commits aparte (uno por fallo), salvo el 3.
 | 1 | Historial vacío con una compra de 100+ artículos | **Corregido** (`wholePurchases` en `lib/purchaseHistory.ts`, 3 tests) |
 | 2 | Aviso de datos que se borra con un listener aún caído | **Corregido** (error por listener, `lib/dataErrors.ts`, 4 tests) |
 | 3 | Historial y usuarios sin manejo de errores | **No corregido**, por decisión de nith |
-| 4 | «Crear los que faltan»: error inalcanzable y «Creando…» | **Corregido** (sin test: es un componente) |
+| 4 | «Crear los que faltan»: error inalcanzable y «Creando…» | **Corregido** (sin test: es un componente). La primera corrección perdía el bloqueo contra la doble pulsación; arreglado después: `busy` ya no se restablece al crear y «Cancelar» lo restablece |
 | 5 | Destinatarios de notas con el correo cortado | **Corregido**: ahora `memberName` (alias o correo completo) |
+| 6 | Etiquetas e importación: `try/catch` que nunca salta (como el 4) | **Pendiente de decisión** (anotado tras la auditoría externa) |
 
 Lo que sigue es la descripción original de cada uno, con el diff que se propuso.
 
@@ -182,3 +183,102 @@ mientras que en el formulario de la nota y en Usuarios sale con `memberName`, qu
 («ana@example.com»). Puede ser intencionado (la línea es corta), pero es incoherente.
 
 **Decisión de nith:** unificar en `memberName` (alias o correo completo), como el resto de la app.
+
+---
+
+## 6. [Pendiente de decisión] Etiquetas e importación: `try/catch` que nunca salta
+
+Encontrado por la auditoría externa de la rama. Es el mismo caso que el 4.
+
+**Dónde:**
+- `src/features/recipes/TagsManager.tsx`: `save()` (llama a `renameTag`), el alta de etiqueta (`addTag`) y el
+  callback de `useDragReorder` (`reorderTags(ids).catch(...)`).
+- `src/features/recipes/ImportRecipes.tsx`, `handleImport()`: `addImportedRecipes`.
+
+**Qué pasa:** esas funciones de `features/recipes/data.ts` escriben con `void setDoc/updateDoc/batch.commit()` y no
+esperan al servidor, así que nunca lanzan. Sus `catch` («No se pudo guardar», «No se pudo crear la etiqueta», «No se
+pudo cambiar el orden», «No se pudo importar» y devolver el texto pegado) son código muerto: un fallo real llega al
+aviso global de escrituras (`ErrorToast`). En cambio `deleteTag` y `undoImport` **sí** pueden lanzar (leen de la caché
+con `getDocsFromCache`, que rechaza si no puede), así que sus `catch` sí sirven y se quedan.
+
+**Cómo reproducirlo:** no se ve en uso normal; se ve leyendo el código o forzando un fallo de escritura en el
+emulador (denegar `tags` en las reglas): el mensaje local no aparece, sale el aviso global.
+
+**Corrección propuesta:** quitar los `try/catch` muertos y dejar un comentario de dónde llega el fallo. No cambia nada
+visible en uso normal.
+
+```diff
+ // TagsManager.tsx, save()
+     setBusy(true)
+-    try {
+-      await renameTag(tag.id, n)
+-      setEditing(false)
+-      setError(null)
+-    } catch (err) {
+-      console.error(err)
+-      setError('No se pudo guardar. Inténtalo de nuevo.')
+-    } finally {
+-      setBusy(false)
+-    }
++    // no espera al servidor: un fallo llega al aviso global de escrituras
++    await renameTag(tag.id, n)
++    setEditing(false)
++    setError(null)
++    setBusy(false)
+```
+
+```diff
+ // TagsManager.tsx, alta de etiqueta
+     setBusy(true)
+-    try {
+-      await addTag(n, nextOrder(tags))
+-      setName('')
+-      setError(null)
+-    } catch (err) {
+-      console.error(err)
+-      setError('No se pudo crear la etiqueta. Inténtalo de nuevo.')
+-    } finally {
+-      setBusy(false)
+-    }
++    await addTag(n, nextOrder(tags))
++    setName('')
++    setError(null)
++    setBusy(false)
+```
+
+```diff
+ // TagsManager.tsx, orden
+-  const { shown, draggingId, rowStyle, handleFor, rowRef } = useDragReorder(sortTags(tags), (ids) => {
+-    reorderTags(ids).catch((err) => {
+-      console.error(err)
+-      setError('No se pudo cambiar el orden. Inténtalo de nuevo.')
+-    })
+-  })
++  const { shown, draggingId, rowStyle, handleFor, rowRef } = useDragReorder(sortTags(tags), (ids) => void reorderTags(ids))
+```
+
+```diff
+ // ImportRecipes.tsx, handleImport()
+-    const previousText = text
+     setText('')
+     setChecked({})
+-    try {
+-      const batchId = await addImportedRecipes(toAdd, plan.newTags)
+-      setDone({ batchId, count: toAdd.length })
+-    } catch (e) {
+-      setText(previousText)
+-      console.error(e)
+-      setError('No se pudo importar. Inténtalo de nuevo.')
+-    } finally {
+-      setBusy(false)
+-    }
++    // no espera al servidor: un fallo llega al aviso global de escrituras
++    const batchId = await addImportedRecipes(toAdd, plan.newTags)
++    setDone({ batchId, count: toAdd.length })
++    setBusy(false)
+```
+
+Alternativa, si nith prefiere conservar los mensajes locales: que esas funciones de `data.ts` devuelvan la promesa de
+`commit()`/`setDoc()` en vez de descartarla con `void`. Pero entonces, sin cobertura, la pantalla se quedaría
+esperando hasta recuperar la red, que es justo lo que el `void` evita.
+
