@@ -1,7 +1,7 @@
 import { useMemo, useState, type FormEvent } from 'react'
 import type { Group, Ingredient, RecipeIngredient, Tag } from '../../lib/collections'
 import { groupByPantryGroup } from '../../lib/groupByPantryGroup'
-import { cancelButton, primaryButton } from '../../components/buttonStyles'
+import { cancelButton, pillButton, primaryButton } from '../../components/buttonStyles'
 import SegmentedToggle from '../../components/SegmentedToggle'
 import SearchInput from '../../components/SearchInput'
 import { matchesSearch } from '../../lib/search'
@@ -176,12 +176,7 @@ export default function RecipeForm({
                 type="button"
                 aria-pressed={on}
                 onClick={() => toggleTag(tag.id)}
-                className={
-                  'ripple relative rounded-full border px-3 py-1 text-sm ' +
-                  (on
-                    ? 'border-emerald-700 bg-emerald-700 text-white'
-                    : 'border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-moss-700 dark:text-gray-300 dark:hover:bg-moss-800')
-                }
+                className={pillButton(on)}
               >
                 {tag.name}
               </button>

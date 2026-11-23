@@ -13,7 +13,7 @@ import ListSkeleton from '../../components/ListSkeleton'
 import { scrollMainToTop } from '../../lib/scroll'
 import StickyHeader from '../../components/StickyHeader'
 import ImportRecipes from './ImportRecipes'
-import { outlineButton, primaryButton } from '../../components/buttonStyles'
+import { outlineButton, pillButton, primaryButton } from '../../components/buttonStyles'
 import { filterRecipes, getRecipeStatus } from '../../lib/recipeStatus'
 import { useIdSet } from '../../lib/useIdSet'
 
@@ -88,12 +88,7 @@ export default function RecipesPage() {
                     setShowTags((v) => !v)
                     scrollMainToTop()
                   }}
-                  className={
-                    'ripple relative shrink-0 rounded-full border px-3 py-1 text-sm ' +
-                    (showTags
-                      ? 'border-emerald-700 bg-emerald-700 text-white'
-                      : 'border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-moss-700 dark:text-gray-300 dark:hover:bg-moss-800')
-                  }
+                  className={pillButton(showTags) + ' shrink-0'}
                 >
                   Etiquetas
                 </button>
@@ -117,12 +112,7 @@ export default function RecipesPage() {
                         onClick={() =>
                           setActiveTags((prev) => (on ? prev.filter((t) => t !== tag.id) : [...prev, tag.id]))
                         }
-                        className={
-                          'ripple relative shrink-0 whitespace-nowrap rounded-full border px-3 py-1 text-sm ' +
-                          (on
-                            ? 'border-emerald-700 bg-emerald-700 text-white'
-                            : 'border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-moss-700 dark:text-gray-300 dark:hover:bg-moss-800')
-                        }
+                        className={pillButton(on) + ' shrink-0 whitespace-nowrap'}
                       >
                         {tag.name}
                       </button>

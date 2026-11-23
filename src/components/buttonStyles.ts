@@ -24,3 +24,13 @@ export const rowIconButton =
 /** Enlace/acción discreta en verde. */
 export const linkButton =
   'inline-flex items-center rounded-md px-2 py-1.5 text-sm text-emerald-700 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-950'
+
+/** Pastilla que se activa y desactiva (filtros y etiquetas del Recetario): verde y rellena mientras está pulsada. */
+export function pillButton(on: boolean) {
+  return (
+    'ripple relative rounded-full border px-3 py-1 text-sm ' +
+    (on
+      ? 'border-emerald-700 bg-emerald-700 text-white'
+      : 'border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-moss-700 dark:text-gray-300 dark:hover:bg-moss-800')
+  )
+}
