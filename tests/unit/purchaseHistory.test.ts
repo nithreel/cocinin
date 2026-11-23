@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { formatRelativeDate, groupPurchaseHistory } from '../../src/lib/purchaseHistory'
+import { formatRelativeDate, groupPurchaseHistory, wholePurchases } from '../../src/lib/purchaseHistory'
 import type { PurchaseHistoryEntry } from '../../src/lib/collections'
 
 const entry = (id: string, purchasedAt: number): PurchaseHistoryEntry => ({ id, ingredientName: id, purchasedAt })
@@ -30,5 +30,18 @@ describe('formatRelativeDate', () => {
     expect(formatRelativeDate(new Date(2026, 10, 5, 12, 0).getTime(), now)).toBe(
       new Date(2026, 10, 5, 12, 0).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }),
     )
+  })
+})
+
+describe('wholePurchases', () => {
+  it('por debajo del límite lo deja todo', () => {
+    const e = [entry('a', 2), entry('b', 1)]
+    expect(wholePurchases(e, 3)).toBe(e)
+  })
+  it('en el límite descarta la compra más antigua, que puede venir cortada', () => {
+    expect(wholePurchases([entry('a', 2), entry('b', 1), entry('c', 1)], 3).map((x) => x.id)).toEqual(['a'])
+  })
+  it('si una sola compra llena la página, la conserva (antes el historial salía vacío)', () => {
+    expect(wholePurchases([entry('a', 1), entry('b', 1), entry('c', 1)], 3).map((x) => x.id)).toEqual(['a', 'b', 'c'])
   })
 })

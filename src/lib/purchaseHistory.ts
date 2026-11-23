@@ -29,3 +29,12 @@ export function formatRelativeDate(timestamp: number, now = Date.now()) {
   if (diffDays < 7) return `hace ${diffDays} días`
   return new Date(timestamp).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })
 }
+
+/** Si se llegó al límite, la compra más antigua puede venir incompleta: se descarta entera. Si una sola compra ocupa
+ *  toda la página, se muestra (cortada) en vez de dejar el historial vacío y sin «Cargar compras anteriores». */
+export function wholePurchases(entries: PurchaseHistoryEntry[], limit: number) {
+  if (entries.length < limit) return entries
+  const oldest = entries[entries.length - 1].purchasedAt
+  const whole = entries.filter((e) => e.purchasedAt !== oldest)
+  return whole.length > 0 ? whole : entries
+}

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { deleteDoc, doc, getDocs, limit as fsLimit, onSnapshot, orderBy, query, setDoc, updateDoc, writeBatch } from 'firebase/firestore'
 import { currentUid, db } from '../../firebase'
 import { localDateString } from '../../lib/expiry'
+import { wholePurchases } from '../../lib/purchaseHistory'
 import {
   ingredientsCol,
   purchaseHistoryCol,
@@ -12,13 +13,6 @@ import {
 } from '../../lib/collections'
 
 export { useShoppingList } from '../../lib/AppDataContext'
-
-/** Si se llegó al límite, la compra más antigua puede venir incompleta: se descarta entera. */
-function wholePurchases(entries: PurchaseHistoryEntry[], limit: number) {
-  if (entries.length < limit) return entries
-  const oldest = entries[entries.length - 1].purchasedAt
-  return entries.filter((e) => e.purchasedAt !== oldest)
-}
 
 /**
  * Historial de compras: solo se descarga (y se escucha) cuando `enabled` (la sección está desplegada), de `limit` en
