@@ -76,7 +76,7 @@ no solo grupos e ingredientes) y `reportError(key, err.message)` en el error.
 duplicado en `NotesPage` y `UsersPage`).
 
 **Qué pasa:** `onSnapshot` no recibe callback de error. Si la lectura se deniega (p. ej. a alguien a quien acaban de
-quitar del hogar), Usuarios se queda en el esqueleto de carga y el historial no muestra nada, sin ningún mensaje; el
+quitar del hogar), Usuarios se queda en «Cargando…» y el historial no muestra nada, sin ningún mensaje; el
 error solo sale en la consola como «Uncaught Error in snapshot listener».
 
 **Cómo reproducirlo:** en el emulador, denegar la lectura de `purchaseHistory` (o de `users`) y desplegar el

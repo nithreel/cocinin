@@ -41,7 +41,7 @@ El resto de `src/` (37 ficheros) está por debajo de 150 líneas y con una sola 
 ### Diagnóstico por fichero
 
 **PantryPage.tsx (1112 líneas, 7 componentes, 30 `useState`).** Es el único fichero claramente desproporcionado.
-Contiene: `ExpiryFields` (70 l.), `IngredientRow` (408 l., 12 `useState`, 3 `useEffect`: fila, panel de fechas,
+Contiene: `ExpiryFields` (70 l.), `IngredientRow` (408 l., 11 `useState`, 3 `useEffect`: fila, panel de fechas,
 edición, borrado, carrito, congelar), `IsFoodCheckbox`, `AddGroupForm`, `AddIngredientForm` (87 l.),
 `GroupHeader` (188 l.: insignias, asa de arrastre, edición en el sitio, borrado) y la página (238 l.: agrupar por
 secciones, búsqueda, modo «organizar», borradores, cancelar con restauración de orden). Además mezcla lógica pura
@@ -140,7 +140,7 @@ Tests: de 89 a 115 (26 nuevos en `pantrySections`, `recipeStatus`, `purchaseHist
 | `AppDataContext.tsx` (13 `useState`, 7 `useEffect`) | 186 | `AppDataContext.tsx` (hook `useLiveQuery`) | 162 |
 | `RecipeForm.tsx` | 303 | `RecipeForm.tsx` (usa `pillButton`) | 298 |
 
-Ningún fichero de `src/` pasa ya de 320 líneas. `src/` crece de 8558 a 8746 líneas en total (cabeceras de import y
+Ningún fichero tocado pasa ya de 320 líneas; el mayor de `src/` es `ImportRecipes.tsx` (330), que se deja por ser un solo flujo. `src/` crece de 8558 a 8746 líneas en total (cabeceras de import y
 comentarios de los ficheros nuevos).
 
 Los fallos encontrados por el camino están en `docs/refactor-1.7.0-bugs.md` (sin aplicar).
