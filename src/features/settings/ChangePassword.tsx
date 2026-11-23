@@ -4,9 +4,9 @@ import { EmailAuthProvider, reauthenticateWithCredential, updatePassword } from 
 import { auth } from '../../firebase'
 import Collapse from '../../components/Collapse'
 import { cancelButton, outlineButton, primaryButton } from '../../components/buttonStyles'
+import { inputField } from '../../components/inputStyles'
 
-const inputClasses =
-  'w-full rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-moss-700 dark:bg-moss-800 dark:text-gray-100'
+const inputClasses = inputField + ' w-full'
 
 function errorMessage(err: unknown) {
   if (err instanceof FirebaseError) {

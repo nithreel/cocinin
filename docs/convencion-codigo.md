@@ -46,8 +46,18 @@ no hay un orden fijo. `import type` para lo que solo es tipo.
 
 ## Tamaño
 Orientativo: un fichero de componente hasta unas 300 líneas y un componente hasta unas 250; si pasa de ahí, se
-extraen subcomponentes o lógica pura a `lib/` (ver `docs/refactor-1.7.0.md`). Las clases de los botones salen de
-`components/buttonStyles.ts`.
+extraen subcomponentes o lógica pura a `lib/` (ver `docs/refactor-1.7.0.md`).
+
+## Estilos compartidos
+- Botones: siempre de `components/buttonStyles.ts` (`primaryButton`, `cancelButton`, `pillButton(on)`…).
+- Campos (texto, fecha, selector, área de texto): de `components/inputStyles.ts`, constantes por nombre que se
+  componen con los extras de cada sitio:
+  - `inputField` (normal: `px-3 py-1.5 text-sm`) → `className={inputField + ' w-full'}`.
+  - `inputCompact` (en filas y paneles: `px-2 py-1 text-sm`) → `className={inputCompact + ' w-40'}`.
+  - `inputBase` (solo borde, foco y tema oscuro) para los tamaños únicos: el título de una receta en edición
+    (`text-lg font-semibold`), el JSON del importador (`font-mono text-xs`), el login (`px-3 py-2`)…
+- Un extra se queda en su sitio; solo se crea una constante nueva cuando la misma combinación se repite. Al
+  cambiar estilos compartidos se comprueba que el CSS generado no cambia (su nombre lleva el hash del contenido).
 
 ## Tipos y errores
 - Sin `any` (tampoco en los tests): `unknown` y se acota, o un tipo local.
@@ -57,11 +67,6 @@ extraen subcomponentes o lógica pura a `lib/` (ver `docs/refactor-1.7.0.md`). L
 - Las escrituras no esperan al servidor (`void setDoc(...)`): sus fallos llegan al aviso global, no a un `try/catch`
   local.
 
-## Pendiente de decisión (no aplicado)
-- `IngredientRow.tsx` (319 líneas; componente de 291) y `ImportRecipes.tsx` (324; 227) pasan del tamaño orientativo,
-  igual que los componentes `RecipeForm` (276) y `RecipeCard` (271). Recomendación: trocear `IngredientRow` (panel de
-  fechas aparte) cuando se toque por otro motivo; los demás son un solo flujo y pueden quedarse.
-- 74 de 205 funciones exportadas no llevan `/** */`. Casi todas se explican por su nombre; recomendación: documentar
-  solo al tocarlas, no en bloque.
-- Las clases de los campos de texto se repiten 23 veces con variantes. Un `inputStyles.ts` como `buttonStyles.ts`
-  sería coherente, pero toca 10 ficheros: mejor en una versión aparte, comprobando el CSS generado.
+## Excepciones aceptadas
+- `IngredientRow.tsx` y `ImportRecipes.tsx` (unas 320 líneas) pasan del tamaño orientativo, igual que los componentes
+  `RecipeForm` y `RecipeCard` (unas 270). Se dan por buenos (decisión de nith): son un solo flujo cada uno.

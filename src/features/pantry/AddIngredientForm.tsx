@@ -5,6 +5,7 @@ import { cancelButton, primaryButton } from '../../components/buttonStyles'
 import { normalizeText } from '../../lib/search'
 import { NO_GROUP } from '../../lib/groupByPantryGroup'
 import ExpiryFields from './ExpiryFields'
+import { inputField } from '../../components/inputStyles'
 
 /** Formulario de ingrediente nuevo. Avisa si el nombre ya existe (sin tildes ni mayúsculas); pulsar «Añadir» otra
  *  vez lo crea igualmente. `onDone` recibe el id y el grupo para resaltarlo. */
@@ -57,12 +58,12 @@ export default function AddIngredientForm({
             setWarnedName(null)
           }}
           placeholder="Nombre del ingrediente"
-          className="min-w-40 flex-1 rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-moss-700 dark:bg-moss-800 dark:text-gray-100"
+          className={inputField + ' min-w-40 flex-1'}
         />
         <select
           value={groupId}
           onChange={(e) => setGroupId(e.target.value)}
-          className="rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-moss-700 dark:bg-moss-800 dark:text-gray-100"
+          className={inputField}
         >
           <option value={NO_GROUP}>Sin grupo</option>
           {groups.map((g) => (

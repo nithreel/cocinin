@@ -15,6 +15,7 @@ import IconsReveal from '../../components/IconsReveal'
 import { rowIconButton } from '../../components/buttonStyles'
 import { ingredientsToBuy, isUsable, type RecipeStatus } from '../../lib/recipeStatus'
 import type { Group, Ingredient, Recipe, Tag } from '../../lib/collections'
+import { inputBase } from '../../components/inputStyles'
 
 const statusBorderClasses: Record<RecipeStatus, string> = {
   full: 'border-l-emerald-500',
@@ -150,7 +151,7 @@ export default function RecipeCard({
               onChange={(e) => setDraftTitle(e.target.value)}
               aria-label="Título de la receta"
               placeholder="Nombre de la receta"
-              className="w-full rounded-md border border-gray-300 px-2 py-0.5 text-lg font-semibold text-gray-900 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-moss-700 dark:bg-moss-800 dark:text-gray-100"
+              className={inputBase + ' w-full px-2 py-0.5 text-lg font-semibold text-gray-900'}
             />
             <p className="mt-1 min-h-4 text-xs text-gray-500 dark:text-gray-400">{recipeTags.map((t) => t.name).join(' · ')}</p>
           </div>

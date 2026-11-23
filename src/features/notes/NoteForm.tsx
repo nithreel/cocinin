@@ -7,9 +7,10 @@ import { isPushConfigured } from '../../lib/push'
 import { defaultRemindAt, joinDateTime, reminderChanged, splitDateTime } from '../../lib/noteTime'
 import { memberName } from '../../lib/members'
 import type { NoteValues } from './data'
+import { inputBase } from '../../components/inputStyles'
 
-const inputClasses =
-  'rounded-md border border-gray-300 px-2 py-1.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-moss-700 dark:bg-moss-800 dark:text-gray-100'
+const inputClasses = inputBase + ' px-2 py-1.5 text-sm'
+
 /** Crear o editar una nota (`initial`). Con aviso exige hora, fecha y destinatarios; la hora debe ser futura salvo
  *  que no se toque al editar. */
 export default function NoteForm({

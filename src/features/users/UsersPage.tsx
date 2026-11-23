@@ -10,6 +10,7 @@ import { useMembers } from '../../lib/useMembers'
 import { createAccount } from '../../firebase'
 import StickyHeader from '../../components/StickyHeader'
 import { cancelButton, primaryButton } from '../../components/buttonStyles'
+import { inputField } from '../../components/inputStyles'
 
 function MemberRow({ m, isSelf }: { m: Member; isSelf: boolean }) {
   const [editing, setEditing] = useState(false)
@@ -108,8 +109,7 @@ function errorMessage(err: unknown) {
   return 'No se pudo añadir el usuario. Inténtalo de nuevo.'
 }
 
-const inputClasses =
-  'w-full rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-moss-700 dark:bg-moss-800 dark:text-gray-100'
+const inputClasses = inputField + ' w-full'
 
 /** Gestión de usuarios (solo admin: App.tsx manda a Despensa a los demás). Cambiar contraseña y restaurar copia
  *  están en Ajustes. */

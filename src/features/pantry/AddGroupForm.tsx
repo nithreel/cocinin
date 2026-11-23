@@ -4,6 +4,7 @@ import type { Group } from '../../lib/collections'
 import { cancelButton, primaryButton } from '../../components/buttonStyles'
 import { nextGroupOrder } from '../../lib/pantrySections'
 import IsFoodCheckbox from './IsFoodCheckbox'
+import { inputField } from '../../components/inputStyles'
 
 /** Formulario de grupo nuevo; si ya hay orden manual, el grupo va al final. */
 export default function AddGroupForm({ groups, onDone }: { groups: Group[]; onDone: () => void }) {
@@ -32,7 +33,7 @@ export default function AddGroupForm({ groups, onDone }: { groups: Group[]; onDo
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Nombre del grupo"
-          className="flex-1 rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-moss-700 dark:bg-moss-800 dark:text-gray-100"
+          className={inputField + ' flex-1'}
         />
       </div>
       <IsFoodCheckbox checked={isFood} onChange={setIsFood} />

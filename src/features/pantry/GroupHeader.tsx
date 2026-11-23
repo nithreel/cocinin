@@ -12,6 +12,7 @@ import { rowIconButton } from '../../components/buttonStyles'
 import { groupBadgeCounts } from '../../lib/expiry'
 import type { GroupDraft, PantrySection } from '../../lib/pantrySections'
 import IsFoodCheckbox from './IsFoodCheckbox'
+import { inputBase } from '../../components/inputStyles'
 
 /** Cabecera de un grupo: pliega y despliega con insignias de congelados, descongelando y avisos; la pulsación larga
  *  entra en «organizar», donde se mueve, renombra o elimina. */
@@ -139,7 +140,7 @@ export default function GroupHeader({
                 value={draft.name}
                 onChange={(e) => onDraftChange({ ...draft, name: e.target.value })}
                 aria-label="Nombre del grupo"
-                className="min-w-0 flex-1 rounded-md border border-gray-300 px-2 py-0.5 text-sm font-semibold focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-moss-700 dark:bg-moss-800 dark:text-gray-100"
+                className={inputBase + ' min-w-0 flex-1 px-2 py-0.5 text-sm font-semibold'}
               />
             ) : (
               <div className={titleClasses}>

@@ -4,6 +4,7 @@ import type { ExpiryMode, Group, Ingredient } from '../../lib/collections'
 import { cancelButton, primaryButton } from '../../components/buttonStyles'
 import { NO_GROUP } from '../../lib/groupByPantryGroup'
 import ExpiryFields from './ExpiryFields'
+import { inputCompact } from '../../components/inputStyles'
 
 /** Fila de la Despensa en modo edición: nombre, grupo, fecha y cantidad. Arranca con los datos actuales del ingrediente. */
 export default function IngredientEditForm({
@@ -46,12 +47,12 @@ export default function IngredientEditForm({
           <input autoComplete="off"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="min-w-32 flex-1 rounded-md border border-gray-300 px-2 py-1 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-moss-700 dark:bg-moss-800 dark:text-gray-100"
+            className={inputCompact + ' min-w-32 flex-1'}
           />
           <select
             value={groupId}
             onChange={(e) => setGroupId(e.target.value)}
-            className="rounded-md border border-gray-300 px-2 py-1 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-moss-700 dark:bg-moss-800 dark:text-gray-100"
+            className={inputCompact}
           >
             <option value={NO_GROUP}>Sin grupo</option>
             {groups.map((g) => (

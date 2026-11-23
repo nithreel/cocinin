@@ -9,6 +9,7 @@ import { parseImport, resolveRecipes } from '../../lib/importRecipes'
 import { planImportTags, tagKey } from '../../lib/tags'
 import { tagsCol } from '../../lib/collections'
 import type { Group, Ingredient, Recipe, Tag } from '../../lib/collections'
+import { inputBase, inputCompact } from '../../components/inputStyles'
 
 /** Texto que se pega en Claude web junto con la copia de seguridad y la receta. */
 const CLAUDE_PROMPT = `Te paso la copia de seguridad de mi cocina (JSON) y una receta. Devuélveme SOLO un JSON, sin explicaciones, con esta forma:
@@ -54,7 +55,7 @@ function CreateMissing({ names, groups }: { names: string[]; groups: Group[] }) 
           <select
             value={picked[n] ?? ''}
             onChange={(e) => setPicked((p) => ({ ...p, [n]: e.target.value }))}
-            className="w-40 rounded-md border border-gray-300 px-2 py-1 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-moss-700 dark:bg-moss-800 dark:text-gray-100"
+            className={inputCompact + ' w-40'}
           >
             <option value="">Grupo…</option>
             {foodGroups.map((g) => (
@@ -234,7 +235,7 @@ export default function ImportRecipes({
         placeholder="Pega aquí el JSON devuelto"
         spellCheck={false}
         autoComplete="off"
-        className="mb-3 w-full rounded-md border border-gray-300 px-3 py-2 font-mono text-xs focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-moss-700 dark:bg-moss-800 dark:text-gray-100"
+        className={inputBase + ' mb-3 w-full px-3 py-2 font-mono text-xs'}
       />
 
       {parsed && !parsed.ok && <p className="mb-3 text-sm text-red-600 dark:text-red-400">{parsed.error}</p>}
