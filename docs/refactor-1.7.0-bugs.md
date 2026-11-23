@@ -1,11 +1,21 @@
-# Refactor 1.7.0 — fallos y rarezas encontrados (NO corregidos)
+# Refactor 1.7.0 — fallos y rarezas encontrados
 
-Se anotaron durante el refactor y **no se tocaron** para que el refactor sea verificable por sí solo. Cada uno lleva
-la corrección propuesta como diff, sin aplicar. Ordenados por importancia.
+Se anotaron durante el refactor sin tocarlos, para que el refactor fuera verificable por sí solo. Después nith los
+valoró y se corrigieron en commits aparte (uno por fallo), salvo el 3.
+
+| # | Fallo | Estado |
+|---|---|---|
+| 1 | Historial vacío con una compra de 100+ artículos | **Corregido** (`wholePurchases` en `lib/purchaseHistory.ts`, 3 tests) |
+| 2 | Aviso de datos que se borra con un listener aún caído | **Corregido** (error por listener, `lib/dataErrors.ts`, 4 tests) |
+| 3 | Historial y usuarios sin manejo de errores | **No corregido**, por decisión de nith |
+| 4 | «Crear los que faltan»: error inalcanzable y «Creando…» | **Corregido** (sin test: es un componente) |
+| 5 | Destinatarios de notas con el correo cortado | **Corregido**: ahora `memberName` (alias o correo completo) |
+
+Lo que sigue es la descripción original de cada uno, con el diff que se propuso.
 
 ---
 
-## 1. Historial de compras vacío si la última compra de la página tiene 100 artículos o más
+## 1. [Corregido] Historial de compras vacío si la última compra de la página tiene 100 artículos o más
 
 **Dónde:** `src/features/shopping-list/data.ts`, `wholePurchases()` (lo usa `usePurchaseHistory`).
 
@@ -35,7 +45,7 @@ Con un test en `tests/unit` (habría que exportar `wholePurchases` o moverla a `
 
 ---
 
-## 2. El aviso «No se pueden cargar los datos» se borra aunque el listener que falló siga muerto
+## 2. [Corregido] El aviso «No se pueden cargar los datos» se borra aunque el listener que falló siga muerto
 
 **Dónde:** `src/lib/AppDataContext.tsx` (opción `clearsError` de `useLiveQuery`; en v1.6.3, los `setDataError(null)`
 de los efectos de `groups` e `ingredients`).
@@ -70,7 +80,7 @@ no solo grupos e ingredientes) y `reportError(key, err.message)` en el error.
 
 ---
 
-## 3. Historial de compras y lista de usuarios: sin manejador de error, «cargando» para siempre
+## 3. [No corregido: decisión de nith] Historial de compras y lista de usuarios: sin manejador de error, «cargando» para siempre
 
 **Dónde:** `usePurchaseHistory` (`src/features/shopping-list/data.ts`) y `useMembers` (`src/lib/useMembers.ts`, antes
 duplicado en `NotesPage` y `UsersPage`).
@@ -124,7 +134,7 @@ historial (o abrir Usuarios).
 
 ---
 
-## 4. Importar recetas, «Crear los que faltan»: el mensaje de error nunca sale y «Creando…» no se restablece
+## 4. [Corregido] Importar recetas, «Crear los que faltan»: el mensaje de error nunca sale y «Creando…» no se restablece
 
 **Dónde:** `src/features/recipes/ImportRecipes.tsx`, `CreateMissing.create()`.
 
@@ -163,7 +173,7 @@ explícito en un comentario que los fallos van al aviso global.
 
 ---
 
-## 5. (Sospechoso, a decidir) Nombres de destinatarios de una nota distintos del resto de la app
+## 5. [Corregido] Nombres de destinatarios de una nota distintos del resto de la app
 
 **Dónde:** `recipientNames` en `src/lib/noteOrder.ts` (antes en línea en `NoteCard`).
 
@@ -171,5 +181,4 @@ explícito en un comentario que los fallos van al aviso global.
 mientras que en el formulario de la nota y en Usuarios sale con `memberName`, que devuelve el **correo completo**
 («ana@example.com»). Puede ser intencionado (la línea es corta), pero es incoherente.
 
-**Propuesta (solo si nith lo quiere):** unificar en `memberName` o, al revés, dar a `memberName` una variante corta y
-usarla en los dos sitios del formulario de nota.
+**Decisión de nith:** unificar en `memberName` (alias o correo completo), como el resto de la app.
