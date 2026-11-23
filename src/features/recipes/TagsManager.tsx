@@ -6,11 +6,12 @@ import { XIcon } from '../../components/icons'
 import type { Recipe, Tag } from '../../lib/collections'
 import { findTag, sortTags } from '../../lib/tags'
 import { useDragReorder } from '../../lib/useDragReorder'
+import { nextOrder } from '../../lib/order'
 import DragHandle from '../../components/DragHandle'
 import { addTag, deleteTag, renameTag, reorderTags } from './data'
+import { inputField } from '../../components/inputStyles'
 
-const inputClass =
-  'min-w-0 flex-1 rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-moss-700 dark:bg-moss-800 dark:text-gray-100'
+const inputClass = inputField + ' min-w-0 flex-1'
 
 function TagRow({
   tag,
@@ -160,7 +161,7 @@ export default function TagsManager({
     }
     setBusy(true)
     try {
-      await addTag(n, tags.some((t) => t.order !== undefined) ? Math.max(...tags.map((t) => t.order ?? -1)) + 1 : undefined)
+      await addTag(n, nextOrder(tags))
       setName('')
       setError(null)
     } catch (err) {

@@ -34,6 +34,7 @@ const MESSAGES: Partial<Record<PushState, string>> = {
   denied: 'Los avisos están bloqueados para esta app. Actívalos en los ajustes del navegador o del sistema.',
 }
 
+/** Notificaciones de este dispositivo: activarlas o desactivarlas, elegir de qué avisar y mandar un aviso de prueba. */
 export default function AlertsPage() {
   const { user } = useAuth()
   const [state, setState] = useState<PushState | null>(null)

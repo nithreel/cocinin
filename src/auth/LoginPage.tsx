@@ -3,6 +3,7 @@ import { Navigate, useLocation } from 'react-router-dom'
 import { FirebaseError } from 'firebase/app'
 import { useAuth } from './AuthContext'
 import { primaryButton } from '../components/buttonStyles'
+import { inputBase } from '../components/inputStyles'
 
 function errorMessage(err: unknown) {
   if (err instanceof FirebaseError) {
@@ -30,6 +31,7 @@ function errorMessage(err: unknown) {
   return 'No se pudo completar la operación. Inténtalo de nuevo.'
 }
 
+/** Entrar, recuperar contraseña o, si aún no hay ningún usuario (`needsSetup`), crear el administrador. */
 export default function LoginPage() {
   const { user, isMember, needsSetup, signIn, resetPassword, createFirstUser } = useAuth()
   const location = useLocation()
@@ -104,7 +106,7 @@ export default function LoginPage() {
           autoComplete="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="mb-4 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-moss-700 dark:bg-moss-800 dark:text-gray-100"
+          className={inputBase + ' mb-4 w-full bg-white px-3 py-2 text-sm text-gray-900'}
         />
 
         <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300" htmlFor="password">
@@ -119,7 +121,7 @@ export default function LoginPage() {
             minLength={setupMode ? 6 : undefined}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 pr-16 text-sm text-gray-900 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-moss-700 dark:bg-moss-800 dark:text-gray-100"
+            className={inputBase + ' w-full bg-white px-3 py-2 pr-16 text-sm text-gray-900'}
           />
           <button
             type="button"

@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
-import { useToast } from './Toast'
 import { FirebaseError } from 'firebase/app'
+import { useToast } from './Toast'
 
 function describe(reason: unknown) {
   if (reason instanceof FirebaseError) {

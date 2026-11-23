@@ -3,6 +3,8 @@ export function normalizeText(text: string) {
   return text.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase()
 }
 
+/** ¿Contiene `text` el término? Sin tildes ni mayúsculas y con el término recortado; un término vacío coincide con
+ *  todo. */
 export function matchesSearch(text: string, term: string) {
   return normalizeText(text).includes(normalizeText(term).trim())
 }

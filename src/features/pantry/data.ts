@@ -15,6 +15,7 @@ export interface ExpiryInput {
   quantity: string
 }
 
+/** Crea un grupo; sin `order` se ordena alfabéticamente. */
 export async function addGroup(name: string, isFood: boolean, order?: number) {
   void setDoc(doc(groupsCol), { name, isFood, createdAt: Date.now(), ...(order === undefined ? {} : { order }) })
 }
@@ -26,11 +27,12 @@ export async function reorderGroups(ids: string[]) {
   void batch.commit()
 }
 
+/** Cambia nombre y «Es comida» de un grupo; sus ingredientes no se tocan. */
 export async function updateGroup(id: string, name: string, isFood: boolean) {
   void updateDoc(doc(groupsCol, id), { name, isFood })
 }
 
-// Un ingrediente nuevo nace disponible (ON): quien lo añade es porque lo tiene.
+/** Un ingrediente nuevo nace disponible (ON): quien lo añade es porque lo tiene. Devuelve su id. */
 export function addIngredient(name: string, groupId: string | null, expiry: ExpiryInput, inPantry = true) {
   const ref = doc(ingredientsCol)
   void setDoc(ref, {
@@ -46,6 +48,8 @@ export function addIngredient(name: string, groupId: string | null, expiry: Expi
   return ref.id
 }
 
+/** Fecha y cantidad desde el panel de la fila: la fecha se guarda como caducidad o como compra según `mode`, y la
+ *  otra se borra. */
 export async function updateIngredientExpiry(id: string, expiry: ExpiryInput) {
   void updateDoc(doc(ingredientsCol, id), {
     expiryMode: expiry.mode,
@@ -55,6 +59,8 @@ export async function updateIngredientExpiry(id: string, expiry: ExpiryInput) {
   })
 }
 
+/** Edición completa (nombre, grupo, fecha y cantidad); las fechas siguen la misma regla que
+ *  `updateIngredientExpiry`. */
 export async function updateIngredient(
   id: string,
   name: string,
@@ -74,6 +80,8 @@ export async function updateIngredient(
 /** Al reponer o congelar algo agotado a mano nace sin fecha: «Comprado hace…» solo lo pone la lista de la compra. */
 const NO_DATES = { expiryMode: 'none', expiryDate: null, stockedDate: null, thawedAt: null, useSoon: false, useSoonAt: null } as const
 
+/** Interruptor de la Despensa. Al agotarse deja de estar congelado y pierde cantidad y «gastar pronto», y anota
+ *  `by` (el notifier no avisa a quien lo agota); al reponerse nace sin fechas. */
 export async function setIngredientInPantry(id: string, inPantry: boolean) {
   void updateDoc(
     doc(ingredientsCol, id),
@@ -111,6 +119,7 @@ export async function deleteIngredient(id: string) {
   void batch.commit()
 }
 
+/** Borra el grupo y pasa sus ingredientes a «Sin grupo» (los busca en la caché local, así no depende de la red). */
 export async function deleteGroup(id: string) {
   const batch = writeBatch(db)
   const ingredientsSnap = await getDocsFromCache(query(ingredientsCol, where('groupId', '==', id)))

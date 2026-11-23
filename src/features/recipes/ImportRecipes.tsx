@@ -1,14 +1,15 @@
 import { useMemo, useState } from 'react'
+import { doc } from 'firebase/firestore'
 import { addIngredient } from '../pantry/data'
 import { addImportedRecipes, undoImport } from './data'
 import { cancelButton, primaryButton } from '../../components/buttonStyles'
 import BackupButton from '../../components/BackupButton'
 import { XIcon } from '../../components/icons'
-import { doc } from 'firebase/firestore'
 import { parseImport, resolveRecipes } from '../../lib/importRecipes'
 import { planImportTags, tagKey } from '../../lib/tags'
 import { tagsCol } from '../../lib/collections'
 import type { Group, Ingredient, Recipe, Tag } from '../../lib/collections'
+import { inputBase, inputCompact } from '../../components/inputStyles'
 
 /** Texto que se pega en Claude web junto con la copia de seguridad y la receta. */
 const CLAUDE_PROMPT = `Te paso la copia de seguridad de mi cocina (JSON) y una receta. Devuélveme SOLO un JSON, sin explicaciones, con esta forma:
@@ -28,21 +29,18 @@ function CreateMissing({ names, groups }: { names: string[]; groups: Group[] }) 
   const [open, setOpen] = useState(false)
   const [picked, setPicked] = useState<Record<string, string>>({})
   const [busy, setBusy] = useState(false)
-  const [error, setError] = useState<string | null>(null)
   const foodGroups = groups.filter((g) => g.isFood !== false)
   const ready = names.every((n) => picked[n])
 
-  async function create() {
+  function create() {
+    if (busy) return
+    // `busy` no vuelve a false: en cuanto la caché local tiene los ingredientes nuevos, la receta deja de tener
+    // `missing` y este bloque se desmonta. Así una segunda pulsación no puede crearlos dos veces. Si algo lo dejara
+    // montado (p. ej. una escritura rechazada), «Cancelar» lo restablece.
     setBusy(true)
-    setError(null)
-    try {
-      // Sin existencias: son cosas que no tienes; así la receta no sale como «completa» por error.
-      for (const n of names) await addIngredient(n, picked[n], { mode: 'none', date: null, quantity: '' }, false)
-    } catch (e) {
-      console.error(e)
-      setError('No se pudieron crear los ingredientes. Inténtalo de nuevo.')
-      setBusy(false)
-    }
+    // Sin existencias: son cosas que no tienes; así la receta no sale como «completa» por error.
+    // Las escrituras no esperan al servidor: un fallo llega al aviso global de escrituras, no aquí.
+    for (const n of names) addIngredient(n, picked[n], { mode: 'none', date: null, quantity: '' }, false)
   }
 
   if (!open) {
@@ -60,7 +58,7 @@ function CreateMissing({ names, groups }: { names: string[]; groups: Group[] }) 
           <select
             value={picked[n] ?? ''}
             onChange={(e) => setPicked((p) => ({ ...p, [n]: e.target.value }))}
-            className="w-40 rounded-md border border-gray-300 px-2 py-1 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-moss-700 dark:bg-moss-800 dark:text-gray-100"
+            className={inputCompact + ' w-40'}
           >
             <option value="">Grupo…</option>
             {foodGroups.map((g) => (
@@ -71,12 +69,18 @@ function CreateMissing({ names, groups }: { names: string[]; groups: Group[] }) 
           </select>
         </div>
       ))}
-      {error && <p className="text-red-600 dark:text-red-400">{error}</p>}
       <div className="flex gap-2">
         <button type="button" disabled={!ready || busy} onClick={create} className={primaryButton}>
           {busy ? 'Creando…' : `Crear ${names.length}`}
         </button>
-        <button type="button" onClick={() => setOpen(false)} className={cancelButton}>
+        <button
+          type="button"
+          onClick={() => {
+            setOpen(false)
+            setBusy(false)
+          }}
+          className={cancelButton}
+        >
           Cancelar
         </button>
       </div>
@@ -101,6 +105,8 @@ function CheckIcon() {
   )
 }
 
+/** Importar recetas desde el JSON que devuelve Claude: vista previa, ingredientes que faltan, etiquetas nuevas y
+ *  deshacer el último lote. */
 export default function ImportRecipes({
   ingredients,
   groups,
@@ -239,7 +245,7 @@ export default function ImportRecipes({
         placeholder="Pega aquí el JSON devuelto"
         spellCheck={false}
         autoComplete="off"
-        className="mb-3 w-full rounded-md border border-gray-300 px-3 py-2 font-mono text-xs focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-moss-700 dark:bg-moss-800 dark:text-gray-100"
+        className={inputBase + ' mb-3 w-full px-3 py-2 font-mono text-xs'}
       />
 
       {parsed && !parsed.ok && <p className="mb-3 text-sm text-red-600 dark:text-red-400">{parsed.error}</p>}

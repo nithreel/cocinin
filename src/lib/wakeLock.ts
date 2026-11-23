@@ -14,6 +14,7 @@ export interface VisibilitySource {
   removeEventListener(type: 'visibilitychange', fn: () => void): void
 }
 
+/** ¿Permite el navegador mantener la pantalla encendida? (Screen Wake Lock API). */
 export function wakeLockSupported(nav: { wakeLock?: unknown } = navigator) {
   return !!nav.wakeLock
 }

@@ -51,6 +51,7 @@ export interface SettingsStorage {
   setItem(key: string, value: string): void
 }
 
+/** Lee los ajustes guardados; si el almacenamiento falla o no existe, valores por defecto. */
 export function readSettings(storage: SettingsStorage | null | undefined): DeviceSettings {
   try {
     return parseSettings(storage?.getItem(SETTINGS_KEY))
@@ -88,6 +89,7 @@ export function getSettings(): DeviceSettings {
   return current
 }
 
+/** Cambia uno o varios ajustes: los guarda, aplica tema y animaciones en <html> y avisa a quien use `useSettings`. */
 export function updateSettings(patch: Partial<DeviceSettings>) {
   current = { ...getSettings(), ...patch }
   writeSettings(browserStorage(), current)
@@ -101,6 +103,7 @@ function subscribe(listener: () => void) {
   return () => listeners.delete(listener)
 }
 
+/** Ajustes del dispositivo, que se vuelven a pintar al cambiar (también desde otra pantalla). */
 export function useSettings() {
   return useSyncExternalStore(subscribe, getSettings, getSettings)
 }

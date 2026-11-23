@@ -1,11 +1,12 @@
 import { useMemo, useState, type FormEvent } from 'react'
 import type { Group, Ingredient, RecipeIngredient, Tag } from '../../lib/collections'
 import { groupByPantryGroup } from '../../lib/groupByPantryGroup'
-import { cancelButton, primaryButton } from '../../components/buttonStyles'
+import { cancelButton, pillButton, primaryButton } from '../../components/buttonStyles'
 import SegmentedToggle from '../../components/SegmentedToggle'
 import SearchInput from '../../components/SearchInput'
 import { matchesSearch } from '../../lib/search'
 import { sortTags } from '../../lib/tags'
+import { inputBase, inputCompact, inputField } from '../../components/inputStyles'
 
 interface SelectedIngredient {
   quantity: string
@@ -20,6 +21,8 @@ export interface RecipeFormValues {
   tagIds: string[]
 }
 
+/** Crear o editar una receta. Solo ofrece ingredientes de grupos de comida (y los que ya tenga); descarta los que
+ *  ya no existen. `onSubmit` recibe los valores ya recortados. */
 export default function RecipeForm({
   ingredients,
   groups,
@@ -156,7 +159,7 @@ export default function RecipeForm({
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Nombre de la receta"
-            className="mb-4 w-full rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-moss-700 dark:bg-moss-800 dark:text-gray-100"
+            className={inputField + ' mb-4 w-full'}
           />
         </>
       )}
@@ -176,12 +179,7 @@ export default function RecipeForm({
                 type="button"
                 aria-pressed={on}
                 onClick={() => toggleTag(tag.id)}
-                className={
-                  'ripple relative rounded-full border px-3 py-1 text-sm ' +
-                  (on
-                    ? 'border-emerald-700 bg-emerald-700 text-white'
-                    : 'border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-moss-700 dark:text-gray-300 dark:hover:bg-moss-800')
-                }
+                className={pillButton(on)}
               >
                 {tag.name}
               </button>
@@ -242,13 +240,13 @@ export default function RecipeForm({
                           value={selected[ing.id].quantity}
                           onChange={(e) => updateSelected(ing.id, 'quantity', e.target.value)}
                           placeholder="Cantidad"
-                          className="w-24 rounded-md border border-gray-300 px-2 py-1 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-moss-700 dark:bg-moss-800 dark:text-gray-100"
+                          className={inputCompact + ' w-24'}
                         />
                         <input autoComplete="off"
                           value={selected[ing.id].unit}
                           onChange={(e) => updateSelected(ing.id, 'unit', e.target.value)}
                           placeholder="Unidad"
-                          className="w-24 rounded-md border border-gray-300 px-2 py-1 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-moss-700 dark:bg-moss-800 dark:text-gray-100"
+                          className={inputCompact + ' w-24'}
                         />
                         <label className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-300">
                           <input autoComplete="off"
@@ -281,7 +279,7 @@ export default function RecipeForm({
         rows={6}
         placeholder="Pasos a seguir…"
         autoComplete="off"
-        className="mb-4 max-h-[60vh] min-h-36 w-full [field-sizing:content] rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-moss-700 dark:bg-moss-800 dark:text-gray-100"
+        className={inputBase + ' mb-4 max-h-[60vh] min-h-36 w-full [field-sizing:content] px-3 py-2 text-sm'}
       />
 
       {/* Pie fijo: Guardar y Cancelar siguen a la vista en formularios largos */}

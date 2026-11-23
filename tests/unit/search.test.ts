@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { matchesSearch, normalizeText } from '../../src/lib/search'
+import { matchesSearch, normalizeText, sortByText } from '../../src/lib/search'
 
 describe('búsqueda sin tildes', () => {
   it('normaliza tildes, diéresis y mayúsculas', () => {
@@ -17,5 +17,12 @@ describe('búsqueda sin tildes', () => {
   })
   it('ignora los espacios sobrantes del término', () => {
     expect(matchesSearch('Aceite de oliva', ' aceite ')).toBe(true)
+  })
+})
+
+describe('sortByText', () => {
+  it('ignora mayúsculas y tildes', () => {
+    const r = sortByText(['Zanahoria', 'aceite', 'Ácido', 'Berenjena'], (x) => x)
+    expect(r).toEqual(['aceite', 'Ácido', 'Berenjena', 'Zanahoria'])
   })
 })

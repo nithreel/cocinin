@@ -27,6 +27,7 @@ export function moveId(ids: string[], id: string, delta: -1 | 1): string[] {
   return out
 }
 
+/** Etiqueta con ese nombre, sin distinguir tildes, mayúsculas ni espacios de los extremos. */
 export function findTag(tags: Tag[], name: string): Tag | undefined {
   const key = tagKey(name)
   return tags.find((t) => tagKey(t.name) === key)

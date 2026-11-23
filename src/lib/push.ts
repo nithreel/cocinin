@@ -26,6 +26,7 @@ export type PushState =
   | 'off'
   | 'on'
 
+/** ¿Puede este navegador recibir avisos push? (service worker, PushManager y Notification). */
 export function isPushSupported() {
   return 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window
 }
@@ -49,6 +50,8 @@ async function currentSubscription() {
   return reg?.pushManager.getSubscription()
 }
 
+/** Estado de los avisos en este dispositivo y sus preferencias guardadas. «on» solo si hay suscripción en el
+ *  navegador y también en Firestore. */
 export async function getPushState(): Promise<{ state: PushState; prefs: PushPrefs }> {
   if (!isPushSupported()) return { state: 'unsupported', prefs: DEFAULT_PREFS }
   if (!VAPID_PUBLIC_KEY) return { state: 'unconfigured', prefs: DEFAULT_PREFS }
@@ -102,6 +105,8 @@ export async function disablePush() {
   await withTimeout(sub.unsubscribe(), 3000)
 }
 
+/** Guarda de qué avisar en la suscripción de este dispositivo; sin suscripción no hace nada. Espera al servidor y
+ *  lanza si falla. */
 export async function savePrefs(prefs: PushPrefs) {
   const sub = await currentSubscription()
   if (!sub) return

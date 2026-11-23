@@ -1,14 +1,16 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useState, type FormEvent } from 'react'
 import { FirebaseError } from 'firebase/app'
-import { deleteDoc, doc, onSnapshot, orderBy, query, setDoc, updateDoc } from 'firebase/firestore'
+import { deleteDoc, doc, setDoc, updateDoc } from 'firebase/firestore'
 import { useAuth } from '../../auth/AuthContext'
 import { ConfirmDelete } from '../../components/DeleteButton'
 import KebabMenu from '../../components/KebabMenu'
 import { usersCol, type Member } from '../../lib/collections'
 import { memberName } from '../../lib/members'
+import { useMembers } from '../../lib/useMembers'
 import { createAccount } from '../../firebase'
 import StickyHeader from '../../components/StickyHeader'
 import { cancelButton, primaryButton } from '../../components/buttonStyles'
+import { inputField } from '../../components/inputStyles'
 
 function MemberRow({ m, isSelf }: { m: Member; isSelf: boolean }) {
   const [editing, setEditing] = useState(false)
@@ -107,26 +109,17 @@ function errorMessage(err: unknown) {
   return 'No se pudo añadir el usuario. Inténtalo de nuevo.'
 }
 
-const inputClasses =
-  'w-full rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-moss-700 dark:bg-moss-800 dark:text-gray-100'
+const inputClasses = inputField + ' w-full'
 
 /** Gestión de usuarios (solo admin: App.tsx manda a Despensa a los demás). Cambiar contraseña y restaurar copia
  *  están en Ajustes. */
 export default function UsersPage() {
   const { user } = useAuth()
-  const [members, setMembers] = useState<Member[]>([])
-  const [loading, setLoading] = useState(true)
+  const { members, loading } = useMembers()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
-
-  useEffect(() => {
-    return onSnapshot(query(usersCol, orderBy('createdAt')), (snap) => {
-      setMembers(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Member))
-      setLoading(false)
-    })
-  }, [])
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()

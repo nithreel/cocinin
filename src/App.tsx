@@ -20,6 +20,8 @@ function AdminOnly({ children }: { children: ReactNode }) {
   return isAdmin ? children : <Navigate to="/despensa" replace />
 }
 
+/** Raíz: sin configuración de Firebase muestra cómo rellenarla; si no, el login y las pantallas protegidas (los
+ *  listeners solo se abren con sesión de miembro). */
 export default function App() {
   if (!isFirebaseConfigured) {
     return (

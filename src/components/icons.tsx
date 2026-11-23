@@ -18,6 +18,7 @@ function Icon({ children }: { children: ReactNode }) {
   )
 }
 
+/** Lápiz de «Editar» (16 px), en los botones de fila. */
 export function PencilIcon() {
   return (
     <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -26,6 +27,7 @@ export function PencilIcon() {
   )
 }
 
+/** Pestaña Despensa. */
 export function PantryIcon() {
   return (
     <Icon>
@@ -36,6 +38,7 @@ export function PantryIcon() {
   )
 }
 
+/** Carrito: pestaña Lista y botones de añadir a la lista. */
 export function CartIcon() {
   return (
     <Icon>
@@ -46,6 +49,7 @@ export function CartIcon() {
   )
 }
 
+/** Pestaña Recetario. */
 export function BookIcon() {
   return (
     <Icon>
@@ -55,6 +59,7 @@ export function BookIcon() {
   )
 }
 
+/** Usuarios (solo admin), en la barra de ajustes. */
 export function UsersIcon() {
   return (
     <Icon>
@@ -66,6 +71,7 @@ export function UsersIcon() {
   )
 }
 
+/** Aspa de cerrar o limpiar (16 px). No lleva `aria-hidden`: el botón que la usa pone su `aria-label`. */
 export function XIcon() {
   return (
     <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round">
@@ -94,6 +100,7 @@ export function SnowflakeIcon({ className = 'h-5 w-5', crossed = false }: { clas
   )
 }
 
+/** Campana: Notificaciones y la hora de aviso de una nota. */
 export function BellIcon() {
   return (
     <Icon>
@@ -103,6 +110,7 @@ export function BellIcon() {
   )
 }
 
+/** Cerrar sesión. */
 export function LogoutIcon() {
   return (
     <Icon>
@@ -112,6 +120,7 @@ export function LogoutIcon() {
   )
 }
 
+/** Descargar la copia de seguridad. */
 export function DownloadIcon() {
   return (
     <Icon>
@@ -121,6 +130,7 @@ export function DownloadIcon() {
   )
 }
 
+/** Pestaña Notas. */
 export function NoteIcon() {
   return (
     <Icon>
@@ -139,6 +149,7 @@ export function CaretIcon({ open }: { open: boolean }) {
   )
 }
 
+/** Flecha › de las recetas: gira 90° al desplegar (`open`). */
 export function ChevronIcon({ open }: { open: boolean }) {
   return (
     <svg
@@ -156,6 +167,7 @@ export function ChevronIcon({ open }: { open: boolean }) {
   )
 }
 
+/** Triángulo de «gastar pronto»; tamaño por `className` (20 px por defecto). */
 export function AlertIcon({ className = 'h-5 w-5' }: { className?: string }) {
   return (
     <svg

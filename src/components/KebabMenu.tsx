@@ -6,6 +6,7 @@ export interface MenuItem {
   danger?: boolean
 }
 
+/** Lista de opciones de un menú: cada opción cierra el menú antes de ejecutarse y no propaga el clic a la fila. */
 export function MenuPopup({
   items,
   onClose,
@@ -42,6 +43,7 @@ export function MenuPopup({
   )
 }
 
+/** Botón ⋮ con su menú; se cierra al pulsar fuera. */
 export default function KebabMenu({ items }: { items: MenuItem[] }) {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)

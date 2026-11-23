@@ -46,6 +46,8 @@ function dateExpiry(ingredient: Ingredient): ExpiryInfo {
   return { label: `Caduca en ${diffDays} días`, status: 'ok' }
 }
 
+/** Etiqueta y estado de la fecha de un ingrediente. null si está agotado o no tiene fecha; congelado prima sobre
+ *  todo y el descongelado sobre las fechas de compra o caducidad. */
 export function getExpiryInfo(ingredient: Ingredient): ExpiryInfo | null {
   if (!ingredient.inPantry) return null
   // congelado: las fechas se conservan, pero no se avisa de caducidad mientras esté en el congelador
@@ -109,6 +111,7 @@ export function groupBadgeCounts(items: Ingredient[]) {
   }
 }
 
+/** Clases del texto de la fecha según su estado (rojo caducado, ámbar pronto, azul congelado o descongelando). */
 export function expiryBadgeClasses(status: ExpiryStatus) {
   switch (status) {
     case 'expired':

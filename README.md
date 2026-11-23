@@ -259,6 +259,8 @@ scripts/setup.mjs    asistente de instalación (npm run setup)
 firestore.rules      reglas de acceso
 ```
 
+Antes de tocar el código, lee la [convención de código](docs/convencion-codigo.md): idioma, nombres, comentarios, ficheros y manejo de errores.
+
 ## Licencia
 
 MIT. Ver `LICENSE`.

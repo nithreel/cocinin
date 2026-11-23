@@ -1,6 +1,9 @@
 import { useRef } from 'react'
 import { XIcon } from './icons'
+import { inputField } from './inputStyles'
 
+/** Campo de búsqueda con aspa para limpiar; al limpiar el foco se queda en el campo (el teclado del móvil sigue
+ *  abierto). */
 export default function SearchInput({
   value,
   onChange,
@@ -23,7 +26,7 @@ export default function SearchInput({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full rounded-md border border-gray-300 px-3 py-1.5 pr-10 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-moss-700 dark:bg-moss-800 dark:text-gray-100 [&::-webkit-search-cancel-button]:appearance-none"
+        className={inputField + ' w-full pr-10 [&::-webkit-search-cancel-button]:appearance-none'}
       />
       {value && (
         <button

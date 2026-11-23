@@ -12,6 +12,7 @@ export interface NoteValues {
   recipients: string[]
 }
 
+/** Crea la nota con el aviso sin enviar (`sent: false`); el notifier la recoge en su próxima revisión. */
 export async function addNote(values: NoteValues) {
   void setDoc(doc(notesCol), { ...values, sent: false, createdAt: Date.now(), by: currentUid() })
 }
@@ -22,6 +23,7 @@ export async function updateNote(note: Note, values: NoteValues) {
   void updateDoc(doc(notesCol, note.id), rearm ? { ...values, sent: false } : { ...values })
 }
 
+/** Marca o desmarca como hecha; no cambia el aviso ni el orden de la lista. */
 export async function setNoteDone(id: string, done: boolean) {
   void updateDoc(doc(notesCol, id), { done })
 }
@@ -33,6 +35,7 @@ export async function deleteDoneNotes(notes: Note[]) {
   void batch.commit()
 }
 
+/** Borra la nota; si tenía aviso pendiente, ya no se envía. */
 export async function deleteNote(id: string) {
   void deleteDoc(doc(notesCol, id))
 }
