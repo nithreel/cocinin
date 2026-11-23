@@ -57,7 +57,7 @@ export default function RecipesPage() {
   // con una receta en edición o creándose, el buscador y los filtros se ocultan para dejar espacio (sobre todo con el teclado)
   const [editingIds, handleEditing] = useIdSet()
   const formActive = showForm || editingIds.size > 0
-  // con una receta desplegada, los filtros (Todas/Puedo hacerla y etiquetas) se pliegan; el buscador se queda
+  // con una receta desplegada, el buscador y los filtros (Todas/Puedo hacerla y etiquetas) se pliegan
   const [openIds, handleOpen] = useIdSet()
   const compact = openIds.size > 0
 
