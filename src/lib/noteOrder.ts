@@ -1,4 +1,5 @@
 import type { Member, Note } from './collections'
+import { memberName } from './members'
 
 /** Primero las que tienen aviso pendiente (la más próxima arriba), luego las simples (la más nueva arriba) y al final
  *  las ya avisadas. Marcar una como hecha no la mueve de sitio. */
@@ -7,10 +8,11 @@ export function orderNotes(notes: Note[]): Note[] {
   return [...notes].sort((a, b) => rank(a) - rank(b) || (rank(a) === 0 ? (a.remindAt ?? 0) - (b.remindAt ?? 0) : b.createdAt - a.createdAt))
 }
 
-/** Nombres cortos de los destinatarios de una nota: el alias o, si no tiene, el correo hasta la @; «?» si ya no está. */
+/** Nombres de los destinatarios de una nota, como en el resto de la app (`memberName`: alias o correo completo);
+ *  «?» si ya no es miembro. */
 export function recipientNames(note: Note, members: Member[]): string[] {
-  return note.recipients.map((id) => (() => {
+  return note.recipients.map((id) => {
     const m = members.find((x) => x.id === id)
-    return m ? (m.alias?.trim() || m.email.split('@')[0]) : '?'
-  })())
+    return m ? memberName(m) : '?'
+  })
 }

@@ -24,11 +24,11 @@ describe('orderNotes', () => {
 })
 
 describe('recipientNames', () => {
-  it('alias, o el correo hasta la @, o «?» si ya no es miembro', () => {
+  it('alias, o el correo completo (como memberName), o «?» si ya no es miembro', () => {
     const members = [
       { id: 'u1', email: 'ana@example.com', alias: ' Ana ' },
       { id: 'u2', email: 'luis@example.com' },
     ] as Member[]
-    expect(recipientNames(note('n', { recipients: ['u1', 'u2', 'u3'] }), members)).toEqual(['Ana', 'luis', '?'])
+    expect(recipientNames(note('n', { recipients: ['u1', 'u2', 'u3'] }), members)).toEqual(['Ana', 'luis@example.com', '?'])
   })
 })
