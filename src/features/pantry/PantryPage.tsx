@@ -37,9 +37,21 @@ import { useLongPress } from '../../lib/useLongPress'
 import { useCollapsedSet } from '../../lib/useCollapsedSet'
 import StickyHeader from '../../components/StickyHeader'
 import { cancelButton, primaryButton, rowIconButton } from '../../components/buttonStyles'
-import { matchesSearch, normalizeText } from '../../lib/search'
+import { normalizeText } from '../../lib/search'
 import { expiryBadgeClasses, frozenWithWarning, getExpiryInfo, groupBadgeCounts, hasWarning, remainingLabel, soonMarkLabel } from '../../lib/expiry'
 import { NO_GROUP } from '../../lib/groupByPantryGroup'
+import {
+  buildPantrySections,
+  changedGroupDrafts,
+  filterPantrySections,
+  hasInvalidDraft,
+  nextGroupOrder,
+  organizeSections,
+  orderToRestore,
+  recipeTitlesByIngredient,
+  type GroupDraft,
+  type PantrySection,
+} from '../../lib/pantrySections'
 
 function ExpiryFields({
   mode,
@@ -558,7 +570,7 @@ function AddGroupForm({ groups, onDone }: { groups: Group[]; onDone: () => void 
     setSubmitting(true)
     try {
       // si ya hay un orden elegido a mano, el grupo nuevo va al final
-      await addGroup(name.trim(), isFood, groups.some((g) => g.order !== undefined) ? Math.max(...groups.map((g) => g.order ?? -1)) + 1 : undefined)
+      await addGroup(name.trim(), isFood, nextGroupOrder(groups))
       onDone()
     } finally {
       setSubmitting(false)
@@ -681,8 +693,6 @@ function AddIngredientForm({
   )
 }
 
-type GroupDraft = { name: string; isFood: boolean }
-
 function GroupHeader({
   section,
   isCollapsed,
@@ -693,7 +703,7 @@ function GroupHeader({
   onDraftChange,
   handle,
 }: {
-  section: { id: string; name: string; items: Ingredient[]; deletable: boolean; isFood: boolean }
+  section: PantrySection
   isCollapsed: boolean
   onToggleCollapsed: () => void
   /** modo «organizar grupos»: asa para mover, lápiz para renombrar y ✕ para eliminar */
@@ -890,13 +900,7 @@ export default function PantryPage() {
   const [highlightId, setHighlightId] = useState<string | null>(null)
   const searchActive = search.trim().length > 0
 
-  const recipesByIngredient = useMemo(() => {
-    const map = new Map<string, string[]>()
-    for (const r of recipes) {
-      for (const ri of r.ingredients) map.set(ri.ingredientId, [...(map.get(ri.ingredientId) ?? []), r.title])
-    }
-    return map
-  }, [recipes])
+  const recipesByIngredient = useMemo(() => recipeTitlesByIngredient(recipes), [recipes])
 
   function startOrganize() {
     if (organizing) return
@@ -910,21 +914,14 @@ export default function PantryPage() {
   async function saveOrganize() {
     setSavingGroups(true)
     try {
-      await Promise.all(
-        Object.entries(drafts).map(([id, d]) => {
-          const g = groups.find((x) => x.id === id)
-          const name = d.name.trim()
-          if (!g || !name || (name === g.name && d.isFood === (g.isFood ?? true))) return undefined
-          return updateGroup(id, name, d.isFood)
-        }),
-      )
+      await Promise.all(changedGroupDrafts(drafts, groups).map((c) => updateGroup(c.id, c.name, c.isFood)))
       setDrafts({})
       setOrganizing(false)
     } finally {
       setSavingGroups(false)
     }
   }
-  const draftsInvalid = Object.values(drafts).some((d) => !d.name.trim())
+  const draftsInvalid = hasInvalidDraft(drafts)
 
   function handleIngredientAdded(id?: string, groupId?: string | null) {
     setShowAddIngredient(false)
@@ -936,51 +933,17 @@ export default function PantryPage() {
     expand(groupId ?? NO_GROUP)
   }
 
-  const sections = useMemo(() => {
-    const byGroup = new Map<string, Ingredient[]>()
-    const noGroup: Ingredient[] = []
-    for (const ing of ingredients) {
-      if (ing.groupId) {
-        const list = byGroup.get(ing.groupId) ?? []
-        list.push(ing)
-        byGroup.set(ing.groupId, list)
-      } else {
-        noGroup.push(ing)
-      }
-    }
-    const result = groups.map((g) => ({
-      id: g.id,
-      name: g.name,
-      items: byGroup.get(g.id) ?? [],
-      deletable: true,
-      isFood: g.isFood ?? true,
-    }))
-    if (noGroup.length > 0) {
-      result.push({ id: NO_GROUP, name: 'Sin grupo', items: noGroup, deletable: false, isFood: true })
-    }
-    return result
-  }, [groups, ingredients])
+  const sections = useMemo(() => buildPantrySections(groups, ingredients), [groups, ingredients])
 
-  const visibleSections = useMemo(() => {
-    if (!searchActive) return sections
-    return sections
-      .map((s) =>
-        // si el término coincide con el nombre del grupo, entra el grupo entero
-        matchesSearch(s.name, search) ? s : { ...s, items: s.items.filter((i) => matchesSearch(i.name, search)) },
-      )
-      .filter((s) => s.items.length > 0)
-  }, [sections, searchActive, search])
+  const visibleSections = useMemo(() => filterPantrySections(sections, search), [sections, search])
 
   const loading = loadingGroups || loadingIngredients
 
   // al organizar se ven todos los grupos (sin filtro de búsqueda), en el orden que se está arrastrando, y «Sin grupo» al final
-  const displaySections = useMemo(() => {
-    if (!organizing) return visibleSections
-    const byId = new Map(sections.map((x) => [x.id, x]))
-    const ordered = reorder.shown.map((g) => byId.get(g.id)).filter((x): x is (typeof sections)[number] => !!x)
-    const noGroup = byId.get(NO_GROUP)
-    return noGroup ? [...ordered, noGroup] : ordered
-  }, [organizing, visibleSections, sections, reorder.shown])
+  const displaySections = useMemo(
+    () => (organizing ? organizeSections(sections, reorder.shown) : visibleSections),
+    [organizing, visibleSections, sections, reorder.shown],
+  )
 
   // Los formularios se abren arriba del todo: si se pulsa con la página desplazada, se vuelve a la cima para verlos.
   function openForm(toggle: (fn: (v: boolean) => boolean) => void) {
@@ -1012,10 +975,8 @@ export default function PantryPage() {
               ? () => {
                   // sale sin aplicar los nombres editados y devuelve los grupos al orden con el que se entró
                   // (los grupos eliminados no se recuperan)
-                  const existing = new Set(groups.map((g) => g.id))
-                  const before = orderOnEnter.current.filter((id) => existing.has(id))
-                  const now = groups.map((g) => g.id).filter((id) => before.includes(id))
-                  if (before.join() !== now.join()) void reorderGroups(before)
+                  const before = orderToRestore(orderOnEnter.current, groups)
+                  if (before) void reorderGroups(before)
                   setDrafts({})
                   setOrganizing(false)
                 }
