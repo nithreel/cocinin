@@ -117,7 +117,7 @@ function applyTheme() {
   const root = document.documentElement
   root.dataset.theme = dark ? 'dark' : 'light'
   root.style.colorScheme = dark ? 'dark' : 'light'
-  document.querySelectorAll('meta[name="theme-color"]').forEach((m) => m.setAttribute('content', dark ? '#052e16' : '#166534'))
+  document.querySelectorAll('meta[name="theme-color"]').forEach((m) => m.setAttribute('content', dark ? '#13221d' : '#166534'))
 }
 
 const REDUCE_QUERY = '(prefers-reduced-motion: reduce)'

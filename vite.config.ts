@@ -21,8 +21,8 @@ export default defineConfig({
         short_name: 'CocinIN',
         description: 'Despensa, lista de la compra y recetario compartidos',
         lang: 'es',
-        theme_color: '#166534',
-        background_color: '#ffffff',
+        theme_color: '#13221d',
+        background_color: '#13221d',
         display: 'standalone',
         start_url: '/',
         icons: [
